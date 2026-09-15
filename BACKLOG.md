@@ -113,9 +113,6 @@ export réel, connecteur paie.
   une année déjà planifiée ne doit pas pouvoir être supprimée — voir aussi le point
   ouvert "à appliquer côté backend" ci-dessous)._
 
-- [ ] **11. Menu Export**
-  Maquette du menu d'export accessible depuis la vue Planning.
-
 - [ ] **12. Blocage visuel du planning passé**
   Affichage grisé/verrouillé des cellules passées dans la grille (visuel uniquement,
   sans logique de verrouillage réelle à ce stade).
@@ -139,6 +136,14 @@ export réel, connecteur paie.
   _Statut : fait, déployé sur `main`. Logo par défaut "Les Jardins de Rambam"
   (recréé en SVG), menu admin multi-sections ajouté au passage._
 
+## Sortie de l'Epic — à préciser avant de reprendre
+
+- **Menu Export** (retiré de l'EPIC le 15/09, issue #12 détachée) : la maquette du
+  menu d'export accessible depuis la vue Planning avait une spécification trop
+  imprécise pour être développée en l'état (contenu du menu ? formats ? périmètre
+  des données exportées ?). À clarifier avec le client avant de la réintégrer dans
+  un prochain Epic.
+
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
 - **Export PDF téléchargeable** (ajouté le 15/09, suite à la case signature de la
@@ -147,7 +152,8 @@ export réel, connecteur paie.
   vrai bouton « Télécharger le PDF » nécessiterait une génération côté serveur
   (ex: Puppeteer/Playwright headless, ou une lib type `react-pdf`) puisque
   l'application n'a pas encore de backend. À prévoir dans l'Epic backend, probablement
-  en même temps que la story Export (actuellement #12 sur la vue Planning).
+  en même temps que la story Menu Export (#12, sortie de l'Epic v0 en attente de
+  clarification — voir section dédiée ci-dessus).
 
 ## Points ouverts (hors périmètre maquette graphique, à trancher avant le backend)
 
