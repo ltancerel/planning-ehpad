@@ -97,11 +97,17 @@ export réel, connecteur paie.
   réglable, grille de répartition réutilisant le vrai sélecteur de code horaire
   sans les codes événementiels)._
 
-- [ ] **9bis. Appliquer un roulement à un salarié dans le planning**
+- [x] **9bis. Appliquer un roulement à un salarié dans le planning**
   Distincte de la story 9 (décision du 16/09) : assigner un roulement à un salarié
   avec une date de début (alignée sur le lundi de sa semaine) et une date de fin
   optionnelle, puis projeter le motif dans la grille planning. Vient compléter le
   champ Roulement désactivé de la story « Ajouter un salarié ».
+  _Statut : fait, déployé sur `main`. Icône dédiée sur la ligne salarié (vue
+  Planning) ouvrant un panneau : roulement en cours mis en avant, historique des
+  affectations passées, formulaire d'assignation (roulement, date de début
+  ramenée au lundi, date de fin optionnelle) qui projette aussitôt le motif dans
+  la grille. Notion de « roulement par défaut » ajoutée à l'écran Roulements
+  (un seul à la fois) : proposé automatiquement à la création d'un salarié._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
@@ -165,6 +171,14 @@ export réel, connecteur paie.
 - Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
   l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
   hors application pour l'instant ?
+- **Deux représentations distinctes du salarié dans la maquette** (relevé le
+  16/09 en construisant la story 9bis) : la vue Planning utilise une entité
+  `Salarie` (simple, sert de support à la démo de plein de salariés) tandis que
+  l'écran Admin « Ajouter un salarié » utilise une entité `FicheSalarie` plus
+  complète, non reliée par identifiant à la première. L'affectation de
+  roulement (historique, roulement en cours) n'existe donc aujourd'hui que côté
+  `Salarie`/vue Planning. À unifier en un seul modèle Salarié lors du passage
+  au vrai backend.
 - **Intégrité des données à valider côté backend, pas seulement côté front**
   (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
   toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur

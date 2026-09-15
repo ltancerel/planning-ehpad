@@ -118,6 +118,8 @@ export type Roulement = {
   nom: string;
   nbSemaines: number;
   motif: string[][];
+  // Roulement proposé automatiquement à la création d'un salarié (un seul à la fois).
+  parDefaut?: boolean;
 };
 
 export const ROULEMENTS_DEMO: Roulement[] = [
@@ -129,6 +131,7 @@ export const ROULEMENTS_DEMO: Roulement[] = [
       ["60S", "60S", "60S", "60S", "60S", "", ""],
       ["70A", "70A", "70A", "70A", "70A", "", ""],
     ],
+    parDefaut: true,
   },
   {
     id: "r2",
@@ -137,6 +140,39 @@ export const ROULEMENTS_DEMO: Roulement[] = [
     motif: [["SEC", "SEC", "SEC", "SEC", "SEC", "", ""]],
   },
 ];
+
+// Affectation d'un roulement à un salarié sur une période donnée (cf. story
+// « Appliquer un roulement à un salarié dans le planning »). dateDebut est
+// toujours un lundi ; dateFin absente = affectation en cours.
+export type AffectationRoulement = {
+  id: string;
+  roulementId: string;
+  dateDebut: string; // ISO, lundi
+  dateFin?: string; // ISO
+};
+
+// Historique des affectations par salarié (clé = Salarie.id). Un salarié sans
+// entrée n'a jamais eu de roulement assigné depuis le planning.
+export const AFFECTATIONS_ROULEMENT_DEMO: Record<string, AffectationRoulement[]> = {
+  "8": [{ id: "aff1", roulementId: "r1", dateDebut: "2025-01-06" }],
+  "14": [
+    { id: "aff2", roulementId: "r2", dateDebut: "2025-01-06", dateFin: "2025-12-28" },
+    { id: "aff3", roulementId: "r1", dateDebut: "2025-12-29" },
+  ],
+};
+
+export function affectationsRecentesDabord(affectations: AffectationRoulement[]): AffectationRoulement[] {
+  return [...affectations].sort((a, b) => b.dateDebut.localeCompare(a.dateDebut));
+}
+
+export function affectationActuelle(
+  affectations: AffectationRoulement[],
+  dateReferenceISO: string
+): AffectationRoulement | undefined {
+  return affectationsRecentesDabord(affectations).find(
+    (a) => a.dateDebut <= dateReferenceISO && (!a.dateFin || a.dateFin >= dateReferenceISO)
+  );
+}
 
 export type JourFerie = {
   date: string; // ISO yyyy-mm-dd

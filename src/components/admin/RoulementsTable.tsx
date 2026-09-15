@@ -25,7 +25,14 @@ export default function RoulementsTable({ roulements, onModifier, onSupprimer }:
       <tbody>
         {roulements.map((roulement) => (
           <tr key={roulement.id} className="border-b border-zinc-100 hover:bg-zinc-50">
-            <td className="px-3 py-2 font-medium">{roulement.nom}</td>
+            <td className="px-3 py-2 font-medium">
+              {roulement.nom}
+              {roulement.parDefaut && (
+                <span className="ml-2 inline-block rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                  Par défaut
+                </span>
+              )}
+            </td>
             <td className="px-3 py-2 text-zinc-600">{roulement.nbSemaines}</td>
             <td className="px-3 py-2">
               <div className="space-y-1">

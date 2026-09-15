@@ -22,6 +22,7 @@ type RoulementFormProps = {
 export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: RoulementFormProps) {
   const modeEdition = Boolean(valeurInitiale);
   const [nom, setNom] = useState(valeurInitiale?.nom ?? "");
+  const [parDefaut, setParDefaut] = useState(valeurInitiale?.parDefaut ?? false);
   const [motif, setMotif] = useState<string[][]>(
     valeurInitiale?.motif.map((semaine) => [...semaine]) ?? [semaineVide()]
   );
@@ -72,7 +73,7 @@ export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: 
       return;
     }
     setErreur(null);
-    onValider({ nom: nom.trim(), nbSemaines: motif.length, motif });
+    onValider({ nom: nom.trim(), nbSemaines: motif.length, motif, parDefaut });
   }
 
   return (
@@ -119,6 +120,17 @@ export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: 
           <p className="mt-1 text-[11px] text-zinc-400">
             Chaque semaine du motif est un bloc complet Lundi → Dimanche (roulement aligné sur la
             semaine).
+          </p>
+        </div>
+
+        <div className="rounded border border-zinc-200 p-3">
+          <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-700">
+            <input type="checkbox" checked={parDefaut} onChange={(e) => setParDefaut(e.target.checked)} />
+            Roulement par défaut
+          </label>
+          <p className="mt-1 text-[11px] text-zinc-400">
+            Proposé automatiquement à la création d&apos;un salarié. Un seul roulement par défaut à la
+            fois — activer celui-ci désactivera l&apos;éventuel autre roulement par défaut.
           </p>
         </div>
 
