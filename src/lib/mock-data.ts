@@ -24,6 +24,42 @@ export const UTILISATEUR_CONNECTE: ProfilUtilisateur = {
   poste: "Direction",
 };
 
+export type Utilisateur = {
+  id: string;
+  identifiant: string; // 3 lettres majuscules
+  nom: string;
+  prenom: string;
+  email: string;
+  typeUtilisateur: "Administrateur" | "Utilisateur";
+  service: string;
+  poste: string;
+};
+
+// Utilisateurs de démo (noms/emails fictifs — cf. décision de ne jamais utiliser
+// de vraies identités dans les données de démonstration).
+export const UTILISATEURS_DEMO: Utilisateur[] = [
+  {
+    id: "u1",
+    identifiant: "TMO",
+    nom: "MOREL",
+    prenom: "Thomas",
+    email: "thomas.morel@example.fr",
+    typeUtilisateur: "Administrateur",
+    service: "ADMINISTRATIF",
+    poste: "Direction",
+  },
+  {
+    id: "u2",
+    identifiant: "SLA",
+    nom: "LAMBERT",
+    prenom: "Sophie",
+    email: "sophie.lambert@example.fr",
+    typeUtilisateur: "Utilisateur",
+    service: "IDE",
+    poste: "Infirmière coordinatrice",
+  },
+];
+
 export const SERVICES_ORDRE = ["ADMINISTRATIF", "ASH BESOINS", "ASH CDD", "IDE"];
 
 // Service exclusivement composé de lignes "Besoin" non attachées à un salarié

@@ -12,7 +12,7 @@ type EntreeNav = {
 const SECTIONS: EntreeNav[] = [
   { label: "Identité EHPAD", href: "/admin/ehpad", disponible: true },
   { label: "Codes horaires", href: "/admin/horaires", disponible: true },
-  { label: "Utilisateurs", href: "/admin/utilisateurs", disponible: false },
+  { label: "Utilisateurs", href: "/admin/utilisateurs", disponible: true },
   { label: "Salariés", href: "/admin/salaries", disponible: false },
   { label: "Roulements", href: "/admin/roulements", disponible: false },
   { label: "Années", href: "/admin/annees", disponible: false },
