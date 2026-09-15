@@ -5,6 +5,23 @@ export type Salarie = {
   service: string;
 };
 
+export type ProfilUtilisateur = {
+  nom: string;
+  prenom: string;
+  typeUtilisateur: "Administrateur" | "Utilisateur";
+  service: string;
+  poste: string;
+};
+
+// Utilisateur connecté (mock — pas d'authentification réelle à ce stade)
+export const UTILISATEUR_CONNECTE: ProfilUtilisateur = {
+  nom: "Dupont",
+  prenom: "Claire",
+  typeUtilisateur: "Administrateur",
+  service: "Administration",
+  poste: "Direction",
+};
+
 export const SERVICES_ORDRE = ["ADMINISTRATIF", "ASH BESOINS", "ASH CDD", "IDE"];
 
 export const SALARIES: Salarie[] = [

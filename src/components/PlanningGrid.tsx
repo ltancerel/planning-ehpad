@@ -5,6 +5,7 @@ import Link from "next/link";
 import { SALARIES, SERVICES_ORDRE, JOURS_FERIES_2026, genererPlanningDemo } from "@/lib/mock-data";
 import { HORAIRE_CODES_PAR_CODE, heuresDuCode } from "@/lib/horaire-codes";
 import { formatDateISO, lettreJour, estWeekend, formatJourMois, lundiDeLaSemaine, genererPeriode } from "@/lib/dates";
+import UserMenu from "@/components/UserMenu";
 
 const NB_SEMAINES = 4;
 const NB_JOURS = NB_SEMAINES * 7;
@@ -161,6 +162,7 @@ export default function PlanningGrid() {
           >
             Administration
           </Link>
+          <UserMenu />
         </div>
       </header>
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import UserMenu from "@/components/UserMenu";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -12,6 +13,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <Link href="/" className="ml-auto text-xs font-medium text-amber-900 hover:underline">
           ← Retour au planning
         </Link>
+        <UserMenu />
       </header>
       <div className="flex-1 overflow-hidden">{children}</div>
     </div>
