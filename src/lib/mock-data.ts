@@ -61,6 +61,53 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
   },
 ];
 
+export type Manager = "Aucun" | "Maîtresse de maison" | "IDEC";
+export const MANAGERS: Manager[] = ["Aucun", "Maîtresse de maison", "IDEC"];
+
+export type FicheSalarie = {
+  id: string;
+  matricule: string; // 4 lettres majuscules
+  nom: string;
+  prenom: string;
+  service: string;
+  typeContrat: "CDD" | "CDI";
+  contratActif: boolean;
+  manager: Manager;
+  presence: "Présent" | "Absent";
+  compteUtilisateur: boolean;
+  email?: string;
+};
+
+// Fiches salariés de démo (noms fictifs, cf. décision de ne jamais utiliser de
+// vraies identités dans les données de démonstration).
+export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
+  {
+    id: "fs1",
+    matricule: "CBRD",
+    nom: "BERNARD",
+    prenom: "Claire",
+    service: "ADMINISTRATIF",
+    typeContrat: "CDI",
+    contratActif: true,
+    manager: "Aucun",
+    presence: "Présent",
+    compteUtilisateur: true,
+    email: "claire.bernard@example.fr",
+  },
+  {
+    id: "fs2",
+    matricule: "LINS",
+    nom: "LAURENT",
+    prenom: "Inès",
+    service: "ASH CDD",
+    typeContrat: "CDD",
+    contratActif: true,
+    manager: "IDEC",
+    presence: "Présent",
+    compteUtilisateur: false,
+  },
+];
+
 export const SERVICES_ORDRE = ["ADMINISTRATIF", "ASH BESOINS", "ASH CDD", "IDE"];
 
 // Service exclusivement composé de lignes "Besoin" non attachées à un salarié
