@@ -13,6 +13,7 @@ const NB_SEMAINES = 4;
 const NB_JOURS = NB_SEMAINES * 7;
 const LARGEUR_COLONNE = 44;
 const LARGEUR_COLONNE_SALARIE = 200;
+const HAUTEUR_LIGNE_ENTETE = 28;
 const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
 
 // Données de démo générées une seule fois sur une large plage fixe, indépendante
@@ -194,6 +195,7 @@ export default function PlanningGrid() {
             <tr>
               <th
                 className="sticky left-0 top-0 z-30 border border-zinc-200 bg-zinc-100"
+                style={{ height: HAUTEUR_LIGNE_ENTETE * 2 }}
                 rowSpan={2}
               />
               {jours.map((jour) => {
@@ -201,9 +203,10 @@ export default function PlanningGrid() {
                 return (
                   <th
                     key={formatDateISO(jour)}
-                    className={`sticky top-0 z-10 border border-zinc-200 text-xs font-medium ${
+                    className={`sticky top-0 z-10 border border-zinc-200 text-xs font-medium leading-none ${
                       grise ? "bg-zinc-300 text-zinc-600" : "bg-zinc-100 text-zinc-700"
                     }`}
+                    style={{ height: HAUTEUR_LIGNE_ENTETE, boxSizing: "border-box" }}
                   >
                     {lettreJour(jour)}
                   </th>
@@ -216,10 +219,14 @@ export default function PlanningGrid() {
                 return (
                   <th
                     key={formatDateISO(jour)}
-                    className={`sticky z-10 border border-zinc-200 text-xs font-normal ${
+                    className={`sticky z-10 border border-zinc-200 text-xs font-normal leading-none ${
                       grise ? "bg-zinc-300 text-zinc-600" : "bg-zinc-50 text-zinc-500"
                     }`}
-                    style={{ top: 28 }}
+                    style={{
+                      top: HAUTEUR_LIGNE_ENTETE,
+                      height: HAUTEUR_LIGNE_ENTETE,
+                      boxSizing: "border-box",
+                    }}
                   >
                     {formatJourMois(jour)}
                   </th>
