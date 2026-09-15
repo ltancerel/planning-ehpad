@@ -45,9 +45,10 @@ export réel, connecteur paie.
   Formulaire maquette complet : matricule, nom, prénom, service, type de contrat,
   manager optionnel, roulement, présence.
 
-- [ ] **8. Config — Créer un horaire**
+- [ ] **8. Config — Créer un code horaire (Admin)**
   Maquette de l'écran de création d'un code horaire : code, couleur police/fond,
   intitulé, jusqu'à 4 plages, commentaire (cf. capture CDC image1).
+  Écran réservé à l'administrateur (pas d'accès utilisateur standard).
 
 - [ ] **9. Config — Créer un roulement**
   Maquette de l'écran de création d'un roulement (nombre de semaines, répartition
