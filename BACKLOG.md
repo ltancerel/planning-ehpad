@@ -47,10 +47,11 @@ export réel, connecteur paie.
   « soutien »), afficher le code horaire de travail en ligne 1 et le code informatif
   en ligne 2 dans la même cellule.
 
-- [ ] **4. Sélecteur de code horaire**
+- [x] **4. Sélecteur de code horaire**
   Remplacer la saisie texte libre actuelle par un sélecteur (liste déroulante /
   recherche typeahead) avec aperçu couleur, plus proche de l'outil existant montré
   dans le CDC.
+  _Statut : fait, déployé sur `main`._
 
 - [ ] **5. Vue Émargement**
   Maquette de la vue mensuelle de validation du planning par le salarié, sur le
