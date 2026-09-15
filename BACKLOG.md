@@ -2,6 +2,23 @@
 
 Suivi détaillé (source de vérité) — chaque Story a aussi une issue GitHub liée pour le suivi visuel.
 
+## Extension au cahier des charges — Multi-EHPAD (ajout du 15/09/2026)
+
+Non prévu dans le CDC initial, ajouté à la demande du client : l'application doit
+pouvoir servir **plusieurs EHPAD indépendants** (le logiciel est déjà prévu en SaaS),
+avec **segmentation complète des données et des utilisateurs** entre EHPAD (un
+utilisateur d'un EHPAD ne doit jamais voir les données d'un autre EHPAD).
+
+**Approche technique retenue** : base Supabase unique et partagée, avec une colonne
+`ehpad_id` sur chaque table métier (utilisateurs, salariés, planning, codes horaires,
+roulements, années...) et des policies Row Level Security scopant chaque requête à
+l'EHPAD de l'utilisateur connecté. Choisi plutôt qu'une base par EHPAD, pour rester
+cohérent avec l'objectif de minimisation des coûts.
+
+**Impact sur le modèle de données** : ajout d'une entité EHPAD (nom/titre, logo) en
+tête de la hiérarchie ; toutes les entités existantes (Utilisateur, Salarié, Horaire,
+Roulement, Année, Journée) devront être rattachées à un EHPAD.
+
 ## EPIC — Maquette graphique (v0)
 
 **Objectif** : livrer une maquette interactive des écrans principaux, avec des données
@@ -78,6 +95,12 @@ export réel, connecteur paie.
   clarification à venir sur les droits de l'utilisateur standard).
   _Statut : fait, déployé sur `main`._
 
+- [ ] **15. Config — Identité de l'EHPAD (titre + logo)**
+  Écran de configuration de l'EHPAD courant : titre affiché en haut à gauche
+  (remplace le libellé générique « Planning ») + upload/aperçu d'un logo. Première
+  brique visuelle de la segmentation multi-EHPAD (voir section dédiée ci-dessus).
+  Écran réservé à l'administrateur.
+
 ## Points ouverts (hors périmètre maquette graphique, à trancher avant le backend)
 
 - Nombre de types d'utilisateur (2 vs 3) et droits exacts de l'utilisateur standard
@@ -85,3 +108,6 @@ export réel, connecteur paie.
 - Login mono-session : pertinent ?
 - Notion de contrat à préciser
 - Complexité du mot de passe à définir
+- Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
+  l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
+  hors application pour l'instant ?
