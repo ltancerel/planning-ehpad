@@ -1,5 +1,6 @@
 import type { ValeurCellule } from "./horaire-codes";
 import { formatDateISO, genererPeriode } from "./dates";
+import { genererJoursFeriesFixes, genererJoursFeriesConfigurables } from "./jours-feries";
 
 export type Salarie = {
   id: string;
@@ -134,6 +135,48 @@ export const ROULEMENTS_DEMO: Roulement[] = [
     nom: "IDE fixe (1 semaine)",
     nbSemaines: 1,
     motif: [["SEC", "SEC", "SEC", "SEC", "SEC", "", ""]],
+  },
+];
+
+export type JourFerie = {
+  date: string; // ISO yyyy-mm-dd
+  label: string;
+  type: "fixe" | "calcule" | "personnalise";
+  actif: boolean;
+};
+
+export type AnneePlanifiee = {
+  id: string;
+  annee: number;
+  jourDemarrage: string; // ISO yyyy-mm-dd
+  joursFeries: JourFerie[];
+};
+
+export function genererJoursFeriesDefaut(annee: number): JourFerie[] {
+  return [
+    ...genererJoursFeriesFixes(annee).map(({ date, label }) => ({
+      date: formatDateISO(date),
+      label,
+      type: "fixe" as const,
+      actif: true,
+    })),
+    ...genererJoursFeriesConfigurables(annee).map(({ date, label }) => ({
+      date: formatDateISO(date),
+      label,
+      type: "calcule" as const,
+      actif: true,
+    })),
+  ].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+// Année déjà planifiée dans la démo (cohérente avec les jours fériés utilisés
+// dans la vue Planning).
+export const ANNEES_DEMO: AnneePlanifiee[] = [
+  {
+    id: "a2026",
+    annee: 2026,
+    jourDemarrage: "2026-01-01",
+    joursFeries: genererJoursFeriesDefaut(2026),
   },
 ];
 

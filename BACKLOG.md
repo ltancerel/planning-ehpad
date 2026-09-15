@@ -89,10 +89,13 @@ export réel, connecteur paie.
   Écran réservé à l'administrateur (pas d'accès utilisateur standard).
   _Statut : fait, déployé sur `main`. À revoir si besoin après retour client._
 
-- [ ] **9. Config — Créer un roulement**
+- [x] **9. Config — Créer un roulement**
   Maquette de l'écran de création d'un roulement (nombre de semaines, répartition
   des horaires dans les semaines). Chaque semaine du motif est un bloc complet
   Lundi→Dimanche (roulement aligné sur la semaine).
+  _Statut : fait, déployé sur `main`. Liste + formulaire (nom, nombre de semaines
+  réglable, grille de répartition réutilisant le vrai sélecteur de code horaire
+  sans les codes événementiels)._
 
 - [ ] **9bis. Appliquer un roulement à un salarié dans le planning**
   Distincte de la story 9 (décision du 16/09) : assigner un roulement à un salarié
@@ -100,9 +103,15 @@ export réel, connecteur paie.
   optionnelle, puis projeter le motif dans la grille planning. Vient compléter le
   champ Roulement désactivé de la story « Ajouter un salarié ».
 
-- [ ] **10. Config — Planifier une année**
+- [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
   année bissextile).
+  _Statut : fait, déployé sur `main`. Jours fériés fixes + calculés depuis Pâques
+  (algorithme de Meeus/Jones/Butcher) pour l'année choisie, jours personnalisés,
+  détection bissextile. Formulaire par défaut sur 2027 pour simuler l'année
+  suivante. Suppression d'une année désactivée dans l'UI (retour client du 16/09 :
+  une année déjà planifiée ne doit pas pouvoir être supprimée — voir aussi le point
+  ouvert "à appliquer côté backend" ci-dessous)._
 
 - [ ] **11. Menu Export**
   Maquette du menu d'export accessible depuis la vue Planning.
@@ -150,3 +159,11 @@ export réel, connecteur paie.
 - Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
   l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
   hors application pour l'instant ?
+- **Intégrité des données à valider côté backend, pas seulement côté front**
+  (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
+  toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur
+  (contrainte DB / policy Supabase / vérification API), le front ne pouvant être
+  qu'un confort UX — contournable via appel direct à l'API, DevTools, etc. À
+  reprendre explicitement dans les specs backend pour chaque règle de suppression
+  déjà mockée côté front (années, et sans doute plus tard salariés/utilisateurs
+  avec historique).
