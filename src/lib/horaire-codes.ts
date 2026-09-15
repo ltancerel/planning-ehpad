@@ -2,21 +2,31 @@ export type HoraireCategorie = "travail" | "informatif" | "evenementiel" | "spec
 
 export type Plage = { debut: string; fin: string };
 
+export type RegleHeuresEvenement = "zero" | "code_initial" | "personnalise";
+
 export type HoraireCode = {
   code: string;
   intitule: string;
   categorie: HoraireCategorie;
   couleurFond: string;
   couleurTexte: string;
+  commentaire?: string;
   plages?: Plage[];
+  // Champs spécifiques aux codes événementiels (se superposent à un code de travail)
+  action?: string;
+  regleHeures?: RegleHeuresEvenement;
+  heuresPersonnalisees?: number;
 };
 
-function dureeHeures(plages: Plage[] = []): number {
+export function dureeHeures(plages: Plage[] = []): number {
   return plages.reduce((total, { debut, fin }) => {
     const [hd, md] = debut.split(":").map(Number);
     const [hf, mf] = fin.split(":").map(Number);
     if (hd === 0 && md === 0 && hf === 0 && mf === 0) return total;
-    return total + (hf * 60 + mf - (hd * 60 + md)) / 60;
+    const minutesDebut = hd * 60 + md;
+    let minutesFin = hf * 60 + mf;
+    if (minutesFin <= minutesDebut) minutesFin += 24 * 60; // plage traversant minuit
+    return total + (minutesFin - minutesDebut) / 60;
   }, 0);
 }
 
@@ -76,9 +86,33 @@ export const HORAIRE_CODES: HoraireCode[] = [
   { code: "DOUB", intitule: "Doublure", categorie: "informatif", couleurFond: "#ede9fe", couleurTexte: "#5b21b6" },
 
   // Horaires événementiels (se superposent à un code de travail)
-  { code: "CAR", intitule: "Carence maladie", categorie: "evenementiel", couleurFond: "#ef4444", couleurTexte: "#ffffff" },
-  { code: "ABI", intitule: "Absence injustifiée", categorie: "evenementiel", couleurFond: "#dc2626", couleurTexte: "#ffffff" },
-  { code: "MAL", intitule: "Maladie", categorie: "evenementiel", couleurFond: "#f97316", couleurTexte: "#ffffff" },
+  {
+    code: "CAR",
+    intitule: "Carence maladie",
+    categorie: "evenementiel",
+    couleurFond: "#ef4444",
+    couleurTexte: "#ffffff",
+    action: "Se superpose au code horaire",
+    regleHeures: "zero",
+  },
+  {
+    code: "ABI",
+    intitule: "Absence injustifiée",
+    categorie: "evenementiel",
+    couleurFond: "#dc2626",
+    couleurTexte: "#ffffff",
+    action: "Se superpose au code horaire",
+    regleHeures: "zero",
+  },
+  {
+    code: "MAL",
+    intitule: "Maladie",
+    categorie: "evenementiel",
+    couleurFond: "#f97316",
+    couleurTexte: "#ffffff",
+    action: "Se superpose au code horaire",
+    regleHeures: "code_initial",
+  },
   { code: "ABA", intitule: "Congé sans solde", categorie: "evenementiel", couleurFond: "#a1a1aa", couleurTexte: "#ffffff" },
   { code: "CP", intitule: "Congés", categorie: "evenementiel", couleurFond: "#60a5fa", couleurTexte: "#1e3a8a" },
 ];

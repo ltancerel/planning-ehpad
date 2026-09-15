@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
+import Link from "next/link";
 import { SALARIES, SERVICES_ORDRE, JOURS_FERIES_2026, genererPlanningDemo } from "@/lib/mock-data";
 import { HORAIRE_CODES_PAR_CODE, heuresDuCode } from "@/lib/horaire-codes";
 import { formatDateISO, lettreJour, estWeekend, formatJourMois, lundiDeLaSemaine, genererPeriode } from "@/lib/dates";
@@ -84,6 +85,12 @@ export default function PlanningGrid() {
           >
             Période suivante →
           </button>
+          <Link
+            href="/admin/horaires"
+            className="ml-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+          >
+            Administration
+          </Link>
         </div>
       </header>
 
