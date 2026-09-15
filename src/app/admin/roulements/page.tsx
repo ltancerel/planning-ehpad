@@ -29,20 +29,14 @@ export default function RoulementsAdminPage() {
   }
 
   function enregistrer(donnees: Omit<Roulement, "id">) {
-    // Un seul roulement par défaut à la fois : en activer un désactive les autres.
-    const retirerAutresDefauts = (liste: Roulement[]) =>
-      donnees.parDefaut ? liste.map((r) => ({ ...r, parDefaut: false })) : liste;
-
     if (roulementEnEdition) {
       setRoulements((prev) =>
-        retirerAutresDefauts(prev).map((r) =>
-          r.id === roulementEnEdition.id ? { ...donnees, id: r.id } : r
-        )
+        prev.map((r) => (r.id === roulementEnEdition.id ? { ...donnees, id: r.id } : r))
       );
       setMessageConfirmation(`Roulement « ${donnees.nom} » mis à jour.`);
     } else {
       const nouveau: Roulement = { ...donnees, id: `r${prochainId++}` };
-      setRoulements((prev) => [...retirerAutresDefauts(prev), nouveau]);
+      setRoulements((prev) => [...prev, nouveau]);
       setMessageConfirmation(`Roulement « ${donnees.nom} » créé.`);
     }
     fermerPanneau();

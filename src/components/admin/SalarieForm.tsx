@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { FicheSalarie, Manager } from "@/lib/mock-data";
-import { SERVICES_ORDRE, MANAGERS, ROULEMENTS_DEMO } from "@/lib/mock-data";
+import type { AffectationRoulement, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
+import { SERVICES_ORDRE, MANAGERS } from "@/lib/mock-data";
+import { formatDateISO } from "@/lib/dates";
+import RoulementSalarieSection from "@/components/admin/RoulementSalarieSection";
 
 function capitaliser(texte: string): string {
   if (!texte) return texte;
@@ -12,14 +14,20 @@ function capitaliser(texte: string): string {
 type SalarieFormProps = {
   valeurInitiale?: FicheSalarie;
   matriculesExistants: string[];
+  roulements: Roulement[];
+  affectationsRoulement: AffectationRoulement[];
   onValider: (salarie: Omit<FicheSalarie, "id">) => void;
+  onAssignerRoulement: (donnees: Omit<AffectationRoulement, "id">) => void;
   onAnnuler: () => void;
 };
 
 export default function SalarieForm({
   valeurInitiale,
   matriculesExistants,
+  roulements,
+  affectationsRoulement,
   onValider,
+  onAssignerRoulement,
   onAnnuler,
 }: SalarieFormProps) {
   const modeEdition = Boolean(valeurInitiale);
@@ -36,7 +44,6 @@ export default function SalarieForm({
   const [compteUtilisateur, setCompteUtilisateur] = useState(valeurInitiale?.compteUtilisateur ?? false);
   const [email, setEmail] = useState(valeurInitiale?.email ?? "");
   const [erreur, setErreur] = useState<string | null>(null);
-  const roulementParDefaut = ROULEMENTS_DEMO.find((r) => r.parDefaut);
 
   function changerMatricule(saisie: string) {
     setMatricule(saisie.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4));
@@ -173,17 +180,21 @@ export default function SalarieForm({
           </select>
         </div>
 
-        <div className="rounded border border-zinc-200 bg-zinc-50 p-3">
-          <p className="text-xs font-medium text-zinc-700">Roulement</p>
-          <p className="mt-1 text-xs text-zinc-600">
-            {roulementParDefaut
-              ? `Le roulement par défaut « ${roulementParDefaut.nom} » sera assigné automatiquement à la création.`
-              : "Aucun roulement par défaut n'est défini pour l'instant (voir Administration > Roulements)."}
-          </p>
-          <p className="mt-1 text-[11px] text-zinc-400">
-            Le changement de roulement et l&apos;historique des affectations se gèrent depuis la vue
-            Planning, sur la ligne du salarié.
-          </p>
+        <div className="rounded border border-zinc-200 p-3">
+          <p className="mb-2 text-xs font-medium text-zinc-700">Roulement</p>
+          {modeEdition ? (
+            <RoulementSalarieSection
+              roulements={roulements}
+              affectations={affectationsRoulement}
+              dateReferenceISO={formatDateISO(new Date())}
+              onAssigner={onAssignerRoulement}
+            />
+          ) : (
+            <p className="text-xs text-zinc-400">
+              Le salarié n&apos;a par défaut aucun roulement assigné. Une fois créé, modifiez sa fiche
+              pour lui en assigner un.
+            </p>
+          )}
         </div>
 
         <div>

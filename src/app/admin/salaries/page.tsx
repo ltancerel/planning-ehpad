@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { FICHES_SALARIES_DEMO, type FicheSalarie } from "@/lib/mock-data";
+import {
+  FICHES_SALARIES_DEMO,
+  ROULEMENTS_DEMO,
+  AFFECTATIONS_ROULEMENT_DEMO,
+  type AffectationRoulement,
+  type FicheSalarie,
+} from "@/lib/mock-data";
 import SalariesTable from "@/components/admin/SalariesTable";
 import SalarieForm from "@/components/admin/SalarieForm";
 
@@ -12,6 +18,9 @@ export default function SalariesAdminPage() {
   const [panneau, setPanneau] = useState<"ferme" | "creation" | "edition">("ferme");
   const [salarieEnEdition, setSalarieEnEdition] = useState<FicheSalarie | undefined>(undefined);
   const [messageConfirmation, setMessageConfirmation] = useState<string | null>(null);
+  const [affectationsParSalarie, setAffectationsParSalarie] = useState<
+    Record<string, AffectationRoulement[]>
+  >(AFFECTATIONS_ROULEMENT_DEMO);
 
   function ouvrirCreation() {
     setSalarieEnEdition(undefined);
@@ -45,6 +54,13 @@ export default function SalariesAdminPage() {
     }
     fermerPanneau();
     setTimeout(() => setMessageConfirmation(null), 4000);
+  }
+
+  function assignerRoulement(salarieId: string, donnees: Omit<AffectationRoulement, "id">) {
+    setAffectationsParSalarie((prev) => ({
+      ...prev,
+      [salarieId]: [...(prev[salarieId] ?? []), { ...donnees, id: `aff-${Date.now()}` }],
+    }));
   }
 
   function supprimer(salarie: FicheSalarie) {
@@ -90,7 +106,10 @@ export default function SalariesAdminPage() {
             <SalarieForm
               valeurInitiale={salarieEnEdition}
               matriculesExistants={salaries.map((s) => s.matricule)}
+              roulements={ROULEMENTS_DEMO}
+              affectationsRoulement={affectationsParSalarie[salarieEnEdition?.id ?? ""] ?? []}
               onValider={enregistrer}
+              onAssignerRoulement={(donnees) => assignerRoulement(salarieEnEdition!.id, donnees)}
               onAnnuler={fermerPanneau}
             />
           </div>

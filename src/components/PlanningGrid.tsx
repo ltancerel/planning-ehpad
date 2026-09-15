@@ -2,18 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  SALARIES,
-  SERVICES_ORDRE,
-  JOURS_FERIES_2026,
-  PLANNING_DEMO,
-  ROULEMENTS_DEMO,
-  AFFECTATIONS_ROULEMENT_DEMO,
-  UTILISATEUR_CONNECTE,
-  type AffectationRoulement,
-  type Roulement,
-  type Salarie,
-} from "@/lib/mock-data";
+import { SALARIES, SERVICES_ORDRE, JOURS_FERIES_2026, PLANNING_DEMO } from "@/lib/mock-data";
 import {
   HORAIRE_CODES_PAR_CODE,
   estCodeSuperposable,
@@ -32,7 +21,6 @@ import {
 import UserMenu from "@/components/UserMenu";
 import { useEhpad } from "@/context/EhpadProvider";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
-import RoulementSalariePanel from "@/components/RoulementSalariePanel";
 
 const NB_SEMAINES = 4;
 const NB_JOURS = NB_SEMAINES * 7;
@@ -40,9 +28,6 @@ const LARGEUR_COLONNE = 44;
 const LARGEUR_COLONNE_SALARIE = 200;
 const HAUTEUR_LIGNE_ENTETE = 28;
 const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
-// Horizon de projection d'un roulement quand aucune date de fin n'est fixée
-// (roulement "en cours") : borne raisonnable pour la démo, pas une vraie limite métier.
-const HORIZON_PROJECTION_JOURS = 730;
 
 // Vue par défaut : septembre 2026, pour une démo cohérente quelle que soit la
 // date réelle de consultation.
@@ -59,10 +44,6 @@ export default function PlanningGrid() {
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
   const [positionEdition, setPositionEdition] = useState<PositionSelecteur | null>(null);
   const [selecteurOuvert, setSelecteurOuvert] = useState(false);
-  const [affectationsParSalarie, setAffectationsParSalarie] = useState<
-    Record<string, AffectationRoulement[]>
-  >(AFFECTATIONS_ROULEMENT_DEMO);
-  const [salarieRoulementOuvert, setSalarieRoulementOuvert] = useState<Salarie | null>(null);
 
   // Mémorisation de la période affichée d'une ouverture à l'autre (cf. CDC)
   useEffect(() => {
@@ -127,47 +108,6 @@ export default function PlanningGrid() {
     fermerEdition();
   }
 
-  function projeterRoulement(
-    salarieId: string,
-    roulement: Roulement,
-    dateDebutISO: string,
-    dateFinISO?: string
-  ) {
-    const debut = new Date(dateDebutISO);
-    const fin = dateFinISO
-      ? new Date(dateFinISO)
-      : new Date(debut.getTime() + HORIZON_PROJECTION_JOURS * 24 * 60 * 60 * 1000);
-    const nbJours =
-      Math.round((fin.getTime() - debut.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-
-    setEditions((prev) => {
-      const nouvelles = { ...prev };
-      for (let i = 0; i < nbJours; i++) {
-        const jour = new Date(debut);
-        jour.setDate(jour.getDate() + i);
-        const semaineIndex = Math.floor(i / 7) % roulement.nbSemaines;
-        const jourIndex = i % 7; // debut est un lundi -> 0 = lundi
-        const code = roulement.motif[semaineIndex][jourIndex];
-        const cle = `${salarieId}__${formatDateISO(jour)}`;
-        const existante = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
-        nouvelles[cle] = code ? { ...existante, travail: code } : {};
-      }
-      return nouvelles;
-    });
-  }
-
-  function assignerRoulement(salarieId: string, donnees: Omit<AffectationRoulement, "id">) {
-    setAffectationsParSalarie((prev) => ({
-      ...prev,
-      [salarieId]: [...(prev[salarieId] ?? []), { ...donnees, id: `aff-${Date.now()}` }],
-    }));
-    const roulement = ROULEMENTS_DEMO.find((r) => r.id === donnees.roulementId);
-    if (roulement) {
-      projeterRoulement(salarieId, roulement, donnees.dateDebut, donnees.dateFin);
-    }
-    setSalarieRoulementOuvert(null);
-  }
-
   function changerPeriode(deltaSemaines: number) {
     setDebutPeriode((prev) => {
       const d = new Date(prev);
@@ -179,8 +119,6 @@ export default function PlanningGrid() {
   const premierJour = jours[0];
   const dernierJour = jours[jours.length - 1];
   const { identite } = useEhpad();
-  // Gestion du roulement réservée à l'administrateur (cf. retour client du 15/09).
-  const estAdministrateur = UTILISATEUR_CONNECTE.typeUtilisateur === "Administrateur";
   const valeurActuelleEdition: ValeurCellule | undefined = cellEnEdition
     ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition])
     : undefined;
@@ -327,26 +265,14 @@ export default function PlanningGrid() {
                 </tr>
                 {groupe.salaries.map((salarie) => (
                   <tr key={salarie.id}>
-                    <td className="sticky left-0 z-10 border border-zinc-200 bg-white px-2 py-1 text-xs font-medium">
-                      <div className="flex items-center justify-between gap-1">
-                        <Link
-                          href={`/emargement?salarie=${salarie.id}&mois=${formatAnneeMois(debutPeriode)}`}
-                          className="min-w-0 flex-1 truncate hover:underline"
-                          title="Voir la vue émargement de ce salarié"
-                        >
-                          {salarie.nom} {salarie.prenom}
-                        </Link>
-                        {estAdministrateur && (
-                          <button
-                            onClick={() => setSalarieRoulementOuvert(salarie)}
-                            className="shrink-0 rounded px-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
-                            title="Gérer le roulement de ce salarié"
-                            aria-label="Gérer le roulement de ce salarié"
-                          >
-                            ⟳
-                          </button>
-                        )}
-                      </div>
+                    <td className="sticky left-0 z-10 truncate border border-zinc-200 bg-white px-2 py-1 text-xs font-medium">
+                      <Link
+                        href={`/emargement?salarie=${salarie.id}&mois=${formatAnneeMois(debutPeriode)}`}
+                        className="hover:underline"
+                        title="Voir la vue émargement de ce salarié"
+                      >
+                        {salarie.nom} {salarie.prenom}
+                      </Link>
                     </td>
                     {jours.map((jour) => {
                       const dateISO = formatDateISO(jour);
@@ -427,17 +353,6 @@ export default function PlanningGrid() {
             onFermer={fermerEdition}
           />
         </>
-      )}
-
-      {estAdministrateur && salarieRoulementOuvert && (
-        <RoulementSalariePanel
-          salarie={salarieRoulementOuvert}
-          roulements={ROULEMENTS_DEMO}
-          affectations={affectationsParSalarie[salarieRoulementOuvert.id] ?? []}
-          dateReferenceISO={formatDateISO(new Date())}
-          onAssigner={(donnees) => assignerRoulement(salarieRoulementOuvert.id, donnees)}
-          onFermer={() => setSalarieRoulementOuvert(null)}
-        />
       )}
     </div>
   );

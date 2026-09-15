@@ -97,17 +97,23 @@ export réel, connecteur paie.
   réglable, grille de répartition réutilisant le vrai sélecteur de code horaire
   sans les codes événementiels)._
 
-- [x] **9bis. Appliquer un roulement à un salarié dans le planning**
-  Distincte de la story 9 (décision du 16/09) : assigner un roulement à un salarié
-  avec une date de début (alignée sur le lundi de sa semaine) et une date de fin
-  optionnelle, puis projeter le motif dans la grille planning. Vient compléter le
-  champ Roulement désactivé de la story « Ajouter un salarié ».
-  _Statut : fait, déployé sur `main`. Icône dédiée sur la ligne salarié (vue
-  Planning) ouvrant un panneau : roulement en cours mis en avant, historique des
-  affectations passées, formulaire d'assignation (roulement, date de début
-  ramenée au lundi, date de fin optionnelle) qui projette aussitôt le motif dans
-  la grille. Notion de « roulement par défaut » ajoutée à l'écran Roulements
-  (un seul à la fois) : proposé automatiquement à la création d'un salarié._
+- [x] **9bis. Assigner un roulement à un salarié**
+  Distincte de la story 9 (décision du 16/09) : le roulement est assigné à un
+  salarié, avec une date de début (alignée sur le lundi de sa semaine) et une
+  date de fin optionnelle. Vient compléter le champ Roulement désactivé de la
+  story « Ajouter un salarié ». Par défaut, un salarié n'a aucun roulement.
+  _Statut : fait, non encore mergé sur `main`. Section dédiée dans la fiche
+  salarié (Admin > Salariés > Modifier) : roulement en cours mis en avant,
+  historique des affectations passées, formulaire d'assignation (roulement,
+  date de début ramenée au lundi, date de fin optionnelle). Pas de projection
+  automatique dans la grille Planning à ce stade — la fiche salarié
+  (`FicheSalarie`) et l'entité utilisée par la grille (`Salarie`) restent deux
+  modèles distincts dans cette maquette (cf. point ouvert dédié)._
+  _Révision du 15/09 : la première version mettait l'assignation dans la vue
+  Planning (icône par ligne) et proposait un « roulement par défaut » assigné
+  automatiquement à la création — retour client : le roulement est un
+  attribut du salarié (donc géré dans sa fiche) et un salarié créé n'a par
+  défaut aucun roulement._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
@@ -176,9 +182,11 @@ export réel, connecteur paie.
   `Salarie` (simple, sert de support à la démo de plein de salariés) tandis que
   l'écran Admin « Ajouter un salarié » utilise une entité `FicheSalarie` plus
   complète, non reliée par identifiant à la première. L'affectation de
-  roulement (historique, roulement en cours) n'existe donc aujourd'hui que côté
-  `Salarie`/vue Planning. À unifier en un seul modèle Salarié lors du passage
-  au vrai backend.
+  roulement (historique, roulement en cours) vit donc côté `FicheSalarie`
+  (fiche salarié) sans se répercuter sur la grille Planning pour l'instant. À
+  unifier en un seul modèle Salarié lors du passage au vrai backend — c'est ce
+  modèle unifié qui permettra de vraiment projeter le roulement assigné dans
+  la grille planning.
 - **Intégrité des données à valider côté backend, pas seulement côté front**
   (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
   toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur

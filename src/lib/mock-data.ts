@@ -118,8 +118,6 @@ export type Roulement = {
   nom: string;
   nbSemaines: number;
   motif: string[][];
-  // Roulement proposé automatiquement à la création d'un salarié (un seul à la fois).
-  parDefaut?: boolean;
 };
 
 export const ROULEMENTS_DEMO: Roulement[] = [
@@ -131,7 +129,6 @@ export const ROULEMENTS_DEMO: Roulement[] = [
       ["60S", "60S", "60S", "60S", "60S", "", ""],
       ["70A", "70A", "70A", "70A", "70A", "", ""],
     ],
-    parDefaut: true,
   },
   {
     id: "r2",
@@ -142,8 +139,9 @@ export const ROULEMENTS_DEMO: Roulement[] = [
 ];
 
 // Affectation d'un roulement à un salarié sur une période donnée (cf. story
-// « Appliquer un roulement à un salarié dans le planning »). dateDebut est
-// toujours un lundi ; dateFin absente = affectation en cours.
+// « Appliquer un roulement à un salarié »). dateDebut est toujours un lundi ;
+// dateFin absente = affectation en cours. Un salarié n'a par défaut aucun
+// roulement : l'affectation est un choix explicite fait depuis sa fiche.
 export type AffectationRoulement = {
   id: string;
   roulementId: string;
@@ -151,13 +149,12 @@ export type AffectationRoulement = {
   dateFin?: string; // ISO
 };
 
-// Historique des affectations par salarié (clé = Salarie.id). Un salarié sans
-// entrée n'a jamais eu de roulement assigné depuis le planning.
+// Historique des affectations par salarié (clé = FicheSalarie.id). Un salarié
+// sans entrée n'a jamais eu de roulement assigné.
 export const AFFECTATIONS_ROULEMENT_DEMO: Record<string, AffectationRoulement[]> = {
-  "8": [{ id: "aff1", roulementId: "r1", dateDebut: "2025-01-06" }],
-  "14": [
-    { id: "aff2", roulementId: "r2", dateDebut: "2025-01-06", dateFin: "2025-12-28" },
-    { id: "aff3", roulementId: "r1", dateDebut: "2025-12-29" },
+  fs1: [
+    { id: "aff1", roulementId: "r2", dateDebut: "2025-01-06", dateFin: "2025-05-25" },
+    { id: "aff2", roulementId: "r1", dateDebut: "2025-06-02" },
   ],
 };
 
