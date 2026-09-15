@@ -69,6 +69,12 @@ export réel, connecteur paie.
   Version condensée/scrollable de la grille planning pour écran mobile (le CDC exige
   un affichage web *et* mobile).
 
+- [ ] **14. Consulter son profil**
+  Menu utilisateur en haut à droite (nom/avatar) sur les écrans principaux, ouvrant
+  un panneau de consultation du profil : type d'utilisateur, nom, prénom, service,
+  poste. Lecture seule pour cette maquette (pas d'édition — à confirmer selon la
+  clarification à venir sur les droits de l'utilisateur standard).
+
 ## Points ouverts (hors périmètre maquette graphique, à trancher avant le backend)
 
 - Nombre de types d'utilisateur (2 vs 3) et droits exacts de l'utilisateur standard
