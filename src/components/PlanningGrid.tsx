@@ -2,7 +2,7 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { SALARIES, SERVICES_ORDRE, JOURS_FERIES_2026, genererPlanningDemo } from "@/lib/mock-data";
+import { SALARIES, SERVICES_ORDRE, SERVICE_BESOINS, JOURS_FERIES_2026, genererPlanningDemo } from "@/lib/mock-data";
 import { HORAIRE_CODES_PAR_CODE, heuresDuCode } from "@/lib/horaire-codes";
 import { formatDateISO, lettreJour, estWeekend, formatJourMois, lundiDeLaSemaine, genererPeriode } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
@@ -21,7 +21,7 @@ const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
 const DEMO_DEBUT = new Date(2025, 0, 1);
 const DEMO_NB_JOURS = 1100;
 const PLANNING_DEMO = genererPlanningDemo(
-  SALARIES,
+  SALARIES.filter((s) => s.service !== SERVICE_BESOINS),
   genererPeriode(DEMO_DEBUT, DEMO_NB_JOURS).map(formatDateISO)
 );
 
