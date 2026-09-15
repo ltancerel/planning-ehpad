@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import type { AffectationRoulement, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
-import { SERVICES_ORDRE, MANAGERS } from "@/lib/mock-data";
-import { formatDateISO } from "@/lib/dates";
-import RoulementSalarieSection from "@/components/admin/RoulementSalarieSection";
+import { SERVICES_ORDRE, MANAGERS, affectationActuelle } from "@/lib/mock-data";
+import { formatDateISO, formatJourMois } from "@/lib/dates";
+import RoulementSalariePanel from "@/components/admin/RoulementSalariePanel";
 
 function capitaliser(texte: string): string {
   if (!texte) return texte;
@@ -44,6 +44,12 @@ export default function SalarieForm({
   const [compteUtilisateur, setCompteUtilisateur] = useState(valeurInitiale?.compteUtilisateur ?? false);
   const [email, setEmail] = useState(valeurInitiale?.email ?? "");
   const [erreur, setErreur] = useState<string | null>(null);
+  const [panneauRoulementOuvert, setPanneauRoulementOuvert] = useState(false);
+  const dateReferenceISO = formatDateISO(new Date());
+  const roulementActuel = affectationActuelle(affectationsRoulement, dateReferenceISO);
+  const nomRoulementActuel = roulementActuel
+    ? roulements.find((r) => r.id === roulementActuel.roulementId)?.nom
+    : undefined;
 
   function changerMatricule(saisie: string) {
     setMatricule(saisie.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4));
@@ -181,20 +187,31 @@ export default function SalarieForm({
         </div>
 
         <div className="rounded border border-zinc-200 p-3">
-          <p className="mb-2 text-xs font-medium text-zinc-700">Roulement</p>
-          {modeEdition ? (
-            <RoulementSalarieSection
-              roulements={roulements}
-              affectations={affectationsRoulement}
-              dateReferenceISO={formatDateISO(new Date())}
-              onAssigner={onAssignerRoulement}
-            />
-          ) : (
-            <p className="text-xs text-zinc-400">
-              Le salarié n&apos;a par défaut aucun roulement assigné. Une fois créé, modifiez sa fiche
-              pour lui en assigner un.
-            </p>
-          )}
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-zinc-700">Roulement</p>
+              {modeEdition ? (
+                <p className="mt-0.5 truncate text-xs text-zinc-500">
+                  {roulementActuel && nomRoulementActuel
+                    ? `${nomRoulementActuel} — depuis le ${formatJourMois(new Date(roulementActuel.dateDebut))}`
+                    : "Aucun roulement assigné"}
+                </p>
+              ) : (
+                <p className="mt-0.5 text-xs text-zinc-400">
+                  Aucun par défaut — assignable après création.
+                </p>
+              )}
+            </div>
+            {modeEdition && (
+              <button
+                type="button"
+                onClick={() => setPanneauRoulementOuvert(true)}
+                className="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-800"
+              >
+                Gérer
+              </button>
+            )}
+          </div>
         </div>
 
         <div>
@@ -252,6 +269,17 @@ export default function SalarieForm({
           {modeEdition ? "Enregistrer" : "Créer"}
         </button>
       </div>
+
+      {modeEdition && panneauRoulementOuvert && (
+        <RoulementSalariePanel
+          nomComplet={`${prenom} ${nom}`}
+          roulements={roulements}
+          affectations={affectationsRoulement}
+          dateReferenceISO={dateReferenceISO}
+          onAssigner={onAssignerRoulement}
+          onFermer={() => setPanneauRoulementOuvert(false)}
+        />
+      )}
     </div>
   );
 }

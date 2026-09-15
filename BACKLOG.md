@@ -102,13 +102,15 @@ export réel, connecteur paie.
   salarié, avec une date de début (alignée sur le lundi de sa semaine) et une
   date de fin optionnelle. Vient compléter le champ Roulement désactivé de la
   story « Ajouter un salarié ». Par défaut, un salarié n'a aucun roulement.
-  _Statut : fait, non encore mergé sur `main`. Section dédiée dans la fiche
-  salarié (Admin > Salariés > Modifier) : roulement en cours mis en avant,
-  historique des affectations passées, formulaire d'assignation (roulement,
-  date de début ramenée au lundi, date de fin optionnelle). Pas de projection
-  automatique dans la grille Planning à ce stade — la fiche salarié
-  (`FicheSalarie`) et l'entité utilisée par la grille (`Salarie`) restent deux
-  modèles distincts dans cette maquette (cf. point ouvert dédié)._
+  _Statut : fait, non encore mergé sur `main`. Fiche salarié (Admin > Salariés
+  > Modifier) : ligne compacte affichant le roulement en cours + bouton
+  « Gérer » ouvrant un panneau dédié (roulement en cours, historique des
+  affectations, formulaire d'assignation avec date de début ramenée au lundi
+  et date de fin optionnelle) — pour ne pas alourdir la fiche elle-même (retour
+  client du 15/09). Pas de projection automatique dans la grille Planning à ce
+  stade — la fiche salarié (`FicheSalarie`) et l'entité utilisée par la grille
+  (`Salarie`) restent deux modèles distincts dans cette maquette (cf. point
+  ouvert dédié)._
   _Révision du 15/09 : la première version mettait l'assignation dans la vue
   Planning (icône par ligne) et proposait un « roulement par défaut » assigné
   automatiquement à la création — retour client : le roulement est un
