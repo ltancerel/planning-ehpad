@@ -16,10 +16,17 @@ const LARGEUR_COLONNE_SALARIE = 200;
 const HAUTEUR_LIGNE_ENTETE = 28;
 const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
 
-// Données de démo générées une seule fois sur une large plage fixe, indépendante
-// de la période actuellement affichée (permet de naviguer librement sans "trous").
+// Vue par défaut : septembre 2026, pour une démo cohérente quelle que soit la
+// date réelle de consultation.
+const PERIODE_PAR_DEFAUT = new Date(2026, 8, 1);
+
+// Données de démo générées une seule fois sur une plage fixe, indépendante de la
+// période actuellement affichée (permet de naviguer librement sans "trous").
+// S'arrête fin septembre 2026 : le mois suivant (octobre) reste vide pour qu'un
+// utilisateur puisse s'y projeter et planifier librement pendant la démo.
 const DEMO_DEBUT = new Date(2025, 0, 1);
-const DEMO_NB_JOURS = 1100;
+const DEMO_FIN = new Date(2026, 8, 30);
+const DEMO_NB_JOURS = Math.round((DEMO_FIN.getTime() - DEMO_DEBUT.getTime()) / (24 * 60 * 60 * 1000)) + 1;
 const PLANNING_DEMO = genererPlanningDemo(
   SALARIES.filter((s) => s.service !== SERVICE_BESOINS),
   genererPeriode(DEMO_DEBUT, DEMO_NB_JOURS).map(formatDateISO)
@@ -30,7 +37,7 @@ function estJourGrise(date: Date): boolean {
 }
 
 export default function PlanningGrid() {
-  const [debutPeriode, setDebutPeriode] = useState(() => lundiDeLaSemaine(new Date()));
+  const [debutPeriode, setDebutPeriode] = useState(() => lundiDeLaSemaine(PERIODE_PAR_DEFAUT));
   const jours = useMemo(() => genererPeriode(debutPeriode, NB_JOURS), [debutPeriode]);
   const [editions, setEditions] = useState<Record<string, string>>({});
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
