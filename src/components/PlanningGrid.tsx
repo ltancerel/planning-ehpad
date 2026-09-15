@@ -7,6 +7,7 @@ import { HORAIRE_CODES_PAR_CODE, heuresDuCode } from "@/lib/horaire-codes";
 import { formatDateISO, lettreJour, estWeekend, formatJourMois, lundiDeLaSemaine, genererPeriode } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
 import { useEhpad } from "@/context/EhpadProvider";
+import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
 
 const NB_SEMAINES = 4;
 const NB_JOURS = NB_SEMAINES * 7;
@@ -32,7 +33,7 @@ export default function PlanningGrid() {
   const jours = useMemo(() => genererPeriode(debutPeriode, NB_JOURS), [debutPeriode]);
   const [editions, setEditions] = useState<Record<string, string>>({});
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
-  const [valeurEdition, setValeurEdition] = useState("");
+  const [positionEdition, setPositionEdition] = useState<PositionSelecteur | null>(null);
   const [selecteurOuvert, setSelecteurOuvert] = useState(false);
 
   // Mémorisation de la période affichée d'une ouverture à l'autre (cf. CDC)
@@ -73,23 +74,20 @@ export default function PlanningGrid() {
     }));
   }, []);
 
-  function ouvrirEdition(cle: string) {
+  function ouvrirEdition(cle: string, cellule: HTMLElement) {
+    const rect = cellule.getBoundingClientRect();
+    setPositionEdition({ top: rect.bottom + 2, left: rect.left, width: rect.width });
     setCellEnEdition(cle);
-    setValeurEdition(editions[cle] ?? PLANNING_DEMO[cle] ?? "");
   }
 
-  function validerEdition(cle: string) {
-    const saisie = valeurEdition.trim().toUpperCase();
-    setEditions((prev) => {
-      const suivant = { ...prev };
-      if (!saisie) {
-        suivant[cle] = "";
-      } else if (HORAIRE_CODES_PAR_CODE[saisie]) {
-        suivant[cle] = saisie;
-      }
-      return suivant;
-    });
+  function fermerEdition() {
     setCellEnEdition(null);
+    setPositionEdition(null);
+  }
+
+  function choisirCode(cle: string, code: string | null) {
+    setEditions((prev) => ({ ...prev, [cle]: code ?? "" }));
+    fermerEdition();
   }
 
   function changerPeriode(deltaSemaines: number) {
@@ -103,6 +101,9 @@ export default function PlanningGrid() {
   const premierJour = jours[0];
   const dernierJour = jours[jours.length - 1];
   const { identite } = useEhpad();
+  const valeurActuelleEdition = cellEnEdition
+    ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition]) || undefined
+    : undefined;
 
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
@@ -252,31 +253,19 @@ export default function PlanningGrid() {
                       return (
                         <td
                           key={cle}
-                          onClick={() => !enEdition && ouvrirEdition(cle)}
+                          onClick={(e) => ouvrirEdition(cle, e.currentTarget)}
                           className="cursor-pointer border border-zinc-200 p-0 text-center align-middle"
                           style={{
-                            backgroundColor: enEdition ? "#fff" : horaire?.couleurFond ?? "#fff",
+                            backgroundColor: enEdition ? "#eff6ff" : horaire?.couleurFond ?? "#fff",
                             color: horaire?.couleurTexte ?? "#000",
+                            outline: enEdition ? "2px solid #60a5fa" : undefined,
+                            outlineOffset: enEdition ? "-2px" : undefined,
                           }}
                           title={horaire ? `${horaire.intitule}${horaire.plages ? ` — ${heuresDuCode(code!)}h` : ""}` : undefined}
                         >
-                          {enEdition ? (
-                            <input
-                              autoFocus
-                              value={valeurEdition}
-                              onChange={(e) => setValeurEdition(e.target.value)}
-                              onBlur={() => validerEdition(cle)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") validerEdition(cle);
-                                if (e.key === "Escape") setCellEnEdition(null);
-                              }}
-                              className="w-full border-0 bg-white px-1 py-1 text-center text-xs text-zinc-900 outline outline-1 outline-blue-400"
-                            />
-                          ) : (
-                            <span className="block px-1 py-1 text-xs font-semibold leading-tight">
-                              {code ?? ""}
-                            </span>
-                          )}
+                          <span className="block px-1 py-1 text-xs font-semibold leading-tight">
+                            {code ?? ""}
+                          </span>
                         </td>
                       );
                     })}
@@ -287,6 +276,18 @@ export default function PlanningGrid() {
           </tbody>
         </table>
       </div>
+
+      {cellEnEdition && positionEdition && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={fermerEdition} />
+          <HoraireCodeSelector
+            position={positionEdition}
+            valeurActuelle={valeurActuelleEdition}
+            onChoisir={(code) => choisirCode(cellEnEdition, code)}
+            onFermer={fermerEdition}
+          />
+        </>
+      )}
     </div>
   );
 }
