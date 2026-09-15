@@ -9,6 +9,7 @@ import {
   PLANNING_DEMO,
   ROULEMENTS_DEMO,
   AFFECTATIONS_ROULEMENT_DEMO,
+  UTILISATEUR_CONNECTE,
   type AffectationRoulement,
   type Roulement,
   type Salarie,
@@ -178,6 +179,8 @@ export default function PlanningGrid() {
   const premierJour = jours[0];
   const dernierJour = jours[jours.length - 1];
   const { identite } = useEhpad();
+  // Gestion du roulement réservée à l'administrateur (cf. retour client du 15/09).
+  const estAdministrateur = UTILISATEUR_CONNECTE.typeUtilisateur === "Administrateur";
   const valeurActuelleEdition: ValeurCellule | undefined = cellEnEdition
     ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition])
     : undefined;
@@ -333,14 +336,16 @@ export default function PlanningGrid() {
                         >
                           {salarie.nom} {salarie.prenom}
                         </Link>
-                        <button
-                          onClick={() => setSalarieRoulementOuvert(salarie)}
-                          className="shrink-0 rounded px-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
-                          title="Gérer le roulement de ce salarié"
-                          aria-label="Gérer le roulement de ce salarié"
-                        >
-                          ⟳
-                        </button>
+                        {estAdministrateur && (
+                          <button
+                            onClick={() => setSalarieRoulementOuvert(salarie)}
+                            className="shrink-0 rounded px-1 text-zinc-400 hover:bg-zinc-100 hover:text-zinc-600"
+                            title="Gérer le roulement de ce salarié"
+                            aria-label="Gérer le roulement de ce salarié"
+                          >
+                            ⟳
+                          </button>
+                        )}
                       </div>
                     </td>
                     {jours.map((jour) => {
@@ -424,7 +429,7 @@ export default function PlanningGrid() {
         </>
       )}
 
-      {salarieRoulementOuvert && (
+      {estAdministrateur && salarieRoulementOuvert && (
         <RoulementSalariePanel
           salarie={salarieRoulementOuvert}
           roulements={ROULEMENTS_DEMO}
