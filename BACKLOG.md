@@ -91,7 +91,14 @@ export réel, connecteur paie.
 
 - [ ] **9. Config — Créer un roulement**
   Maquette de l'écran de création d'un roulement (nombre de semaines, répartition
-  des horaires dans les semaines).
+  des horaires dans les semaines). Chaque semaine du motif est un bloc complet
+  Lundi→Dimanche (roulement aligné sur la semaine).
+
+- [ ] **9bis. Appliquer un roulement à un salarié dans le planning**
+  Distincte de la story 9 (décision du 16/09) : assigner un roulement à un salarié
+  avec une date de début (alignée sur le lundi de sa semaine) et une date de fin
+  optionnelle, puis projeter le motif dans la grille planning. Vient compléter le
+  champ Roulement désactivé de la story « Ajouter un salarié ».
 
 - [ ] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
