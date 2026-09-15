@@ -103,9 +103,15 @@ export réel, connecteur paie.
   optionnelle, puis projeter le motif dans la grille planning. Vient compléter le
   champ Roulement désactivé de la story « Ajouter un salarié ».
 
-- [ ] **10. Config — Planifier une année**
+- [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
   année bissextile).
+  _Statut : fait, déployé sur `main`. Jours fériés fixes + calculés depuis Pâques
+  (algorithme de Meeus/Jones/Butcher) pour l'année choisie, jours personnalisés,
+  détection bissextile. Formulaire par défaut sur 2027 pour simuler l'année
+  suivante. Suppression d'une année désactivée dans l'UI (retour client du 16/09 :
+  une année déjà planifiée ne doit pas pouvoir être supprimée — voir aussi le point
+  ouvert "à appliquer côté backend" ci-dessous)._
 
 - [ ] **11. Menu Export**
   Maquette du menu d'export accessible depuis la vue Planning.
@@ -153,3 +159,11 @@ export réel, connecteur paie.
 - Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
   l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
   hors application pour l'instant ?
+- **Intégrité des données à valider côté backend, pas seulement côté front**
+  (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
+  toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur
+  (contrainte DB / policy Supabase / vérification API), le front ne pouvant être
+  qu'un confort UX — contournable via appel direct à l'API, DevTools, etc. À
+  reprendre explicitement dans les specs backend pour chaque règle de suppression
+  déjà mockée côté front (années, et sans doute plus tard salariés/utilisateurs
+  avec historique).

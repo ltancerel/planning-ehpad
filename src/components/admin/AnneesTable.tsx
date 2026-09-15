@@ -6,10 +6,9 @@ import { estAnneeBissextile } from "@/lib/jours-feries";
 type AnneesTableProps = {
   annees: AnneePlanifiee[];
   onModifier: (annee: AnneePlanifiee) => void;
-  onSupprimer: (annee: AnneePlanifiee) => void;
 };
 
-export default function AnneesTable({ annees, onModifier, onSupprimer }: AnneesTableProps) {
+export default function AnneesTable({ annees, onModifier }: AnneesTableProps) {
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
@@ -48,12 +47,12 @@ export default function AnneesTable({ annees, onModifier, onSupprimer }: AnneesT
                 >
                   Modifier
                 </button>
-                <button
-                  onClick={() => onSupprimer(annee)}
-                  className="text-xs font-medium text-red-500 hover:text-red-700"
+                <span
+                  className="cursor-not-allowed text-xs font-medium text-zinc-300"
+                  title="Une année déjà planifiée ne peut pas être supprimée."
                 >
                   Supprimer
-                </button>
+                </span>
               </td>
             </tr>
           );

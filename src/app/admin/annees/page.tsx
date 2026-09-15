@@ -43,12 +43,6 @@ export default function AnneesAdminPage() {
     setTimeout(() => setMessageConfirmation(null), 4000);
   }
 
-  function supprimer(annee: AnneePlanifiee) {
-    if (confirm(`Supprimer l'année ${annee.annee} ?`)) {
-      setAnnees((prev) => prev.filter((a) => a.id !== annee.id));
-    }
-  }
-
   return (
     <div className="relative flex h-full">
       <div className="flex-1 overflow-auto p-4">
@@ -75,7 +69,7 @@ export default function AnneesAdminPage() {
         )}
 
         <div className="overflow-hidden rounded border border-zinc-200">
-          <AnneesTable annees={annees} onModifier={ouvrirEdition} onSupprimer={supprimer} />
+          <AnneesTable annees={annees} onModifier={ouvrirEdition} />
         </div>
       </div>
 
