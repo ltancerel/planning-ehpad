@@ -28,7 +28,12 @@ export default function HoraireCodeSelector({
       : HORAIRE_CODES.filter(
           (h) => h.code.toUpperCase().includes(terme) || h.intitule.toUpperCase().includes(terme)
         );
-    return [...filtres].sort((a, b) => a.code.localeCompare(b.code));
+    return [...filtres].sort((a, b) => {
+      const groupeA = estCodeSuperposable(a.code) ? 1 : 0;
+      const groupeB = estCodeSuperposable(b.code) ? 1 : 0;
+      if (groupeA !== groupeB) return groupeA - groupeB;
+      return a.code.localeCompare(b.code);
+    });
   }, [recherche]);
 
   function changerRecherche(valeur: string) {
@@ -66,29 +71,36 @@ export default function HoraireCodeSelector({
         className="border-b border-zinc-200 px-2 py-1.5 text-sm outline-none"
       />
       <ul className="flex-1 overflow-auto py-1">
-        {resultats.map((horaire, index) => (
-          <li key={horaire.code}>
-            <button
-              type="button"
-              onClick={() => onChoisir(horaire.code)}
-              onMouseEnter={() => setIndexSurligne(index)}
-              className={`flex w-full items-center gap-2 px-2 py-1 text-left text-sm ${
-                index === indexSurligne ? "bg-zinc-100" : ""
-              }`}
-            >
-              <span
-                className="inline-block min-w-[2.25rem] shrink-0 rounded px-1.5 py-0.5 text-center text-xs font-semibold"
-                style={{ backgroundColor: horaire.couleurFond, color: horaire.couleurTexte }}
-              >
-                {horaire.code}
-              </span>
-              <span className="truncate text-zinc-700">{horaire.intitule}</span>
-              {estCodeSuperposable(horaire.code) && (
-                <span className="ml-auto shrink-0 text-[10px] text-zinc-400">se superpose</span>
+        {resultats.map((horaire, index) => {
+          const superposable = estCodeSuperposable(horaire.code);
+          const premierSuperposable = superposable && !estCodeSuperposable(resultats[index - 1]?.code ?? "");
+
+          return (
+            <li key={horaire.code}>
+              {premierSuperposable && (
+                <div className="mx-2 my-1 border-t border-zinc-100 pt-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                  Codes de superposition
+                </div>
               )}
-            </button>
-          </li>
-        ))}
+              <button
+                type="button"
+                onClick={() => onChoisir(horaire.code)}
+                onMouseEnter={() => setIndexSurligne(index)}
+                className={`flex w-full items-center gap-2 px-2 py-1 text-left text-sm ${
+                  index === indexSurligne ? "bg-zinc-100" : ""
+                }`}
+              >
+                <span
+                  className="inline-block min-w-[2.25rem] shrink-0 rounded px-1.5 py-0.5 text-center text-xs font-semibold"
+                  style={{ backgroundColor: horaire.couleurFond, color: horaire.couleurTexte }}
+                >
+                  {horaire.code}
+                </span>
+                <span className="truncate text-zinc-700">{horaire.intitule}</span>
+              </button>
+            </li>
+          );
+        })}
         {resultats.length === 0 && (
           <li className="px-2 py-3 text-center text-xs text-zinc-400">Aucun code trouvé</li>
         )}
