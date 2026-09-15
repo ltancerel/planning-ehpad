@@ -14,7 +14,7 @@ const SECTIONS: EntreeNav[] = [
   { label: "Codes horaires", href: "/admin/horaires", disponible: true },
   { label: "Utilisateurs", href: "/admin/utilisateurs", disponible: true },
   { label: "Salariés", href: "/admin/salaries", disponible: true },
-  { label: "Roulements", href: "/admin/roulements", disponible: false },
+  { label: "Roulements", href: "/admin/roulements", disponible: true },
   { label: "Années", href: "/admin/annees", disponible: false },
   { label: "Export", href: "/admin/export", disponible: false },
 ];

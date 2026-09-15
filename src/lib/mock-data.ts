@@ -108,6 +108,35 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
   },
 ];
 
+// Un roulement est une structure répétitive (pattern) d'horaires sur une ou
+// plusieurs semaines (cf. CDC). Chaque semaine du motif est un bloc complet
+// Lundi->Dimanche (roulement aligné sur la semaine) : motif[s][j] avec
+// j = 0 (lundi) .. 6 (dimanche). Une case vide ("") = repos, pas d'horaire.
+export type Roulement = {
+  id: string;
+  nom: string;
+  nbSemaines: number;
+  motif: string[][];
+};
+
+export const ROULEMENTS_DEMO: Roulement[] = [
+  {
+    id: "r1",
+    nom: "ASH matin/soir (2 semaines)",
+    nbSemaines: 2,
+    motif: [
+      ["60S", "60S", "60S", "60S", "60S", "", ""],
+      ["70A", "70A", "70A", "70A", "70A", "", ""],
+    ],
+  },
+  {
+    id: "r2",
+    nom: "IDE fixe (1 semaine)",
+    nbSemaines: 1,
+    motif: [["SEC", "SEC", "SEC", "SEC", "SEC", "", ""]],
+  },
+];
+
 export const SERVICES_ORDRE = ["ADMINISTRATIF", "ASH BESOINS", "ASH CDD", "IDE"];
 
 // Service exclusivement composé de lignes "Besoin" non attachées à un salarié
