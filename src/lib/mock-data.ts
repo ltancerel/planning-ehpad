@@ -31,22 +31,24 @@ export const SERVICES_ORDRE = ["ADMINISTRATIF", "ASH BESOINS", "ASH CDD", "IDE"]
 // restent vides dans les données de démo (voir genererPlanningDemo plus bas).
 export const SERVICE_BESOINS = "ASH BESOINS";
 
+// Noms volontairement génériques (patronymes les plus courants en France) pour
+// bien signaler des données fictives et éviter toute homonymie avec un salarié réel.
 export const SALARIES: Salarie[] = [
-  { id: "1", nom: "ADMIN", prenom: "Sarah", service: "ADMINISTRATIF" },
-  { id: "2", nom: "BOSS", prenom: "Valentine", service: "ADMINISTRATIF" },
-  { id: "3", nom: "BOUAOUICHE", prenom: "Sarah", service: "ADMINISTRATIF" },
-  { id: "4", nom: "CAPOULADE", prenom: "Mathilde", service: "ADMINISTRATIF" },
+  { id: "1", nom: "DUPONT", prenom: "Marie", service: "ADMINISTRATIF" },
+  { id: "2", nom: "MARTIN", prenom: "Julie", service: "ADMINISTRATIF" },
+  { id: "3", nom: "BERNARD", prenom: "Claire", service: "ADMINISTRATIF" },
+  { id: "4", nom: "DURAND", prenom: "Sophie", service: "ADMINISTRATIF" },
   { id: "5", nom: "BESOIN", prenom: "ASH 1", service: SERVICE_BESOINS },
   { id: "6", nom: "BESOIN", prenom: "ASH 2", service: SERVICE_BESOINS },
   { id: "7", nom: "BESOIN", prenom: "ASH 3", service: SERVICE_BESOINS },
-  { id: "8", nom: "HORPMI", prenom: "Adriana", service: "ASH CDD" },
-  { id: "9", nom: "JORGE", prenom: "Khadija", service: "ASH CDD" },
-  { id: "10", nom: "ABDELOUHAB", prenom: "Myriam", service: "ASH CDD" },
-  { id: "11", nom: "AMMAR", prenom: "Qatar", service: "ASH CDD" },
-  { id: "12", nom: "BARI", prenom: "Mohamed", service: "ASH CDD" },
-  { id: "13", nom: "BARI", prenom: "Salwa", service: "ASH CDD" },
-  { id: "14", nom: "DIABY", prenom: "Hanatou", service: "IDE" },
-  { id: "15", nom: "DIABY", prenom: "Salimatou", service: "IDE" },
+  { id: "8", nom: "PETIT", prenom: "Léa", service: "ASH CDD" },
+  { id: "9", nom: "ROBERT", prenom: "Emma", service: "ASH CDD" },
+  { id: "10", nom: "RICHARD", prenom: "Chloé", service: "ASH CDD" },
+  { id: "11", nom: "DUBOIS", prenom: "Camille", service: "ASH CDD" },
+  { id: "12", nom: "MOREAU", prenom: "Lucas", service: "ASH CDD" },
+  { id: "13", nom: "LAURENT", prenom: "Inès", service: "ASH CDD" },
+  { id: "14", nom: "SIMON", prenom: "Manon", service: "IDE" },
+  { id: "15", nom: "MICHEL", prenom: "Anna", service: "IDE" },
 ].sort((a, b) => {
   const serviceOrdre = SERVICES_ORDRE.indexOf(a.service) - SERVICES_ORDRE.indexOf(b.service);
   if (serviceOrdre !== 0) return serviceOrdre;
