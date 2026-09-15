@@ -95,11 +95,13 @@ export réel, connecteur paie.
   clarification à venir sur les droits de l'utilisateur standard).
   _Statut : fait, déployé sur `main`._
 
-- [ ] **15. Config — Identité de l'EHPAD (titre + logo)**
+- [x] **15. Config — Identité de l'EHPAD (titre + logo)**
   Écran de configuration de l'EHPAD courant : titre affiché en haut à gauche
   (remplace le libellé générique « Planning ») + upload/aperçu d'un logo. Première
   brique visuelle de la segmentation multi-EHPAD (voir section dédiée ci-dessus).
   Écran réservé à l'administrateur.
+  _Statut : fait, déployé sur `main`. Logo par défaut "Les Jardins de Rambam"
+  (recréé en SVG), menu admin multi-sections ajouté au passage._
 
 ## Points ouverts (hors périmètre maquette graphique, à trancher avant le backend)
 
