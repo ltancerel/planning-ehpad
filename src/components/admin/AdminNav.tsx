@@ -15,7 +15,7 @@ const SECTIONS: EntreeNav[] = [
   { label: "Utilisateurs", href: "/admin/utilisateurs", disponible: true },
   { label: "Salariés", href: "/admin/salaries", disponible: true },
   { label: "Roulements", href: "/admin/roulements", disponible: true },
-  { label: "Années", href: "/admin/annees", disponible: false },
+  { label: "Années", href: "/admin/annees", disponible: true },
   { label: "Export", href: "/admin/export", disponible: false },
 ];
 
