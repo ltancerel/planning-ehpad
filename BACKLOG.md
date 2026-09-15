@@ -19,10 +19,11 @@ export réel, connecteur paie.
   horaire en cellule.
   _Statut : fait, déployé sur Vercel (tag `DEMO-V0`)._
 
-- [ ] **2. Sélecteur de période dédié**
+- [x] **2. Sélecteur de période dédié**
   Bouton dédié pour changer la période affichée (au lieu des flèches actuelles) +
   mémorisation de la période d'une ouverture à l'autre (stub `localStorage` pour la
   maquette).
+  _Statut : fait, déployé sur `main`._
 
 - [ ] **3. Affichage 2 lignes en cellule**
   Pour les codes informatifs qui l'exigent (« à demander », « en attente de réponse »,
