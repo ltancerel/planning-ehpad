@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { SALARIES, SERVICES_ORDRE, JOURS_FERIES_2026, genererPlanningDemo } from "@/lib/mock-data";
 import { HORAIRE_CODES_PAR_CODE, heuresDuCode } from "@/lib/horaire-codes";
@@ -10,6 +10,16 @@ const NB_SEMAINES = 4;
 const NB_JOURS = NB_SEMAINES * 7;
 const LARGEUR_COLONNE = 44;
 const LARGEUR_COLONNE_SALARIE = 200;
+const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
+
+// Données de démo générées une seule fois sur une large plage fixe, indépendante
+// de la période actuellement affichée (permet de naviguer librement sans "trous").
+const DEMO_DEBUT = new Date(2025, 0, 1);
+const DEMO_NB_JOURS = 1100;
+const PLANNING_DEMO = genererPlanningDemo(
+  SALARIES,
+  genererPeriode(DEMO_DEBUT, DEMO_NB_JOURS).map(formatDateISO)
+);
 
 function estJourGrise(date: Date): boolean {
   return estWeekend(date) || JOURS_FERIES_2026.has(formatDateISO(date));
@@ -18,9 +28,35 @@ function estJourGrise(date: Date): boolean {
 export default function PlanningGrid() {
   const [debutPeriode, setDebutPeriode] = useState(() => lundiDeLaSemaine(new Date()));
   const jours = useMemo(() => genererPeriode(debutPeriode, NB_JOURS), [debutPeriode]);
-  const [planning, setPlanning] = useState(() => genererPlanningDemo(SALARIES, jours.map(formatDateISO)));
+  const [editions, setEditions] = useState<Record<string, string>>({});
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
   const [valeurEdition, setValeurEdition] = useState("");
+  const [selecteurOuvert, setSelecteurOuvert] = useState(false);
+
+  // Mémorisation de la période affichée d'une ouverture à l'autre (cf. CDC)
+  useEffect(() => {
+    try {
+      const enregistree = localStorage.getItem(CLE_STOCKAGE_PERIODE);
+      if (!enregistree) return;
+      const periodeEnregistree = lundiDeLaSemaine(new Date(enregistree));
+      // Hydratation depuis localStorage au montage : nécessairement post-render côté client
+      // pour éviter un mismatch SSR (le serveur n'a pas accès à localStorage).
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setDebutPeriode((actuelle) =>
+        formatDateISO(actuelle) === formatDateISO(periodeEnregistree) ? actuelle : periodeEnregistree
+      );
+    } catch {
+      // localStorage indisponible (navigation privée...) : on garde la période par défaut
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CLE_STOCKAGE_PERIODE, formatDateISO(debutPeriode));
+    } catch {
+      // ignoré : la mémorisation est un confort, pas une exigence bloquante
+    }
+  }, [debutPeriode]);
 
   const groupes = useMemo(() => {
     const parService = new Map<string, typeof SALARIES>();
@@ -37,15 +73,15 @@ export default function PlanningGrid() {
 
   function ouvrirEdition(cle: string) {
     setCellEnEdition(cle);
-    setValeurEdition(planning[cle] ?? "");
+    setValeurEdition(editions[cle] ?? PLANNING_DEMO[cle] ?? "");
   }
 
   function validerEdition(cle: string) {
     const saisie = valeurEdition.trim().toUpperCase();
-    setPlanning((prev) => {
+    setEditions((prev) => {
       const suivant = { ...prev };
       if (!saisie) {
-        delete suivant[cle];
+        suivant[cle] = "";
       } else if (HORAIRE_CODES_PAR_CODE[saisie]) {
         suivant[cle] = saisie;
       }
@@ -73,17 +109,51 @@ export default function PlanningGrid() {
           <button
             onClick={() => changerPeriode(-1)}
             className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+            aria-label="Période précédente"
+            title="Période précédente"
           >
-            ← Période précédente
+            ←
           </button>
-          <span className="px-2 text-xs text-zinc-600">
-            {formatJourMois(premierJour)} – {formatJourMois(dernierJour)} {dernierJour.getFullYear()}
-          </span>
+          <div className="relative">
+            <button
+              onClick={() => setSelecteurOuvert((v) => !v)}
+              className="rounded border border-zinc-300 px-2 py-1 text-xs font-medium hover:bg-zinc-50"
+            >
+              {formatJourMois(premierJour)} – {formatJourMois(dernierJour)} {dernierJour.getFullYear()} ▾
+            </button>
+            {selecteurOuvert && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setSelecteurOuvert(false)} />
+                <div className="absolute left-0 top-full z-40 mt-1 rounded border border-zinc-200 bg-white p-3 shadow-lg">
+                  <label className="mb-1 block text-xs font-medium text-zinc-600">
+                    Choisir une date de début de période
+                  </label>
+                  <input
+                    type="date"
+                    defaultValue={formatDateISO(debutPeriode)}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        setDebutPeriode(lundiDeLaSemaine(new Date(e.target.value)));
+                        setSelecteurOuvert(false);
+                      }
+                    }}
+                    className="rounded border border-zinc-300 px-2 py-1 text-sm"
+                  />
+                  <p className="mt-2 max-w-[16rem] text-xs text-zinc-500">
+                    La période affichée ({NB_SEMAINES} semaines) est mémorisée d&apos;une ouverture à
+                    l&apos;autre.
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={() => changerPeriode(1)}
             className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+            aria-label="Période suivante"
+            title="Période suivante"
           >
-            Période suivante →
+            →
           </button>
           <Link
             href="/admin/horaires"
@@ -158,7 +228,7 @@ export default function PlanningGrid() {
                     {jours.map((jour) => {
                       const dateISO = formatDateISO(jour);
                       const cle = `${salarie.id}__${dateISO}`;
-                      const code = planning[cle];
+                      const code = (cle in editions ? editions[cle] : PLANNING_DEMO[cle]) || undefined;
                       const horaire = code ? HORAIRE_CODES_PAR_CODE[code] : undefined;
                       const enEdition = cellEnEdition === cle;
 
