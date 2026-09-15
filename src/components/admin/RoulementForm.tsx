@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import type { Roulement } from "@/lib/mock-data";
-import { HORAIRE_CODES, HORAIRE_CODES_PAR_CODE } from "@/lib/horaire-codes";
+import { HORAIRE_CODES_PAR_CODE } from "@/lib/horaire-codes";
+import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
 
 const JOURS = ["L", "Ma", "M", "J", "V", "S", "D"];
 const NB_SEMAINES_MIN = 1;
@@ -25,6 +26,8 @@ export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: 
     valeurInitiale?.motif.map((semaine) => [...semaine]) ?? [semaineVide()]
   );
   const [erreur, setErreur] = useState<string | null>(null);
+  const [celluleEnEdition, setCelluleEnEdition] = useState<{ s: number; j: number } | null>(null);
+  const [positionEdition, setPositionEdition] = useState<PositionSelecteur | null>(null);
 
   function changerNbSemaines(nb: number) {
     const borne = Math.min(NB_SEMAINES_MAX, Math.max(NB_SEMAINES_MIN, nb));
@@ -43,6 +46,24 @@ export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: 
         s === semaineIndex ? semaine.map((c, j) => (j === jourIndex ? valeur : c)) : semaine
       )
     );
+  }
+
+  function ouvrirSelecteur(s: number, j: number, cellule: HTMLElement) {
+    const rect = cellule.getBoundingClientRect();
+    setPositionEdition({ top: rect.bottom + 2, left: rect.left, width: Math.max(rect.width, 220) });
+    setCelluleEnEdition({ s, j });
+  }
+
+  function fermerSelecteur() {
+    setCelluleEnEdition(null);
+    setPositionEdition(null);
+  }
+
+  function choisirCode(code: string | null) {
+    if (celluleEnEdition) {
+      changerCellule(celluleEnEdition.s, celluleEnEdition.j, code ?? "");
+    }
+    fermerSelecteur();
   }
 
   function valider() {
@@ -129,22 +150,17 @@ export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: 
                     const horaire = code ? HORAIRE_CODES_PAR_CODE[code] : undefined;
                     return (
                       <td key={jourIndex} className="border border-zinc-200 p-0">
-                        <select
-                          value={code}
-                          onChange={(e) => changerCellule(semaineIndex, jourIndex, e.target.value)}
-                          className="w-full appearance-none px-1 py-1.5 text-center text-[11px] font-semibold outline-none"
+                        <button
+                          type="button"
+                          onClick={(e) => ouvrirSelecteur(semaineIndex, jourIndex, e.currentTarget)}
+                          className="w-full px-1 py-1.5 text-center text-[11px] font-semibold"
                           style={{
                             backgroundColor: horaire?.couleurFond ?? "#ffffff",
                             color: horaire?.couleurTexte ?? "#a1a1aa",
                           }}
                         >
-                          <option value="">—</option>
-                          {HORAIRE_CODES.map((h) => (
-                            <option key={h.code} value={h.code}>
-                              {h.code}
-                            </option>
-                          ))}
-                        </select>
+                          {code || "—"}
+                        </button>
                       </td>
                     );
                   })}
@@ -171,6 +187,19 @@ export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: 
           {modeEdition ? "Enregistrer" : "Créer"}
         </button>
       </div>
+
+      {celluleEnEdition && positionEdition && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={fermerSelecteur} />
+          <HoraireCodeSelector
+            position={positionEdition}
+            aUneValeur={Boolean(motif[celluleEnEdition.s][celluleEnEdition.j])}
+            masquerEvenementiels
+            onChoisir={choisirCode}
+            onFermer={fermerSelecteur}
+          />
+        </>
+      )}
     </div>
   );
 }

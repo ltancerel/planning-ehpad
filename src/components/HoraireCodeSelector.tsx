@@ -8,6 +8,9 @@ export type PositionSelecteur = { top: number; left: number; width: number };
 type HoraireCodeSelectorProps = {
   position: PositionSelecteur;
   aUneValeur?: boolean;
+  /** Masque les codes événementiels (superposition) — non pertinents hors du
+   * planning réel, ex. dans un roulement qui définit un motif récurrent. */
+  masquerEvenementiels?: boolean;
   onChoisir: (code: string | null) => void;
   onFermer: () => void;
 };
@@ -15,17 +18,26 @@ type HoraireCodeSelectorProps = {
 export default function HoraireCodeSelector({
   position,
   aUneValeur,
+  masquerEvenementiels,
   onChoisir,
   onFermer,
 }: HoraireCodeSelectorProps) {
   const [recherche, setRecherche] = useState("");
   const [indexSurligne, setIndexSurligne] = useState(0);
 
+  const codesDisponibles = useMemo(
+    () =>
+      masquerEvenementiels
+        ? HORAIRE_CODES.filter((h) => h.categorie !== "evenementiel")
+        : HORAIRE_CODES,
+    [masquerEvenementiels]
+  );
+
   const resultats = useMemo(() => {
     const terme = recherche.trim().toUpperCase();
     const filtres = !terme
-      ? HORAIRE_CODES
-      : HORAIRE_CODES.filter(
+      ? codesDisponibles
+      : codesDisponibles.filter(
           (h) => h.code.toUpperCase().includes(terme) || h.intitule.toUpperCase().includes(terme)
         );
     return [...filtres].sort((a, b) => {
@@ -34,7 +46,7 @@ export default function HoraireCodeSelector({
       if (groupeA !== groupeB) return groupeA - groupeB;
       return a.code.localeCompare(b.code);
     });
-  }, [recherche]);
+  }, [recherche, codesDisponibles]);
 
   function changerRecherche(valeur: string) {
     setRecherche(valeur);
