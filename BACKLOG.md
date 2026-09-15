@@ -61,18 +61,27 @@ export réel, connecteur paie.
   dans le CDC.
   _Statut : fait, déployé sur `main`._
 
-- [ ] **5. Vue Émargement**
-  Maquette de la vue mensuelle de validation du planning par le salarié, sur le
-  modèle des captures fournies dans le CDC.
+- [x] **5. Vue Émargement**
+  Maquette de la vue mensuelle de validation du planning par le salarié : grille
+  calendrier (semaines en ligne, jours en colonne comme un calendrier classique —
+  revu suite au retour client), heures réalisées extrapolées des codes horaires
+  (réutilise la logique de superposition événementielle de la story #3), bouton de
+  validation, case signature salarié + manager et bouton Imprimer pour un format
+  papier (styles `print:` dédiés masquant les éléments non pertinents sur papier).
+  Accessible en cliquant sur le nom d'un salarié dans la grille planning.
+  _Statut : fait, déployé sur `main`._
 
 - [x] **6. Config — Ajouter un utilisateur**
   Formulaire maquette (type d'utilisateur, nom, prénom, service, poste).
   _Statut : fait, déployé sur `main`. Liste + formulaire (identifiant 3 lettres,
   email, type, service, poste), écran réservé à l'administrateur._
 
-- [ ] **7. Config — Ajouter un salarié**
+- [x] **7. Config — Ajouter un salarié**
   Formulaire maquette complet : matricule, nom, prénom, service, type de contrat,
   manager optionnel, roulement, présence.
+  _Statut : fait, déployé sur `main`. Liste + formulaire (matricule 4 lettres,
+  contrat CDD/CDI + actif/inactif, manager, présence, compte utilisateur optionnel).
+  Champ Roulement présent mais désactivé (dépend de la story #9)._
 
 - [x] **8. Config — Créer un code horaire (Admin)**
   Maquette de l'écran de création d'un code horaire : code, couleur police/fond,
@@ -113,6 +122,16 @@ export réel, connecteur paie.
   Écran réservé à l'administrateur.
   _Statut : fait, déployé sur `main`. Logo par défaut "Les Jardins de Rambam"
   (recréé en SVG), menu admin multi-sections ajouté au passage._
+
+## Idées pour epics futurs (hors périmètre maquette graphique v0)
+
+- **Export PDF téléchargeable** (ajouté le 15/09, suite à la case signature de la
+  vue émargement) : au-delà de l'impression navigateur déjà en place
+  (`window.print()`, qui permet déjà d'enregistrer en PDF via le navigateur), un
+  vrai bouton « Télécharger le PDF » nécessiterait une génération côté serveur
+  (ex: Puppeteer/Playwright headless, ou une lib type `react-pdf`) puisque
+  l'application n'a pas encore de backend. À prévoir dans l'Epic backend, probablement
+  en même temps que la story Export (actuellement #12 sur la vue Planning).
 
 ## Points ouverts (hors périmètre maquette graphique, à trancher avant le backend)
 
