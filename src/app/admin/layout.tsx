@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import UserMenu from "@/components/UserMenu";
+import AdminNav from "@/components/admin/AdminNav";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
@@ -15,7 +16,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         </Link>
         <UserMenu />
       </header>
-      <div className="flex-1 overflow-hidden">{children}</div>
+      <div className="flex flex-1 overflow-hidden">
+        <AdminNav />
+        <div className="flex-1 overflow-hidden">{children}</div>
+      </div>
     </div>
   );
 }

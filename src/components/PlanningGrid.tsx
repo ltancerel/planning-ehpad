@@ -6,6 +6,7 @@ import { SALARIES, SERVICES_ORDRE, JOURS_FERIES_2026, genererPlanningDemo } from
 import { HORAIRE_CODES_PAR_CODE, heuresDuCode } from "@/lib/horaire-codes";
 import { formatDateISO, lettreJour, estWeekend, formatJourMois, lundiDeLaSemaine, genererPeriode } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
+import { useEhpad } from "@/context/EhpadProvider";
 
 const NB_SEMAINES = 4;
 const NB_JOURS = NB_SEMAINES * 7;
@@ -101,11 +102,25 @@ export default function PlanningGrid() {
 
   const premierJour = jours[0];
   const dernierJour = jours[jours.length - 1];
+  const { identite } = useEhpad();
 
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
       <header className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-2">
-        <h1 className="font-semibold text-zinc-800">Planning</h1>
+        <div className="flex items-center gap-2">
+          {identite.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element -- logo dynamique (data URL uploadé), incompatible avec next/image
+            <img src={identite.logo} alt="" className="h-7 w-7 rounded object-contain" />
+          ) : (
+            <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
+              {identite.nom.charAt(0)}
+            </span>
+          )}
+          <div className="leading-tight">
+            <h1 className="font-semibold text-zinc-800">{identite.nom}</h1>
+            <p className="text-[10px] text-zinc-400">Planning</p>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => changerPeriode(-1)}
