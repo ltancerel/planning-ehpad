@@ -2,14 +2,22 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { SALARIES, SERVICES_ORDRE, SERVICE_BESOINS, JOURS_FERIES_2026, genererPlanningDemo } from "@/lib/mock-data";
+import { SALARIES, SERVICES_ORDRE, JOURS_FERIES_2026, PLANNING_DEMO } from "@/lib/mock-data";
 import {
   HORAIRE_CODES_PAR_CODE,
   estCodeSuperposable,
   heuresReellesCellule,
   type ValeurCellule,
 } from "@/lib/horaire-codes";
-import { formatDateISO, lettreJour, estWeekend, formatJourMois, lundiDeLaSemaine, genererPeriode } from "@/lib/dates";
+import {
+  formatDateISO,
+  lettreJour,
+  estWeekend,
+  formatJourMois,
+  lundiDeLaSemaine,
+  genererPeriode,
+  formatAnneeMois,
+} from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
 import { useEhpad } from "@/context/EhpadProvider";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
@@ -24,18 +32,6 @@ const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
 // Vue par défaut : septembre 2026, pour une démo cohérente quelle que soit la
 // date réelle de consultation.
 const PERIODE_PAR_DEFAUT = new Date(2026, 8, 1);
-
-// Données de démo générées une seule fois sur une plage fixe, indépendante de la
-// période actuellement affichée (permet de naviguer librement sans "trous").
-// S'arrête fin septembre 2026 : le mois suivant (octobre) reste vide pour qu'un
-// utilisateur puisse s'y projeter et planifier librement pendant la démo.
-const DEMO_DEBUT = new Date(2025, 0, 1);
-const DEMO_FIN = new Date(2026, 8, 30);
-const DEMO_NB_JOURS = Math.round((DEMO_FIN.getTime() - DEMO_DEBUT.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-const PLANNING_DEMO = genererPlanningDemo(
-  SALARIES.filter((s) => s.service !== SERVICE_BESOINS),
-  genererPeriode(DEMO_DEBUT, DEMO_NB_JOURS).map(formatDateISO)
-);
 
 function estJourGrise(date: Date): boolean {
   return estWeekend(date) || JOURS_FERIES_2026.has(formatDateISO(date));
@@ -270,7 +266,13 @@ export default function PlanningGrid() {
                 {groupe.salaries.map((salarie) => (
                   <tr key={salarie.id}>
                     <td className="sticky left-0 z-10 truncate border border-zinc-200 bg-white px-2 py-1 text-xs font-medium">
-                      {salarie.nom} {salarie.prenom}
+                      <Link
+                        href={`/emargement?salarie=${salarie.id}&mois=${formatAnneeMois(debutPeriode)}`}
+                        className="hover:underline"
+                        title="Voir la vue émargement de ce salarié"
+                      >
+                        {salarie.nom} {salarie.prenom}
+                      </Link>
                     </td>
                     {jours.map((jour) => {
                       const dateISO = formatDateISO(jour);

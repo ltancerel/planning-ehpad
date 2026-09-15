@@ -37,3 +37,21 @@ export function genererPeriode(dateDebut: Date, nbJours: number): Date[] {
   }
   return jours;
 }
+
+export function genererMois(annee: number, mois: number): Date[] {
+  const nbJours = new Date(annee, mois + 1, 0).getDate();
+  return genererPeriode(new Date(annee, mois, 1), nbJours);
+}
+
+export function formatAnneeMois(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+const MOIS_LIBELLE = [
+  "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+  "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
+];
+
+export function libelleMois(date: Date): string {
+  return `${MOIS_LIBELLE[date.getMonth()]} ${date.getFullYear()}`;
+}

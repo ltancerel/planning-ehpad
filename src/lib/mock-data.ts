@@ -1,4 +1,5 @@
 import type { ValeurCellule } from "./horaire-codes";
+import { formatDateISO, genererPeriode } from "./dates";
 
 export type Salarie = {
   id: string;
@@ -145,3 +146,16 @@ export function genererPlanningDemo(salaries: Salarie[], dates: string[]): Recor
   }
   return planning;
 }
+
+// Données de démo générées une seule fois sur une plage fixe, indépendante de la
+// période actuellement affichée (permet de naviguer librement sans "trous").
+// S'arrête fin septembre 2026 : le mois suivant (octobre) reste vide pour qu'un
+// utilisateur puisse s'y projeter et planifier librement pendant la démo.
+// Partagées entre la vue planning et la vue émargement pour rester cohérentes.
+export const DEMO_DEBUT = new Date(2025, 0, 1);
+export const DEMO_FIN = new Date(2026, 8, 30);
+const DEMO_NB_JOURS = Math.round((DEMO_FIN.getTime() - DEMO_DEBUT.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+export const PLANNING_DEMO = genererPlanningDemo(
+  SALARIES.filter((s) => s.service !== SERVICE_BESOINS),
+  genererPeriode(DEMO_DEBUT, DEMO_NB_JOURS).map(formatDateISO)
+);
