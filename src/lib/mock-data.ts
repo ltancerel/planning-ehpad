@@ -1,3 +1,5 @@
+import type { ValeurCellule } from "./horaire-codes";
+
 export type Salarie = {
   id: string;
   nom: string;
@@ -73,16 +75,34 @@ function seedAleatoire(seed: number) {
   };
 }
 
-const CODES_DEMO = ["60S", "70A", "185", "SEC", "OK", ".", "CP", "MAL", "CAR"];
+const CODES_TRAVAIL_DEMO = ["60S", "70A", "185", "SEC", "OK", "."];
+// CAR/ABI/MAL se superposent à un code travail (cf. CDC) ; CP s'utilise seul.
+const CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO = ["CAR", "MAL", "ABI"];
+const CODES_AUTONOMES_DEMO = ["CP"];
 
-export function genererPlanningDemo(salaries: Salarie[], dates: string[]) {
+export function genererPlanningDemo(salaries: Salarie[], dates: string[]): Record<string, ValeurCellule> {
   const rng = seedAleatoire(42);
-  const planning: Record<string, string> = {};
+  const planning: Record<string, ValeurCellule> = {};
   for (const salarie of salaries) {
     for (const date of dates) {
-      if (rng() < 0.12) continue; // case vide
-      const code = CODES_DEMO[Math.floor(rng() * CODES_DEMO.length)];
-      planning[`${salarie.id}__${date}`] = code;
+      const tirage = rng();
+      if (tirage < 0.12) continue; // jamais remplie
+
+      const cle = `${salarie.id}__${date}`;
+      if (tirage < 0.2) {
+        const code = CODES_AUTONOMES_DEMO[Math.floor(rng() * CODES_AUTONOMES_DEMO.length)];
+        planning[cle] = { travail: code };
+        continue;
+      }
+
+      const travail = CODES_TRAVAIL_DEMO[Math.floor(rng() * CODES_TRAVAIL_DEMO.length)];
+      if (rng() < 0.15) {
+        const evenementiel =
+          CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO[Math.floor(rng() * CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO.length)];
+        planning[cle] = { travail, evenementiel };
+      } else {
+        planning[cle] = { travail };
+      }
     }
   }
   return planning;

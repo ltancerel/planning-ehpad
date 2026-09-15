@@ -42,10 +42,18 @@ export réel, connecteur paie.
   maquette).
   _Statut : fait, déployé sur `main`._
 
-- [ ] **3. Affichage 2 lignes en cellule**
-  Pour les codes informatifs qui l'exigent (« à demander », « en attente de réponse »,
-  « soutien »), afficher le code horaire de travail en ligne 1 et le code informatif
-  en ligne 2 dans la même cellule.
+- [x] **3. Superposition d'un code événementiel sur un code travail**
+  Une cellule peut porter un code travail (ligne 1) et, superposé, un code
+  événementiel (ligne 2) qui vient l'amender — cf. CDC section 3/ « des codes
+  horaire évènementiels qui viennent... se superposer sur des codes horaires de
+  travail ». Seuls les codes événementiels dotés d'une règle d'heures s'y prêtent
+  (CAR/ABI/MAL, superposent) ; les autres (ABA/CP) s'utilisent seuls et remplacent
+  la cellule entière. Les heures réellement comptabilisées suivent la règle du code
+  événementiel (0h, heures du code initial, ou personnalisé).
+  _Statut : fait, déployé sur `main`._
+  _Révision du 15/09 : la version initiale de cette story portait sur les codes
+  informatifs (« à demander »...), erreur d'interprétation du CDC corrigée par le
+  client — ce cas est abandonné, pas de story de remplacement prévue pour l'instant._
 
 - [x] **4. Sélecteur de code horaire**
   Remplacer la saisie texte libre actuelle par un sélecteur (liste déroulante /

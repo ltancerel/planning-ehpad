@@ -1,20 +1,20 @@
 "use client";
 
 import { useMemo, useState, type KeyboardEvent } from "react";
-import { HORAIRE_CODES } from "@/lib/horaire-codes";
+import { HORAIRE_CODES, estCodeSuperposable } from "@/lib/horaire-codes";
 
 export type PositionSelecteur = { top: number; left: number; width: number };
 
 type HoraireCodeSelectorProps = {
   position: PositionSelecteur;
-  valeurActuelle?: string;
+  aUneValeur?: boolean;
   onChoisir: (code: string | null) => void;
   onFermer: () => void;
 };
 
 export default function HoraireCodeSelector({
   position,
-  valeurActuelle,
+  aUneValeur,
   onChoisir,
   onFermer,
 }: HoraireCodeSelectorProps) {
@@ -83,6 +83,9 @@ export default function HoraireCodeSelector({
                 {horaire.code}
               </span>
               <span className="truncate text-zinc-700">{horaire.intitule}</span>
+              {estCodeSuperposable(horaire.code) && (
+                <span className="ml-auto shrink-0 text-[10px] text-zinc-400">se superpose</span>
+              )}
             </button>
           </li>
         ))}
@@ -90,7 +93,7 @@ export default function HoraireCodeSelector({
           <li className="px-2 py-3 text-center text-xs text-zinc-400">Aucun code trouvé</li>
         )}
       </ul>
-      {valeurActuelle && (
+      {aUneValeur && (
         <button
           type="button"
           onClick={() => onChoisir(null)}

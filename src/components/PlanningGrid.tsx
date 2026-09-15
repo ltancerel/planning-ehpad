@@ -3,7 +3,12 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { SALARIES, SERVICES_ORDRE, SERVICE_BESOINS, JOURS_FERIES_2026, genererPlanningDemo } from "@/lib/mock-data";
-import { HORAIRE_CODES_PAR_CODE, heuresDuCode } from "@/lib/horaire-codes";
+import {
+  HORAIRE_CODES_PAR_CODE,
+  estCodeSuperposable,
+  heuresReellesCellule,
+  type ValeurCellule,
+} from "@/lib/horaire-codes";
 import { formatDateISO, lettreJour, estWeekend, formatJourMois, lundiDeLaSemaine, genererPeriode } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
 import { useEhpad } from "@/context/EhpadProvider";
@@ -39,7 +44,7 @@ function estJourGrise(date: Date): boolean {
 export default function PlanningGrid() {
   const [debutPeriode, setDebutPeriode] = useState(() => lundiDeLaSemaine(PERIODE_PAR_DEFAUT));
   const jours = useMemo(() => genererPeriode(debutPeriode, NB_JOURS), [debutPeriode]);
-  const [editions, setEditions] = useState<Record<string, string>>({});
+  const [editions, setEditions] = useState<Record<string, ValeurCellule>>({});
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
   const [positionEdition, setPositionEdition] = useState<PositionSelecteur | null>(null);
   const [selecteurOuvert, setSelecteurOuvert] = useState(false);
@@ -93,8 +98,17 @@ export default function PlanningGrid() {
     setPositionEdition(null);
   }
 
-  function choisirCode(cle: string, code: string | null) {
-    setEditions((prev) => ({ ...prev, [cle]: code ?? "" }));
+  function choisirCode(cle: string, codeChoisi: string | null) {
+    setEditions((prev) => {
+      if (codeChoisi === null) {
+        return { ...prev, [cle]: {} }; // vide entièrement la cellule (travail + superposition)
+      }
+      const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
+      const nouvelle: ValeurCellule = estCodeSuperposable(codeChoisi)
+        ? { ...actuelle, evenementiel: codeChoisi }
+        : { travail: codeChoisi }; // code travail/informatif/particulier : remplace tout
+      return { ...prev, [cle]: nouvelle };
+    });
     fermerEdition();
   }
 
@@ -109,9 +123,10 @@ export default function PlanningGrid() {
   const premierJour = jours[0];
   const dernierJour = jours[jours.length - 1];
   const { identite } = useEhpad();
-  const valeurActuelleEdition = cellEnEdition
-    ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition]) || undefined
+  const valeurActuelleEdition: ValeurCellule | undefined = cellEnEdition
+    ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition])
     : undefined;
+  const editionAUneValeur = Boolean(valeurActuelleEdition?.travail || valeurActuelleEdition?.evenementiel);
 
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
@@ -260,14 +275,23 @@ export default function PlanningGrid() {
                     {jours.map((jour) => {
                       const dateISO = formatDateISO(jour);
                       const cle = `${salarie.id}__${dateISO}`;
-                      // "" = cellule explicitement vidée par un utilisateur (Vider la cellule) :
+                      // {} = cellule explicitement vidée par un utilisateur (Vider la cellule) :
                       // distinct de undefined, qui signifie qu'aucune valeur n'a jamais existé
                       // (ni démo, ni édition) — cf. demande de distinguer les deux visuellement.
-                      const codeBrut = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
-                      const jamaisRemplie = codeBrut === undefined;
-                      const code = codeBrut || undefined;
-                      const horaire = code ? HORAIRE_CODES_PAR_CODE[code] : undefined;
+                      const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
+                      const jamaisRemplie = valeur === undefined;
+                      const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
+                      const horaireEvenementiel = valeur?.evenementiel
+                        ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel]
+                        : undefined;
                       const enEdition = cellEnEdition === cle;
+                      const infoBulle = valeur?.travail
+                        ? `${horaireTravail?.intitule ?? valeur.travail}${
+                            horaireEvenementiel ? ` + ${horaireEvenementiel.intitule}` : ""
+                          } — ${heuresReellesCellule(valeur)}h`
+                        : jamaisRemplie
+                          ? "Jamais planifiée"
+                          : undefined;
 
                       return (
                         <td
@@ -279,26 +303,33 @@ export default function PlanningGrid() {
                               ? "#eff6ff"
                               : jamaisRemplie
                                 ? "#fafafa"
-                                : horaire?.couleurFond ?? "#fff",
+                                : horaireTravail?.couleurFond ?? "#fff",
                             backgroundImage:
                               !enEdition && jamaisRemplie
                                 ? "repeating-linear-gradient(45deg, #e4e4e7 0px, #e4e4e7 4px, transparent 4px, transparent 10px)"
                                 : undefined,
-                            color: horaire?.couleurTexte ?? "#000",
+                            color: horaireTravail?.couleurTexte ?? "#000",
                             outline: enEdition ? "2px solid #60a5fa" : undefined,
                             outlineOffset: enEdition ? "-2px" : undefined,
                           }}
-                          title={
-                            horaire
-                              ? `${horaire.intitule}${horaire.plages ? ` — ${heuresDuCode(code!)}h` : ""}`
-                              : jamaisRemplie
-                                ? "Jamais planifiée"
-                                : undefined
-                          }
+                          title={infoBulle}
                         >
-                          <span className="block px-1 py-1 text-xs font-semibold leading-tight">
-                            {code ?? ""}
-                          </span>
+                          {valeur?.travail && (
+                            <span className="block px-1 pt-0.5 text-xs font-semibold leading-tight">
+                              {valeur.travail}
+                            </span>
+                          )}
+                          {valeur?.evenementiel && (
+                            <span
+                              className="mx-auto mt-0.5 block w-fit rounded-sm px-1 text-[10px] font-bold leading-tight"
+                              style={{
+                                backgroundColor: horaireEvenementiel?.couleurFond,
+                                color: horaireEvenementiel?.couleurTexte,
+                              }}
+                            >
+                              {valeur.evenementiel}
+                            </span>
+                          )}
                         </td>
                       );
                     })}
@@ -315,7 +346,7 @@ export default function PlanningGrid() {
           <div className="fixed inset-0 z-40" onClick={fermerEdition} />
           <HoraireCodeSelector
             position={positionEdition}
-            valeurActuelle={valeurActuelleEdition}
+            aUneValeur={editionAUneValeur}
             onChoisir={(code) => choisirCode(cellEnEdition, code)}
             onFermer={fermerEdition}
           />

@@ -126,3 +126,34 @@ export function heuresDuCode(code: string): number {
   if (!horaire?.plages) return 0;
   return dureeHeures(horaire.plages);
 }
+
+// Une cellule du planning peut porter un code travail et, en superposition,
+// un code événementiel qui vient l'amender (cf. CDC section 3/ "des codes
+// horaire évènementiels qui viennent... se superposer sur des codes horaires
+// de travail"). Seuls les codes événementiels dotés d'une regleHeures se
+// superposent (CAR/ABI/MAL) ; les autres (ABA/CP) s'utilisent seuls.
+export type ValeurCellule = {
+  travail?: string;
+  evenementiel?: string;
+};
+
+export function estCodeSuperposable(code: string): boolean {
+  const horaire = HORAIRE_CODES_PAR_CODE[code.toUpperCase()];
+  return horaire?.categorie === "evenementiel" && horaire.regleHeures !== undefined;
+}
+
+export function heuresReellesCellule(valeur: ValeurCellule): number {
+  const heuresBase = valeur.travail ? heuresDuCode(valeur.travail) : 0;
+  if (!valeur.evenementiel) return heuresBase;
+  const horaireEvenementiel = HORAIRE_CODES_PAR_CODE[valeur.evenementiel.toUpperCase()];
+  switch (horaireEvenementiel?.regleHeures) {
+    case "zero":
+      return 0;
+    case "code_initial":
+      return heuresBase;
+    case "personnalise":
+      return horaireEvenementiel.heuresPersonnalisees ?? 0;
+    default:
+      return heuresBase;
+  }
+}
