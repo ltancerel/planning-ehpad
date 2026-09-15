@@ -65,8 +65,10 @@ export réel, connecteur paie.
   Maquette de la vue mensuelle de validation du planning par le salarié, sur le
   modèle des captures fournies dans le CDC.
 
-- [ ] **6. Config — Ajouter un utilisateur**
+- [x] **6. Config — Ajouter un utilisateur**
   Formulaire maquette (type d'utilisateur, nom, prénom, service, poste).
+  _Statut : fait, déployé sur `main`. Liste + formulaire (identifiant 3 lettres,
+  email, type, service, poste), écran réservé à l'administrateur._
 
 - [ ] **7. Config — Ajouter un salarié**
   Formulaire maquette complet : matricule, nom, prénom, service, type de contrat,
