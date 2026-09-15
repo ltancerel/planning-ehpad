@@ -7,12 +7,14 @@ import { SALARIES, JOURS_FERIES_2026, PLANNING_DEMO } from "@/lib/mock-data";
 import { HORAIRE_CODES_PAR_CODE, heuresReellesCellule } from "@/lib/horaire-codes";
 import {
   formatDateISO,
-  lettreJour,
   estWeekend,
   genererMois,
+  genererCalendrierMois,
   formatAnneeMois,
   libelleMois,
 } from "@/lib/dates";
+
+const JOURS_SEMAINE = ["L", "Ma", "M", "J", "V", "S", "D"];
 
 function estJourGrise(date: Date): boolean {
   return estWeekend(date) || JOURS_FERIES_2026.has(formatDateISO(date));
@@ -32,18 +34,25 @@ export default function EmargementContenu() {
   );
   const [valide, setValide] = useState(false);
 
-  const jours = useMemo(() => genererMois(dateMois.getFullYear(), dateMois.getMonth()), [dateMois]);
+  const semaines = useMemo(
+    () => genererCalendrierMois(dateMois.getFullYear(), dateMois.getMonth()),
+    [dateMois]
+  );
+  const joursDuMois = useMemo(
+    () => genererMois(dateMois.getFullYear(), dateMois.getMonth()),
+    [dateMois]
+  );
 
-  const lignes = jours.map((jour) => {
+  function valeurDuJour(jour: Date) {
     const dateISO = formatDateISO(jour);
     const valeur = PLANNING_DEMO[`${salarie.id}__${dateISO}`];
     const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
     const horaireEvenementiel = valeur?.evenementiel ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel] : undefined;
     const heures = valeur ? heuresReellesCellule(valeur) : 0;
-    return { jour, dateISO, valeur, horaireTravail, horaireEvenementiel, heures };
-  });
+    return { valeur, horaireTravail, horaireEvenementiel, heures };
+  }
 
-  const totalHeures = lignes.reduce((total, l) => total + l.heures, 0);
+  const totalHeures = joursDuMois.reduce((total, jour) => total + valeurDuJour(jour).heures, 0);
 
   function changerMois(delta: number) {
     const suivant = new Date(dateMois.getFullYear(), dateMois.getMonth() + delta, 1);
@@ -66,7 +75,7 @@ export default function EmargementContenu() {
       </header>
 
       <div className="flex-1 overflow-auto p-4">
-        <div className="mb-4 flex max-w-xl items-center justify-between">
+        <div className="mb-3 flex max-w-2xl items-center justify-between">
           <button
             onClick={() => changerMois(-1)}
             className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
@@ -82,79 +91,94 @@ export default function EmargementContenu() {
           </button>
         </div>
 
-        <div className="max-w-xl overflow-hidden rounded border border-zinc-200">
-          <table className="w-full border-collapse text-sm">
+        <div className="max-w-2xl overflow-hidden rounded border border-zinc-200">
+          <table className="w-full border-collapse text-sm" style={{ tableLayout: "fixed" }}>
             <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium text-zinc-500">
-                <th className="px-3 py-2">Jour</th>
-                <th className="px-3 py-2">Date</th>
-                <th className="px-3 py-2">Horaire</th>
-                <th className="px-3 py-2 text-right">Heures</th>
+              <tr>
+                {JOURS_SEMAINE.map((j) => (
+                  <th
+                    key={j}
+                    className="border border-zinc-200 bg-zinc-100 py-1 text-xs font-medium text-zinc-600"
+                  >
+                    {j}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {lignes.map(({ jour, dateISO, valeur, horaireTravail, horaireEvenementiel, heures }) => {
-                const grise = estJourGrise(jour);
-                return (
-                  <tr
-                    key={dateISO}
-                    className={`border-b border-zinc-100 ${grise ? "bg-zinc-50 text-zinc-400" : ""}`}
-                  >
-                    <td className="px-3 py-1.5">{lettreJour(jour)}</td>
-                    <td className="px-3 py-1.5">
-                      {String(jour.getDate()).padStart(2, "0")}/{String(jour.getMonth() + 1).padStart(2, "0")}
-                    </td>
-                    <td className="px-3 py-1.5">
-                      {valeur?.travail && (
-                        <span
-                          className="mr-1 inline-block rounded px-1.5 py-0.5 text-xs font-semibold"
-                          style={{
-                            backgroundColor: horaireTravail?.couleurFond,
-                            color: horaireTravail?.couleurTexte,
-                          }}
+              {semaines.map((semaine, index) => (
+                <tr key={index}>
+                  {semaine.map((jour) => {
+                    const dansLeMois = jour.getMonth() === dateMois.getMonth();
+                    const { valeur, horaireTravail, horaireEvenementiel, heures } = valeurDuJour(jour);
+                    const grise = estJourGrise(jour);
+
+                    if (!dansLeMois) {
+                      return (
+                        <td
+                          key={formatDateISO(jour)}
+                          className="h-16 border border-zinc-100 bg-zinc-50 align-top text-zinc-300"
                         >
-                          {valeur.travail}
-                        </span>
-                      )}
-                      {valeur?.evenementiel && (
-                        <span
-                          className="inline-block rounded px-1.5 py-0.5 text-xs font-bold"
-                          style={{
-                            backgroundColor: horaireEvenementiel?.couleurFond,
-                            color: horaireEvenementiel?.couleurTexte,
-                          }}
-                        >
-                          {valeur.evenementiel}
-                        </span>
-                      )}
-                      {!valeur?.travail && !valeur?.evenementiel && (
-                        <span className="text-xs text-zinc-300">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-1.5 text-right text-xs text-zinc-600">
-                      {heures > 0 ? `${heures}h` : ""}
-                    </td>
-                  </tr>
-                );
-              })}
+                          <span className="block px-1.5 py-1 text-xs">{jour.getDate()}</span>
+                        </td>
+                      );
+                    }
+
+                    return (
+                      <td
+                        key={formatDateISO(jour)}
+                        className={`h-16 border border-zinc-200 align-top ${grise ? "bg-zinc-50" : "bg-white"}`}
+                      >
+                        <div className="flex h-full flex-col px-1.5 py-1">
+                          <span className={`text-xs ${grise ? "text-zinc-400" : "text-zinc-500"}`}>
+                            {jour.getDate()}
+                          </span>
+                          <div className="mt-0.5 flex flex-wrap gap-0.5">
+                            {valeur?.travail && (
+                              <span
+                                className="rounded px-1 text-[11px] font-semibold leading-tight"
+                                style={{
+                                  backgroundColor: horaireTravail?.couleurFond,
+                                  color: horaireTravail?.couleurTexte,
+                                }}
+                              >
+                                {valeur.travail}
+                              </span>
+                            )}
+                            {valeur?.evenementiel && (
+                              <span
+                                className="rounded px-1 text-[11px] font-bold leading-tight"
+                                style={{
+                                  backgroundColor: horaireEvenementiel?.couleurFond,
+                                  color: horaireEvenementiel?.couleurTexte,
+                                }}
+                              >
+                                {valeur.evenementiel}
+                              </span>
+                            )}
+                          </div>
+                          {heures > 0 && (
+                            <span className="mt-auto text-right text-[10px] text-zinc-400">{heures}h</span>
+                          )}
+                        </div>
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
             </tbody>
-            <tfoot>
-              <tr className="border-t-2 border-zinc-300 bg-zinc-50 font-semibold">
-                <td colSpan={3} className="px-3 py-2 text-right text-xs text-zinc-600">
-                  Total heures réalisées
-                </td>
-                <td className="px-3 py-2 text-right text-sm text-zinc-800">{totalHeures}h</td>
-              </tr>
-            </tfoot>
           </table>
         </div>
 
-        <p className="mt-2 max-w-xl text-[11px] text-zinc-400">
-          Heures extrapolées à partir des codes horaires du mois (planifié, amendé par les codes
-          événementiels superposés — cf. story #4). Maquette : données non persistées.
-        </p>
+        <div className="mt-2 flex max-w-2xl items-center justify-between text-xs text-zinc-500">
+          <p className="max-w-md">
+            Heures extrapolées à partir des codes horaires du mois (planifié, amendé par les codes
+            événementiels superposés — cf. story #4).
+          </p>
+          <p className="font-semibold text-zinc-700">Total : {totalHeures}h</p>
+        </div>
 
-        <div className="mt-4 max-w-xl rounded border border-zinc-200 p-3">
+        <div className="mt-4 max-w-2xl rounded border border-zinc-200 p-3">
           {valide ? (
             <p className="text-sm font-medium text-green-700">
               ✓ Planning validé par {salarie.prenom} {salarie.nom} pour {libelleMois(dateMois)}. Il ne peut
