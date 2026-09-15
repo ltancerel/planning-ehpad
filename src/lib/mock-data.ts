@@ -15,8 +15,8 @@ export type ProfilUtilisateur = {
 
 // Utilisateur connecté (mock — pas d'authentification réelle à ce stade)
 export const UTILISATEUR_CONNECTE: ProfilUtilisateur = {
-  nom: "Dupont",
-  prenom: "Claire",
+  nom: "Hontaa",
+  prenom: "Virginie",
   typeUtilisateur: "Administrateur",
   service: "Administration",
   poste: "Direction",
