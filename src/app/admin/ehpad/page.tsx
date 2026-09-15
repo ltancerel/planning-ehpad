@@ -75,8 +75,8 @@ export default function IdentiteEhpadPage() {
                 className="block text-xs text-zinc-600"
               />
               <p className="mt-1 max-w-xs text-[11px] text-zinc-400">
-                Le logo officiel n&apos;a pas pu être récupéré automatiquement (accès réseau
-                restreint dans cet environnement) — uploadez-le manuellement.
+                PNG, JPG ou SVG. Remplace le logo actuel après enregistrement — utile pour
+                changer d&apos;EHPAD une fois le multi-tenant en place.
               </p>
             </div>
           </div>

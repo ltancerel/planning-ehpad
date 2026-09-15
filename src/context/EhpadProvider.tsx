@@ -9,7 +9,7 @@ export type IdentiteEhpad = {
 
 export const EHPAD_PAR_DEFAUT: IdentiteEhpad = {
   nom: "Les Jardins de Rambam",
-  logo: null,
+  logo: "/logos/rambam-mark.svg",
 };
 
 const CLE_STOCKAGE = "planning-ehpad:identite-ehpad";
