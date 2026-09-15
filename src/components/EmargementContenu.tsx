@@ -62,30 +62,44 @@ export default function EmargementContenu() {
 
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
-      <header className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-2">
+      <header className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-2 print:hidden">
         <div>
           <h1 className="font-semibold text-zinc-800">
             Émargement — {salarie.nom} {salarie.prenom}
           </h1>
           <p className="text-[10px] text-zinc-400">Validation mensuelle du planning</p>
         </div>
-        <Link href="/" className="text-xs font-medium text-blue-600 hover:underline">
-          ← Retour au planning
-        </Link>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+          >
+            🖶 Imprimer
+          </button>
+          <Link href="/" className="text-xs font-medium text-blue-600 hover:underline">
+            ← Retour au planning
+          </Link>
+        </div>
       </header>
 
       <div className="flex-1 overflow-auto p-4">
+        <div className="mb-1 hidden print:block">
+          <h1 className="text-base font-semibold text-zinc-800">
+            Émargement — {salarie.nom} {salarie.prenom}
+          </h1>
+        </div>
+
         <div className="mb-3 flex max-w-2xl items-center justify-between">
           <button
             onClick={() => changerMois(-1)}
-            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50 print:hidden"
           >
             ← Mois précédent
           </button>
           <span className="text-sm font-semibold text-zinc-700">{libelleMois(dateMois)}</span>
           <button
             onClick={() => changerMois(1)}
-            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50 print:hidden"
           >
             Mois suivant →
           </button>
@@ -178,7 +192,7 @@ export default function EmargementContenu() {
           <p className="font-semibold text-zinc-700">Total : {totalHeures}h</p>
         </div>
 
-        <div className="mt-4 max-w-2xl rounded border border-zinc-200 p-3">
+        <div className="mt-4 max-w-2xl rounded border border-zinc-200 p-3 print:hidden">
           {valide ? (
             <p className="text-sm font-medium text-green-700">
               ✓ Planning validé par {salarie.prenom} {salarie.nom} pour {libelleMois(dateMois)}. Il ne peut
@@ -198,6 +212,22 @@ export default function EmargementContenu() {
               </button>
             </>
           )}
+        </div>
+
+        {/* Case signature — pour émargement sur planning imprimé */}
+        <div className="mt-6 grid max-w-2xl grid-cols-2 gap-4">
+          <div>
+            <p className="mb-1 text-xs text-zinc-500">
+              Signature du salarié ({salarie.prenom} {salarie.nom})
+            </p>
+            <div className="h-20 rounded border border-zinc-300" />
+            <p className="mt-1 text-[10px] text-zinc-400">Fait le : ____ / ____ / ______</p>
+          </div>
+          <div>
+            <p className="mb-1 text-xs text-zinc-500">Signature du manager</p>
+            <div className="h-20 rounded border border-zinc-300" />
+            <p className="mt-1 text-[10px] text-zinc-400">Fait le : ____ / ____ / ______</p>
+          </div>
         </div>
       </div>
     </div>
