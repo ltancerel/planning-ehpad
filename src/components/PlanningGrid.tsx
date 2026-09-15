@@ -260,7 +260,12 @@ export default function PlanningGrid() {
                     {jours.map((jour) => {
                       const dateISO = formatDateISO(jour);
                       const cle = `${salarie.id}__${dateISO}`;
-                      const code = (cle in editions ? editions[cle] : PLANNING_DEMO[cle]) || undefined;
+                      // "" = cellule explicitement vidée par un utilisateur (Vider la cellule) :
+                      // distinct de undefined, qui signifie qu'aucune valeur n'a jamais existé
+                      // (ni démo, ni édition) — cf. demande de distinguer les deux visuellement.
+                      const codeBrut = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
+                      const jamaisRemplie = codeBrut === undefined;
+                      const code = codeBrut || undefined;
                       const horaire = code ? HORAIRE_CODES_PAR_CODE[code] : undefined;
                       const enEdition = cellEnEdition === cle;
 
@@ -270,12 +275,26 @@ export default function PlanningGrid() {
                           onClick={(e) => ouvrirEdition(cle, e.currentTarget)}
                           className="cursor-pointer border border-zinc-200 p-0 text-center align-middle"
                           style={{
-                            backgroundColor: enEdition ? "#eff6ff" : horaire?.couleurFond ?? "#fff",
+                            backgroundColor: enEdition
+                              ? "#eff6ff"
+                              : jamaisRemplie
+                                ? "#fafafa"
+                                : horaire?.couleurFond ?? "#fff",
+                            backgroundImage:
+                              !enEdition && jamaisRemplie
+                                ? "repeating-linear-gradient(45deg, #e4e4e7 0px, #e4e4e7 4px, transparent 4px, transparent 10px)"
+                                : undefined,
                             color: horaire?.couleurTexte ?? "#000",
                             outline: enEdition ? "2px solid #60a5fa" : undefined,
                             outlineOffset: enEdition ? "-2px" : undefined,
                           }}
-                          title={horaire ? `${horaire.intitule}${horaire.plages ? ` — ${heuresDuCode(code!)}h` : ""}` : undefined}
+                          title={
+                            horaire
+                              ? `${horaire.intitule}${horaire.plages ? ` — ${heuresDuCode(code!)}h` : ""}`
+                              : jamaisRemplie
+                                ? "Jamais planifiée"
+                                : undefined
+                          }
                         >
                           <span className="block px-1 py-1 text-xs font-semibold leading-tight">
                             {code ?? ""}
