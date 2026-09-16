@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { HORAIRE_CODES, estCodeSuperposable, estCodeComplement, type Plage } from "@/lib/horaire-codes";
 
 export type PositionSelecteur = { top: number; left: number; width: number };
@@ -36,6 +36,29 @@ export default function HoraireCodeSelector({
   const [codeComplementEnSaisie, setCodeComplementEnSaisie] = useState<string | null>(null);
   const [plageDebut, setPlageDebut] = useState("");
   const [plageFin, setPlageFin] = useState("");
+
+  // La position d'ancrage (sous la case cliquée) peut pousser le popover hors
+  // de l'écran pour une case proche du bord droit/bas — le bouton "Ajouter"
+  // devient alors inatteignable (retour client du 17/09 : "impossible
+  // d'enregistrer"). On mesure la taille réelle une fois rendu et on
+  // recadre dans la fenêtre visible.
+  const conteneurRef = useRef<HTMLDivElement>(null);
+  const [positionAffichee, setPositionAffichee] = useState({ top: position.top, left: position.left });
+
+  useLayoutEffect(() => {
+    const el = conteneurRef.current;
+    if (!el) return;
+    const marge = 8;
+    const left = Math.min(
+      Math.max(position.left, marge),
+      Math.max(marge, window.innerWidth - el.offsetWidth - marge)
+    );
+    const top = Math.min(
+      Math.max(position.top, marge),
+      Math.max(marge, window.innerHeight - el.offsetHeight - marge)
+    );
+    setPositionAffichee({ top, left });
+  }, [position.top, position.left, position.width, codeComplementEnSaisie]);
 
   const codesDisponibles = useMemo(
     () =>
@@ -101,8 +124,9 @@ export default function HoraireCodeSelector({
     const horaire = HORAIRE_CODES.find((h) => h.code === codeComplementEnSaisie);
     return (
       <div
+        ref={conteneurRef}
         className="fixed z-50 flex flex-col rounded border border-zinc-200 bg-white p-3 shadow-lg"
-        style={{ top: position.top, left: position.left, width: Math.max(position.width, 240) }}
+        style={{ top: positionAffichee.top, left: positionAffichee.left, width: Math.max(position.width, 240) }}
       >
         <p className="mb-2 text-xs font-medium text-zinc-700">
           Plage horaire pour «&nbsp;{horaire?.intitule ?? codeComplementEnSaisie}&nbsp;»
@@ -149,8 +173,9 @@ export default function HoraireCodeSelector({
 
   return (
     <div
+      ref={conteneurRef}
       className="fixed z-50 flex max-h-80 flex-col rounded border border-zinc-200 bg-white shadow-lg"
-      style={{ top: position.top, left: position.left, width: Math.max(position.width, 240) }}
+      style={{ top: positionAffichee.top, left: positionAffichee.left, width: Math.max(position.width, 240) }}
     >
       <input
         autoFocus
