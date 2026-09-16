@@ -183,6 +183,13 @@ export réel, connecteur paie.
   semaines que prévu (2 attendues, 3 constatées par le client). La
   planification démarre désormais sur la semaine du jour choisi et ne porte
   que sur les `nbSemaines` du roulement, ni plus ni moins._
+  _Correction du 17/09 : la projection restait malgré tout plafonnée à la
+  période actuellement affichée à l'écran (résidu de l'ancienne logique) —
+  si la 2e semaine d'un roulement de 2 semaines dépassait cette fenêtre
+  visible au moment du clic, elle n'était silencieusement jamais remplie
+  (retour client : "je ne vois que la 1ère semaine", sans aucun message).
+  Retiré : la projection couvre désormais les `nbSemaines` du roulement que
+  ces semaines soient ou non visibles au moment de l'action._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion

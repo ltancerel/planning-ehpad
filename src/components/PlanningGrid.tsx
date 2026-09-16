@@ -191,10 +191,13 @@ export default function PlanningGrid() {
   // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, sur
   // exactement les nbSemaines du roulement à partir du lundi donné (retour
   // client du 17/09 : la planification démarre sur la semaine du jour choisi
-  // et ne porte que sur la durée propre du roulement, pas au-delà). Tout ou
-  // rien : si une seule de ces semaines contient déjà un code horaire, rien
-  // n'est appliqué du tout, et la semaine bloquante est renvoyée pour pouvoir
-  // le signaler à l'utilisateur.
+  // et ne porte que sur la durée propre du roulement, pas au-delà) — que ces
+  // semaines soient ou non actuellement affichées à l'écran (retour client :
+  // une application sur 2 semaines ne montrait que la 1ère si la période
+  // visible au moment du clic ne couvrait pas la 2nde, sans aucun message).
+  // Tout ou rien : si une seule de ces semaines contient déjà un code
+  // horaire, rien n'est appliqué du tout, et la semaine bloquante est
+  // renvoyée pour pouvoir le signaler à l'utilisateur.
   function evaluerProjectionRoulement(
     editionsBase: Record<string, ValeurCellule | undefined>,
     salarieId: string,
@@ -205,7 +208,6 @@ export default function PlanningGrid() {
     bloque: boolean;
     semaineBloqueeISO?: string;
   } {
-    const finVisible = jours[jours.length - 1];
     const valeurDe = (jour: Date) => {
       const cle = `${salarieId}__${formatDateISO(jour)}`;
       return cle in editionsBase ? editionsBase[cle] : PLANNING_DEMO[cle];
@@ -215,13 +217,12 @@ export default function PlanningGrid() {
     for (let semaine = 0; semaine < roulement.nbSemaines; semaine++) {
       const lundiSemaine = new Date(lundiDebut);
       lundiSemaine.setDate(lundiSemaine.getDate() + semaine * 7);
-      if (lundiSemaine > finVisible) break; // période affichée trop courte pour ce roulement
       semaines.push(
         Array.from({ length: 7 }, (_, j) => {
           const jour = new Date(lundiSemaine);
           jour.setDate(jour.getDate() + j);
           return jour;
-        }).filter((jour) => jour <= finVisible)
+        })
       );
     }
 
