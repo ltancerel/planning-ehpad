@@ -453,12 +453,26 @@ l'implémentation du backend dans un epic ultérieur.
   (erreurs, pagination, authentification, versionnement), anticipation du
   futur connecteur paie. Dépend des stories 1 et 2.
 
-- [ ] **4. Concevoir l'architecture multi-application** _(issue #27)_
+- [x] **4. Concevoir l'architecture multi-application** _(issue #27)_
   Socle commun (comptes, EHPAD, authentification) découplé du métier
   Planning, pour permettre le branchement d'une future application (ex. plan
   d'action qualité) partageant les mêmes comptes. Droits par application,
   point d'entrée/portail de navigation entre applications. Résout le point
   ouvert "multi-EHPAD : qui peut créer un nouvel EHPAD".
+  _Tranché le 17/09 : seul l'Administrateur Système peut créer/gérer un
+  EHPAD, depuis un écran dédié — liste des EHPAD existants, création en une
+  seule opération tout-ou-rien (nom, logo, applications souscrites, premier
+  compte Administrateur avec mot de passe fixé directement), et gestion
+  ultérieure (modification des applications souscrites, désactivation sans
+  suppression des données). Portail de navigation entre applications :
+  entrée directe si une seule application accessible, sélecteur simple
+  sinon. Petit complément au modèle de données (issue #25, déjà close) :
+  ajout d'un champ `ehpad.actif`, avec désactivation en cascade de tous les
+  comptes de l'EHPAD via trigger PostgreSQL._
+  _Statut : fait — spécification rédigée dans la Synthèse fonctionnelle
+  (Partie 2 § 3) et dans l'
+  [artifact MCD/MLD](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  mis à jour._
 
 - [ ] **5. Définir la stratégie d'environnements (Vercel / Supabase)** _(issue #28)_
   Environnements Vercel (Production/Preview), deux projets Supabase distincts
@@ -528,10 +542,9 @@ jusqu'à leur résolution effective._
 - ~~Complexité du mot de passe à définir~~ → **tranché le 17/09** : 8
   caractères min., 1 caractère spécial min., indicateur de robustesse au
   vert obligatoire — _cf. issue #24._
-- Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
-  l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
-  hors application pour l'instant ? — _cf. story « Concevoir l'architecture
-  multi-application », issue #27._
+- ~~Multi-EHPAD : qui peut créer un nouvel EHPAD ?~~ → **tranché le 17/09** :
+  l'Administrateur Système, depuis un écran dédié de création/gestion des
+  EHPAD — _cf. issue #27._
 - ~~**Deux représentations distinctes du salarié dans la maquette**~~ (relevé
   le 16/09 en construisant la story 9bis) → **tranché le 17/09** : un modèle
   `salarie` unique dans le schéma backend (table `salarie`, cf. issue #25) ;

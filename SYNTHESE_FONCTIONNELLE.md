@@ -224,8 +224,7 @@ seule.
 
 Cette partie documente les décisions structurantes prises en préparation du
 backend, au fur et à mesure qu'elles sont tranchées. Elle est appelée à
-s'enrichir (API, architecture multi-application, environnements) au fil des
-prochains échanges.
+s'enrichir (API, environnements) au fil des prochains échanges.
 
 ### 1. Authentification et gestion des comptes
 
@@ -315,6 +314,54 @@ dédiés), et non uniquement côté applicatif : l'API générée par Supabase
 étant directement accessible, seules les règles posées en base constituent
 une garantie fiable.
 
+### 3. Architecture multi-application
+
+Prépare l'accueil, à terme, d'une seconde application indépendante de
+Planning (ex. un plan d'action qualité), partageant les mêmes comptes et le
+même établissement.
+
+#### Socle commun
+
+Comptes, établissements (EHPAD) et authentification forment un socle
+découplé du métier Planning, pour qu'une autre application puisse s'y
+brancher sans dépendre de son code ni de son schéma.
+
+#### Droits par application
+
+- Un compte **Administrateur** a accès automatiquement à toutes les
+  applications souscrites par son établissement.
+- Un compte **Utilisateur** a un accès indépendant par application (aucune,
+  une seule, ou plusieurs), toujours contenu dans les applications
+  souscrites par son établissement.
+- Un établissement souscrit explicitement à chaque application (ex. un
+  établissement qui n'a pas pris l'application Qualité) — ce qui permet des
+  offres à périmètre variable.
+
+#### Point d'entrée entre applications
+
+Après connexion, un compte n'ayant accès qu'à une seule application y entre
+directement. Un compte ayant accès à plusieurs applications passe par un
+sélecteur simple (les applications restant peu nombreuses, un portail
+élaboré n'est pas nécessaire à ce stade).
+
+#### Gestion des établissements par l'Administrateur Système
+
+Répond au point ouvert « qui peut créer un nouvel établissement ? » : seul
+l'**Administrateur Système** peut créer, consulter et gérer les
+établissements, depuis un écran dédié qui lui est réservé.
+
+- **Liste des établissements existants**, pour un suivi global.
+- **Création d'un établissement**, en une seule opération (garantie
+  tout-ou-rien) : nom, logo, applications souscrites, et premier compte
+  Administrateur (l'Administrateur Système lui fixe un mot de passe
+  initial, comme pour tout compte). Un établissement n'existe donc jamais
+  sans administrateur.
+- **Gestion d'un établissement existant** : modification des applications
+  souscrites (ex. ajout ultérieur de l'application Qualité), et
+  **désactivation** (résiliation, impayé…) sans suppression des données —
+  la désactivation coupe automatiquement l'accès de tous les comptes de cet
+  établissement, sans avoir à les désactiver un par un.
+
 ---
 
 ## Annexes
@@ -339,5 +386,3 @@ développement :
 - Les droits exacts d'un compte Utilisateur (au-delà des trois types de
   compte désormais fixés : Administrateur Système / Administrateur /
   Utilisateur) restent à détailler écran par écran.
-- Dans une optique multi-établissements, qui est habilité à créer un
-  nouvel établissement dans l'application ?
