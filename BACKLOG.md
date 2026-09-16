@@ -304,6 +304,9 @@ export réel, connecteur paie.
   les salariés — une absence (`CP`), une superposition (`MAL`), une absence
   temporaire à la volée (`ABT`, heures en moins) et des heures
   supplémentaires à la volée (`HSP`, heures en plus)._
+  _Ajout du 17/09 (retour client) : total d'heures par semaine, dans une
+  colonne à droite de chaque ligne, alignée avec le total mensuel déjà
+  présent en bas de la vue._
 
 ## Sortie de l'Epic — WAIVED
 
