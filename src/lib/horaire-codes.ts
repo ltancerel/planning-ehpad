@@ -78,7 +78,10 @@ export function deltaComplementHeures(plageEvenement: Plage, plagesTravail: Plag
 // l'utilisateur (retour client du 17/09 : ex. code 8h-18h, refuser 16h-20h).
 export function plageComplementValide(plageEvenement: Plage, plagesTravail: Plage[]): boolean {
   const evenement = minutesDeLaPlage(plageEvenement);
-  if (!evenement) return false;
+  // Une plage mal saisie (texte libre non reconnu) n'est pas bloquée ici :
+  // elle sera simplement sans effet sur le décompte d'heures. Seul un
+  // chevauchement partiel avéré est refusé (retour client du 17/09).
+  if (!evenement) return true;
   return plagesTravail.every((plageTravail) => {
     const travail = minutesDeLaPlage(plageTravail);
     if (!travail) return true;

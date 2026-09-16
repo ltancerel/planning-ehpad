@@ -261,15 +261,17 @@ export réel, connecteur paie.
   `<input type="time">` natif peut afficher un 3e segment (AM/PM) selon la
   locale du navigateur, qui restait vide tant qu'il n'était pas choisi — la
   plage horaire ne se validait donc jamais, quel que soit le poste de
-  l'utilisateur. Remplacé par deux sélecteurs heure/minute (pas de 15 min)
-  indépendants de la locale ; la touche Entrée valide désormais aussi la
-  saisie une fois la plage complète et valide._
+  l'utilisateur. Remplacé par deux champs texte libres (`08:00` / `10:00`,
+  comme l'affichage initial demandé par le client) qui n'ont plus cette
+  dépendance à la locale ; la touche Entrée valide aussi la saisie._
   _Ajout du 17/09 (retour client) : la plage saisie pour un évènement
   "complément à la volée" doit, pour chaque plage du code de travail, être
   entièrement incluse dedans (heures en moins) ou entièrement en dehors
-  (heures en plus) — un chevauchement partiel est ambigu et est désormais
+  (heures en plus) — un chevauchement partiel avéré est ambigu et est
   refusé (ex. code 8h-18h : un évènement 16h-20h est rejeté avec un message
-  explicite, le bouton "Ajouter" restant désactivé)._
+  explicite). Une saisie mal formée (texte libre non reconnu) n'est en
+  revanche jamais bloquante — retour client du 17/09 : elle est acceptée
+  telle quelle et reste simplement sans effet sur le décompte d'heures._
 
 - [ ] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :

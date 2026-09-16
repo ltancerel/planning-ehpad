@@ -11,15 +11,6 @@ import {
 
 export type PositionSelecteur = { top: number; left: number; width: number };
 
-// Sélecteurs heure/minute indépendants de la locale du navigateur : le
-// <input type="time"> natif peut afficher un 3e segment AM/PM selon la
-// locale système (repérage via clavier réel en sandbox Linux/Chromium sans
-// données ICU fr-FR) — la valeur restait alors vide tant que ce segment
-// n'était pas choisi, bloquant silencieusement le bouton "Ajouter" et la
-// touche Entrée (retour client du 17/09).
-const HEURES = Array.from({ length: 24 }, (_, h) => h.toString().padStart(2, "0"));
-const MINUTES = ["00", "15", "30", "45"];
-
 type HoraireCodeSelectorProps = {
   position: PositionSelecteur;
   aUneValeur?: boolean;
@@ -54,15 +45,8 @@ export default function HoraireCodeSelector({
   const [recherche, setRecherche] = useState("");
   const [indexSurligne, setIndexSurligne] = useState(0);
   const [codeComplementEnSaisie, setCodeComplementEnSaisie] = useState<string | null>(null);
-  // Heure et minute sont gardées séparées (plutôt qu'une seule chaîne
-  // "HH:MM") pour ne pas perdre le premier segment choisi tant que le
-  // second n'est pas encore renseigné.
-  const [heureDebut, setHeureDebut] = useState("");
-  const [minuteDebut, setMinuteDebut] = useState("");
-  const [heureFin, setHeureFin] = useState("");
-  const [minuteFin, setMinuteFin] = useState("");
-  const plageDebut = heureDebut && minuteDebut ? `${heureDebut}:${minuteDebut}` : "";
-  const plageFin = heureFin && minuteFin ? `${heureFin}:${minuteFin}` : "";
+  const [plageDebut, setPlageDebut] = useState("");
+  const [plageFin, setPlageFin] = useState("");
 
   // La position d'ancrage (sous la case cliquée) peut pousser le popover hors
   // de l'écran pour une case proche du bord droit/bas — le bouton "Ajouter"
@@ -139,7 +123,11 @@ export default function HoraireCodeSelector({
     onChoisir(code);
   }
 
-  const plageComplete = Boolean(plageDebut && plageFin);
+  const plageComplete = Boolean(plageDebut.trim() && plageFin.trim());
+  // Un chevauchement partiel avéré est refusé (retour client du 17/09), mais
+  // une saisie mal formatée (texte libre non reconnu) n'est jamais bloquante
+  // — elle sera simplement sans effet sur le décompte d'heures plutôt que
+  // d'empêcher l'ajout.
   const plageValide = plageComplete
     ? plageComplementValide({ debut: plageDebut, fin: plageFin }, plagesTravail ?? [])
     : true;
@@ -148,10 +136,8 @@ export default function HoraireCodeSelector({
     if (!codeComplementEnSaisie || !onChoisirComplement || !plageComplete || !plageValide) return;
     onChoisirComplement(codeComplementEnSaisie, { debut: plageDebut, fin: plageFin });
     setCodeComplementEnSaisie(null);
-    setHeureDebut("");
-    setMinuteDebut("");
-    setHeureFin("");
-    setMinuteFin("");
+    setPlageDebut("");
+    setPlageFin("");
   }
 
   if (codeComplementEnSaisie) {
@@ -160,67 +146,34 @@ export default function HoraireCodeSelector({
       <div
         ref={conteneurRef}
         className="fixed z-50 flex flex-col rounded border border-zinc-200 bg-white p-3 shadow-lg"
-        style={{ top: positionAffichee.top, left: positionAffichee.left, width: Math.max(position.width, 260) }}
+        style={{ top: positionAffichee.top, left: positionAffichee.left, width: Math.max(position.width, 240) }}
       >
         <p className="mb-2 text-xs font-medium text-zinc-700">
           Plage horaire pour «&nbsp;{horaire?.intitule ?? codeComplementEnSaisie}&nbsp;»
         </p>
-        <div
-          className="mb-2 flex items-center gap-2"
-          onKeyDown={(e) => e.key === "Enter" && validerComplement()}
-        >
-          <select
+        <div className="mb-2 flex items-center gap-2">
+          <input
             autoFocus
-            value={heureDebut}
-            onChange={(e) => setHeureDebut(e.target.value)}
-            className="rounded border border-zinc-300 px-1 py-1 text-sm"
-          >
-            <option value="">--</option>
-            {HEURES.map((h) => (
-              <option key={h} value={h}>
-                {h}
-              </option>
-            ))}
-          </select>
-          <span>:</span>
-          <select
-            value={minuteDebut}
-            onChange={(e) => setMinuteDebut(e.target.value)}
-            className="rounded border border-zinc-300 px-1 py-1 text-sm"
-          >
-            <option value="">--</option>
-            {MINUTES.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            placeholder="08:00"
+            value={plageDebut}
+            onChange={(e) => setPlageDebut(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && validerComplement()}
+            className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm"
+          />
           <span className="text-zinc-400">→</span>
-          <select
-            value={heureFin}
-            onChange={(e) => setHeureFin(e.target.value)}
-            className="rounded border border-zinc-300 px-1 py-1 text-sm"
-          >
-            <option value="">--</option>
-            {HEURES.map((h) => (
-              <option key={h} value={h}>
-                {h}
-              </option>
-            ))}
-          </select>
-          <span>:</span>
-          <select
-            value={minuteFin}
-            onChange={(e) => setMinuteFin(e.target.value)}
-            className="rounded border border-zinc-300 px-1 py-1 text-sm"
-          >
-            <option value="">--</option>
-            {MINUTES.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            placeholder="10:00"
+            value={plageFin}
+            onChange={(e) => setPlageFin(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && validerComplement()}
+            className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm"
+          />
         </div>
         {plageComplete && !plageValide ? (
           <p className="mb-2 text-[11px] font-medium text-red-600">
