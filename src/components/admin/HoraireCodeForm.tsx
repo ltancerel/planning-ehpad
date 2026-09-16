@@ -73,6 +73,9 @@ export default function HoraireCodeForm({
   const [heuresPersonnalisees, setHeuresPersonnalisees] = useState(
     valeurInitiale?.heuresPersonnalisees?.toString() ?? ""
   );
+  const [afficherVueAnnuelle, setAfficherVueAnnuelle] = useState(
+    valeurInitiale?.afficherVueAnnuelle ?? false
+  );
   const [erreur, setErreur] = useState<string | null>(null);
 
   const heuresCalculees = useMemo(
@@ -121,6 +124,7 @@ export default function HoraireCodeForm({
       couleurFond,
       couleurTexte,
       commentaire: commentaire.trim() || undefined,
+      afficherVueAnnuelle: afficherVueAnnuelle || undefined,
     };
 
     if (categorie === "travail") {
@@ -328,6 +332,22 @@ export default function HoraireCodeForm({
             )}
           </div>
         )}
+
+        <label className="flex cursor-pointer items-start gap-2 rounded border border-zinc-200 p-2">
+          <input
+            type="checkbox"
+            checked={afficherVueAnnuelle}
+            onChange={(e) => setAfficherVueAnnuelle(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span>
+            <span className="block text-sm font-medium text-zinc-700">Afficher dans la vue annuelle</span>
+            <span className="block text-[11px] text-zinc-500">
+              Colore le jour dans la vue annuelle d&apos;un salarié (repérage rapide des évènements
+              particuliers, sans détail d&apos;horaire). À réserver a priori aux absences.
+            </span>
+          </span>
+        </label>
 
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-700">Commentaire</label>
