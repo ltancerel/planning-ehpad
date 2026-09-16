@@ -7,6 +7,7 @@ import { SALARIES, JOURS_FERIES_2026, PLANNING_DEMO } from "@/lib/mock-data";
 import { HORAIRE_CODES_PAR_CODE, heuresReellesCellule } from "@/lib/horaire-codes";
 import {
   formatDateISO,
+  parseDateISO,
   estWeekend,
   genererMois,
   genererCalendrierMois,
@@ -29,7 +30,7 @@ export default function EmargementContenu() {
 
   const moisParam = searchParams.get("mois");
   const dateMois = useMemo(
-    () => (moisParam ? new Date(`${moisParam}-01`) : new Date(2026, 8, 1)),
+    () => (moisParam ? parseDateISO(`${moisParam}-01`) : new Date(2026, 8, 1)),
     [moisParam]
   );
   const [valide, setValide] = useState(false);

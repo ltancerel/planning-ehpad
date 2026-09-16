@@ -166,6 +166,15 @@ export réel, connecteur paie.
   retour client, la distinction initiale entre les deux n'avait pas anticipé
   le besoin d'effacement ; une case effacée doit redevenir disponible pour
   la planification, y compris quand elle portait une donnée de démo._
+  _Correction du 17/09 : bug de fuseau horaire — `formatDateISO` utilisait
+  `toISOString()` (UTC) sur des dates construites en heure locale, et
+  l'application de roulement re-parsait ensuite la chaîne obtenue avec
+  `new Date(chaîne)` (UTC également) ; pour un fuseau en avance sur UTC
+  (ex. Europe/Paris), ce double aller-retour décalait la semaine ciblée d'une
+  semaine en arrière (retour client : sélectionner le 05/10, semaine vide,
+  déclenchait un blocage sur la semaine du 28/09). Corrigé en formatant et en
+  reparsant les dates en heure locale (`parseDateISO` ajouté dans
+  `src/lib/dates.ts`), dans tout le planning et l'émargement._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
