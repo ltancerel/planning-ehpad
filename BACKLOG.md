@@ -197,6 +197,17 @@ export réel, connecteur paie.
   au besoin réel et doit être corrigée ; les règles vont devoir se
   complexifier. Détail du besoin à préciser avant de démarrer.
 
+- [ ] **18. Correction de la vue émargement mensuelle**
+  Retour client du 16/09, à faire après la story #17 :
+  - Alignement visuel avec la (future) vue annuelle (#16) : code horaire de
+    travail au-dessus du code événementiel (empilés, pas côte à côte comme
+    actuellement), centrés dans la case — au lieu du rendu actuel qui les
+    affiche l'un à côté de l'autre en haut à gauche de la case.
+  - Afficher les plages horaires réellement effectuées chaque jour (ex.
+    06:00–13:00 / 14:00–17:30, déjà définies par code horaire — cf. story #8)
+    plutôt que le seul code abrégé, tout en conservant la synthèse du temps
+    (total d'heures par jour et par mois, déjà présente).
+
 ## Sortie de l'Epic — à préciser avant de reprendre
 
 - **Menu Export** (retiré de l'EPIC le 15/09, issue #12 détachée) : la maquette du
