@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SALARIES, JOURS_FERIES_2026, PLANNING_DEMO } from "@/lib/mock-data";
-import { HORAIRE_CODES_PAR_CODE, heuresReellesCellule } from "@/lib/horaire-codes";
+import { HORAIRE_CODES_PAR_CODE, heuresReellesCellule, deltaEvenementielCellule } from "@/lib/horaire-codes";
 import {
   formatDateISO,
   parseDateISO,
@@ -50,7 +50,11 @@ export default function EmargementContenu() {
     const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
     const horaireEvenementiel = valeur?.evenementiel ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel] : undefined;
     const heures = valeur ? heuresReellesCellule(valeur) : 0;
-    return { valeur, horaireTravail, horaireEvenementiel, heures };
+    // Type "superposition" : le code travail est barré (décompte écrasé).
+    // Type "complement" : le delta (+/-) doit être explicitement visible.
+    const travailBarre = horaireEvenementiel?.typeEvenement === "superposition";
+    const delta = valeur ? deltaEvenementielCellule(valeur) : undefined;
+    return { valeur, horaireTravail, horaireEvenementiel, heures, travailBarre, delta };
   }
 
   const totalHeures = joursDuMois.reduce((total, jour) => total + valeurDuJour(jour).heures, 0);
@@ -125,7 +129,8 @@ export default function EmargementContenu() {
                 <tr key={index}>
                   {semaine.map((jour) => {
                     const dansLeMois = jour.getMonth() === dateMois.getMonth();
-                    const { valeur, horaireTravail, horaireEvenementiel, heures } = valeurDuJour(jour);
+                    const { valeur, horaireTravail, horaireEvenementiel, heures, travailBarre, delta } =
+                      valeurDuJour(jour);
                     const grise = estJourGrise(jour);
 
                     if (!dansLeMois) {
@@ -155,6 +160,7 @@ export default function EmargementContenu() {
                                 style={{
                                   backgroundColor: horaireTravail?.couleurFond,
                                   color: horaireTravail?.couleurTexte,
+                                  textDecoration: travailBarre ? "line-through" : undefined,
                                 }}
                               >
                                 {valeur.travail}
@@ -172,9 +178,19 @@ export default function EmargementContenu() {
                               </span>
                             )}
                           </div>
-                          {heures > 0 && (
-                            <span className="mt-auto text-right text-[10px] text-zinc-400">{heures}h</span>
-                          )}
+                          <div className="mt-auto flex items-center justify-end gap-1">
+                            {delta !== undefined && delta !== 0 && (
+                              <span
+                                className={`text-[10px] font-semibold ${
+                                  delta > 0 ? "text-green-600" : "text-red-600"
+                                }`}
+                              >
+                                {delta > 0 ? "+" : ""}
+                                {delta}h
+                              </span>
+                            )}
+                            {heures > 0 && <span className="text-right text-[10px] text-zinc-400">{heures}h</span>}
+                          </div>
                         </div>
                       </td>
                     );

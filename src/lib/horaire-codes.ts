@@ -4,6 +4,17 @@ export type Plage = { debut: string; fin: string };
 
 export type RegleHeuresEvenement = "zero" | "code_initial" | "personnalise";
 
+// Deux types d'évènement (retour client du 17/09) :
+// - "superposition" : se superpose au code de travail et écrase entièrement
+//   le décompte d'heures (règle regleHeures) — le code de travail reste
+//   visible mais barré. C'est le comportement historique (CAR/ABI/MAL).
+// - "complement" : une plage horaire saisie au moment de positionner
+//   l'évènement sur le planning, qui vient compléter (heures en plus) ou
+//   chevaucher (heures en moins) le code de travail. Le code de travail
+//   n'est pas barré dans ce cas ; le delta est calculé dynamiquement, pas
+//   fixé par le code.
+export type TypeEvenement = "superposition" | "complement";
+
 export type HoraireCode = {
   code: string;
   intitule: string;
@@ -12,22 +23,72 @@ export type HoraireCode = {
   couleurTexte: string;
   commentaire?: string;
   plages?: Plage[];
-  // Champs spécifiques aux codes événementiels (se superposent à un code de travail)
+  // Champs spécifiques aux codes événementiels (categorie === "evenementiel")
   action?: string;
-  regleHeures?: RegleHeuresEvenement;
+  typeEvenement?: TypeEvenement;
+  regleHeures?: RegleHeuresEvenement; // uniquement pour typeEvenement === "superposition"
   heuresPersonnalisees?: number;
 };
 
+function minutesDeLaPlage(plage: Plage): { debut: number; fin: number } | null {
+  const [hd, md] = plage.debut.split(":").map(Number);
+  const [hf, mf] = plage.fin.split(":").map(Number);
+  if (Number.isNaN(hd) || Number.isNaN(md) || Number.isNaN(hf) || Number.isNaN(mf)) return null;
+  if (hd === 0 && md === 0 && hf === 0 && mf === 0) return null;
+  const debut = hd * 60 + md;
+  let fin = hf * 60 + mf;
+  if (fin <= debut) fin += 24 * 60; // plage traversant minuit
+  return { debut, fin };
+}
+
 export function dureeHeures(plages: Plage[] = []): number {
-  return plages.reduce((total, { debut, fin }) => {
-    const [hd, md] = debut.split(":").map(Number);
-    const [hf, mf] = fin.split(":").map(Number);
-    if (hd === 0 && md === 0 && hf === 0 && mf === 0) return total;
-    const minutesDebut = hd * 60 + md;
-    let minutesFin = hf * 60 + mf;
-    if (minutesFin <= minutesDebut) minutesFin += 24 * 60; // plage traversant minuit
-    return total + (minutesFin - minutesDebut) / 60;
+  return plages.reduce((total, plage) => {
+    const bornes = minutesDeLaPlage(plage);
+    return bornes ? total + (bornes.fin - bornes.debut) / 60 : total;
   }, 0);
+}
+
+// Chevauchement (en heures) entre deux plages, 0 si aucun recouvrement.
+function chevauchementHeures(a: Plage, b: Plage): number {
+  const A = minutesDeLaPlage(a);
+  const B = minutesDeLaPlage(b);
+  if (!A || !B) return 0;
+  const debut = Math.max(A.debut, B.debut);
+  const fin = Math.min(A.fin, B.fin);
+  return Math.max(0, fin - debut) / 60;
+}
+
+// Delta d'heures (positif = heures en plus, négatif = heures en moins) d'un
+// évènement "complement" par rapport aux plages du code de travail : la
+// partie de la plage évènement qui chevauche le travail compte en moins,
+// la partie hors travail (complément) compte en plus.
+export function deltaComplementHeures(plageEvenement: Plage, plagesTravail: Plage[]): number {
+  const dureeEvenement = dureeHeures([plageEvenement]);
+  const chevauchementTotal = Math.min(
+    dureeEvenement,
+    plagesTravail.reduce((total, p) => total + chevauchementHeures(plageEvenement, p), 0)
+  );
+  const horsTravail = dureeEvenement - chevauchementTotal;
+  return horsTravail - chevauchementTotal;
+}
+
+// Une plage "complement" doit être, pour chaque plage de travail, soit
+// entièrement incluse dedans (heures en moins), soit entièrement en dehors
+// (heures en plus) — un chevauchement partiel serait ambigu pour
+// l'utilisateur (retour client du 17/09 : ex. code 8h-18h, refuser 16h-20h).
+export function plageComplementValide(plageEvenement: Plage, plagesTravail: Plage[]): boolean {
+  const evenement = minutesDeLaPlage(plageEvenement);
+  // Une plage mal saisie (texte libre non reconnu) n'est pas bloquée ici :
+  // elle sera simplement sans effet sur le décompte d'heures. Seul un
+  // chevauchement partiel avéré est refusé (retour client du 17/09).
+  if (!evenement) return true;
+  return plagesTravail.every((plageTravail) => {
+    const travail = minutesDeLaPlage(plageTravail);
+    if (!travail) return true;
+    const chevauche = Math.min(evenement.fin, travail.fin) - Math.max(evenement.debut, travail.debut) > 0;
+    if (!chevauche) return true;
+    return evenement.debut >= travail.debut && evenement.fin <= travail.fin;
+  });
 }
 
 export const HORAIRE_CODES: HoraireCode[] = [
@@ -85,7 +146,8 @@ export const HORAIRE_CODES: HoraireCode[] = [
   { code: "SOUT", intitule: "Soutien", categorie: "informatif", couleurFond: "#ede9fe", couleurTexte: "#5b21b6" },
   { code: "DOUB", intitule: "Doublure", categorie: "informatif", couleurFond: "#ede9fe", couleurTexte: "#5b21b6" },
 
-  // Horaires événementiels (se superposent à un code de travail)
+  // Horaires événementiels — type "superposition" (se superposent au code de
+  // travail et écrasent entièrement le décompte, cf. regleHeures)
   {
     code: "CAR",
     intitule: "Carence maladie",
@@ -93,6 +155,7 @@ export const HORAIRE_CODES: HoraireCode[] = [
     couleurFond: "#ef4444",
     couleurTexte: "#ffffff",
     action: "Se superpose au code horaire",
+    typeEvenement: "superposition",
     regleHeures: "zero",
   },
   {
@@ -102,6 +165,7 @@ export const HORAIRE_CODES: HoraireCode[] = [
     couleurFond: "#dc2626",
     couleurTexte: "#ffffff",
     action: "Se superpose au code horaire",
+    typeEvenement: "superposition",
     regleHeures: "zero",
   },
   {
@@ -111,10 +175,33 @@ export const HORAIRE_CODES: HoraireCode[] = [
     couleurFond: "#f97316",
     couleurTexte: "#ffffff",
     action: "Se superpose au code horaire",
+    typeEvenement: "superposition",
     regleHeures: "code_initial",
   },
   { code: "ABA", intitule: "Congé sans solde", categorie: "evenementiel", couleurFond: "#a1a1aa", couleurTexte: "#ffffff" },
   { code: "CP", intitule: "Congés", categorie: "evenementiel", couleurFond: "#60a5fa", couleurTexte: "#1e3a8a" },
+
+  // Horaires événementiels — type "complement" (plage horaire saisie à la
+  // volée : chevauchement du travail = heures en moins, hors travail =
+  // heures en plus, cf. retour client du 17/09)
+  {
+    code: "ABT",
+    intitule: "Absence temporaire",
+    categorie: "evenementiel",
+    couleurFond: "#fed7aa",
+    couleurTexte: "#713f12",
+    action: "Complète le code horaire sur une plage saisie à la volée",
+    typeEvenement: "complement",
+  },
+  {
+    code: "HSP",
+    intitule: "Heures supplémentaires",
+    categorie: "evenementiel",
+    couleurFond: "#bbf7d0",
+    couleurTexte: "#14532d",
+    action: "Complète le code horaire sur une plage saisie à la volée",
+    typeEvenement: "complement",
+  },
 ];
 
 export const HORAIRE_CODES_PAR_CODE: Record<string, HoraireCode> = Object.fromEntries(
@@ -130,22 +217,44 @@ export function heuresDuCode(code: string): number {
 // Une cellule du planning peut porter un code travail et, en superposition,
 // un code événementiel qui vient l'amender (cf. CDC section 3/ "des codes
 // horaire évènementiels qui viennent... se superposer sur des codes horaires
-// de travail"). Seuls les codes événementiels dotés d'une regleHeures se
-// superposent (CAR/ABI/MAL) ; les autres (ABA/CP) s'utilisent seuls.
+// de travail"). Seuls les codes événementiels dotés d'un typeEvenement se
+// superposent (CAR/ABI/MAL/AJT) ; les autres (ABA/CP) s'utilisent seuls.
 export type ValeurCellule = {
   travail?: string;
   evenementiel?: string;
+  // Uniquement pour un évènement de type "complement" : la plage horaire
+  // saisie au moment de le positionner sur le planning.
+  evenementielPlage?: Plage;
 };
 
 export function estCodeSuperposable(code: string): boolean {
   const horaire = HORAIRE_CODES_PAR_CODE[code.toUpperCase()];
-  return horaire?.categorie === "evenementiel" && horaire.regleHeures !== undefined;
+  return horaire?.categorie === "evenementiel" && horaire.typeEvenement !== undefined;
+}
+
+export function estCodeComplement(code: string): boolean {
+  return HORAIRE_CODES_PAR_CODE[code.toUpperCase()]?.typeEvenement === "complement";
+}
+
+// Delta (en heures, signé) apporté par un évènement "complement" sur une
+// cellule, ou undefined si non applicable — pour l'afficher explicitement
+// (+/-) dans l'émargement mensuel, cf. retour client du 17/09.
+export function deltaEvenementielCellule(valeur: ValeurCellule): number | undefined {
+  if (!valeur.evenementiel || !valeur.evenementielPlage) return undefined;
+  const horaireEvenementiel = HORAIRE_CODES_PAR_CODE[valeur.evenementiel.toUpperCase()];
+  if (horaireEvenementiel?.typeEvenement !== "complement") return undefined;
+  const plagesTravail = valeur.travail ? (HORAIRE_CODES_PAR_CODE[valeur.travail.toUpperCase()]?.plages ?? []) : [];
+  return deltaComplementHeures(valeur.evenementielPlage, plagesTravail);
 }
 
 export function heuresReellesCellule(valeur: ValeurCellule): number {
   const heuresBase = valeur.travail ? heuresDuCode(valeur.travail) : 0;
   if (!valeur.evenementiel) return heuresBase;
   const horaireEvenementiel = HORAIRE_CODES_PAR_CODE[valeur.evenementiel.toUpperCase()];
+  if (horaireEvenementiel?.typeEvenement === "complement") {
+    const delta = deltaEvenementielCellule(valeur) ?? 0;
+    return Math.max(0, heuresBase + delta);
+  }
   switch (horaireEvenementiel?.regleHeures) {
     case "zero":
       return 0;

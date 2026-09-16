@@ -227,11 +227,51 @@ export réel, connecteur paie.
   sur toute une année (vue synthétique, à l'opposé de la grille planning qui
   n'affiche que 4 semaines à la fois). Ajoutée le 16/09, à faire plus tard.
 
-- [ ] **17. Correction des codes horaires événementiels** _(issue #19)_
+- [x] **17. Correction des codes horaires événementiels** _(issue #19)_
   Retour client du 16/09 : la gestion actuelle des codes événementiels
   (CAR/MAL/ABI superposables, CP autonome — cf. story #3) ne correspond pas
   au besoin réel et doit être corrigée ; les règles vont devoir se
   complexifier. Détail du besoin à préciser avant de démarrer.
+  _Statut : fait sur la branche de travail, pas encore mergé. Retour client
+  du 16/09 précisé : deux types d'évènement, configurables par code dans
+  l'admin "Créer un code horaire" :_
+  _- "Superposition" (comportement historique CAR/ABI/MAL) : se superpose au
+  code de travail et écrase entièrement le décompte d'heures (`regleHeures`)
+  — le code de travail reste visible mais est désormais barré dans la vue
+  planning et dans l'émargement mensuel._
+  _- "Complément à la volée" (nouveau) : une plage horaire est saisie au
+  moment de positionner l'évènement sur le planning (mini-formulaire heure
+  début/fin dans le sélecteur de code) ; la partie qui chevauche le code de
+  travail est décomptée en heures en moins, la partie hors travail est
+  ajoutée en heures en plus (delta signé calculé dynamiquement). Le code de
+  travail n'est pas barré ; le delta (+Xh / -Xh) est affiché explicitement
+  à côté des heures dans l'émargement mensuel, et dans l'infobulle de la
+  case planning. Deux codes de type "complément à la volée" : `ABT`
+  ("Absence temporaire", orange) et `HSP` ("Heures supplémentaires", vert)._
+  _Le formulaire admin de création/modification d'un code horaire événementiel
+  propose désormais le choix du type (avec description de chacun), et masque
+  la règle de décompte d'heures pour le type "Complément à la volée" (calculée
+  dynamiquement, non paramétrable)._
+  _Correction du 17/09 (popover hors écran) : le popover de saisie de la
+  plage horaire (comme la liste de codes) pouvait s'afficher partiellement
+  hors de la fenêtre pour une case proche du bord droit/bas de l'écran,
+  rendant le bouton "Ajouter" inatteignable au clic. Il se recadre désormais
+  dans la zone visible une fois affiché._
+  _Correction du 17/09 (bouton "Ajouter" et touche Entrée inactifs) : le
+  `<input type="time">` natif peut afficher un 3e segment (AM/PM) selon la
+  locale du navigateur, qui restait vide tant qu'il n'était pas choisi — la
+  plage horaire ne se validait donc jamais, quel que soit le poste de
+  l'utilisateur. Remplacé par deux champs texte libres (`08:00` / `10:00`,
+  comme l'affichage initial demandé par le client) qui n'ont plus cette
+  dépendance à la locale ; la touche Entrée valide aussi la saisie._
+  _Ajout du 17/09 (retour client) : la plage saisie pour un évènement
+  "complément à la volée" doit, pour chaque plage du code de travail, être
+  entièrement incluse dedans (heures en moins) ou entièrement en dehors
+  (heures en plus) — un chevauchement partiel avéré est ambigu et est
+  refusé (ex. code 8h-18h : un évènement 16h-20h est rejeté avec un message
+  explicite). Une saisie mal formée (texte libre non reconnu) n'est en
+  revanche jamais bloquante — retour client du 17/09 : elle est acceptée
+  telle quelle et reste simplement sans effet sur le décompte d'heures._
 
 - [ ] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
@@ -263,6 +303,16 @@ export réel, connecteur paie.
   raison de spécification précisée ; à reprendre si besoin dans un prochain Epic.
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
+
+- **Mettre en place une suite de tests automatisés rejouables (Playwright)**
+  _(issue #21)_ — ajouté le 17/09, décision du client. Pendant la maquette,
+  les vérifications de non-régression sont faites via des scripts Playwright
+  ponctuels (dossier temporaire hors dépôt), non commités et non rejouables.
+  À remplacer par une vraie suite e2e commitée dans le dépôt (`npm run
+  test:e2e`), couvrant les parcours déjà validés manuellement (planning,
+  codes événementiels, émargement, roulements, config). Volontairement hors
+  périmètre de l'EPIC #1 : à traiter lors de la mise en place du backend,
+  une fois la maquette graphique figée sur une première version.
 
 - **Export PDF téléchargeable** (ajouté le 15/09, suite à la case signature de la
   vue émargement) : au-delà de l'impression navigateur déjà en place

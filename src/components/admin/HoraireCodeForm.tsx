@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { HoraireCategorie, HoraireCode, Plage, RegleHeuresEvenement } from "@/lib/horaire-codes";
+import type {
+  HoraireCategorie,
+  HoraireCode,
+  Plage,
+  RegleHeuresEvenement,
+  TypeEvenement,
+} from "@/lib/horaire-codes";
 import { dureeHeures } from "@/lib/horaire-codes";
 import { PALETTE_FOND, PALETTE_TEXTE } from "@/lib/palette";
 import ColorField from "./ColorField";
@@ -9,8 +15,23 @@ import ColorField from "./ColorField";
 const CATEGORIES: { valeur: HoraireCategorie; libelle: string }[] = [
   { valeur: "travail", libelle: "Travail (plages horaires)" },
   { valeur: "informatif", libelle: "Informatif" },
-  { valeur: "evenementiel", libelle: "Événementiel (superposition)" },
+  { valeur: "evenementiel", libelle: "Événementiel" },
   { valeur: "special", libelle: "Particulier (repos / absence)" },
+];
+
+const TYPES_EVENEMENT: { valeur: TypeEvenement; libelle: string; description: string }[] = [
+  {
+    valeur: "superposition",
+    libelle: "Superposition",
+    description:
+      "Se superpose au code de travail et écrase entièrement le décompte d'heures (le code de travail reste visible mais barré).",
+  },
+  {
+    valeur: "complement",
+    libelle: "Complément à la volée",
+    description:
+      "Une plage horaire est saisie au moment de positionner l'évènement sur le planning : elle vient en heures en moins si elle chevauche le code de travail, en heures en plus sinon. Le code de travail n'est pas barré.",
+  },
 ];
 
 const REGLES_HEURES: { valeur: RegleHeuresEvenement; libelle: string }[] = [
@@ -45,6 +66,9 @@ export default function HoraireCodeForm({
     valeurInitiale?.plages?.length ? valeurInitiale.plages : [PLAGE_VIDE]
   );
   const [action, setAction] = useState(valeurInitiale?.action ?? "Se superpose au code horaire");
+  const [typeEvenement, setTypeEvenement] = useState<TypeEvenement>(
+    valeurInitiale?.typeEvenement ?? "superposition"
+  );
   const [regleHeures, setRegleHeures] = useState<RegleHeuresEvenement>(valeurInitiale?.regleHeures ?? "zero");
   const [heuresPersonnalisees, setHeuresPersonnalisees] = useState(
     valeurInitiale?.heuresPersonnalisees?.toString() ?? ""
@@ -57,7 +81,10 @@ export default function HoraireCodeForm({
   );
 
   function changerCode(saisie: string) {
-    setCode(saisie.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3));
+    // Les codes existants ne sont pas tous des lettres pures (ex. "60S",
+    // "70A", "185", ".", "?", "??") et peuvent aller jusqu'à 5 caractères
+    // (ex. "NDISP") — cf. retour client du 17/09 ("60S" refusé à l'édition).
+    setCode(saisie.toUpperCase().replace(/[^A-Z0-9.?]/g, "").slice(0, 5));
   }
 
   function changerPlage(index: number, champ: keyof Plage, valeur: string) {
@@ -73,8 +100,8 @@ export default function HoraireCodeForm({
   }
 
   function valider() {
-    if (!/^[A-Z]{1,3}$/.test(code)) {
-      setErreur("Le code doit contenir 1 à 3 lettres majuscules.");
+    if (!/^[A-Z0-9.?]{1,5}$/.test(code)) {
+      setErreur("Le code doit contenir 1 à 5 caractères (lettres majuscules, chiffres, . ou ?).");
       return;
     }
     const autresCode = codesExistants.filter((c) => c !== valeurInitiale?.code.toUpperCase());
@@ -101,9 +128,12 @@ export default function HoraireCodeForm({
     }
     if (categorie === "evenementiel") {
       nouveauCode.action = action.trim() || undefined;
-      nouveauCode.regleHeures = regleHeures;
-      if (regleHeures === "personnalise") {
-        nouveauCode.heuresPersonnalisees = Number(heuresPersonnalisees) || 0;
+      nouveauCode.typeEvenement = typeEvenement;
+      if (typeEvenement === "superposition") {
+        nouveauCode.regleHeures = regleHeures;
+        if (regleHeures === "personnalise") {
+          nouveauCode.heuresPersonnalisees = Number(heuresPersonnalisees) || 0;
+        }
       }
     }
 
@@ -140,7 +170,7 @@ export default function HoraireCodeForm({
 
         <div className="flex gap-3">
           <div className="w-24">
-            <label className="mb-1 block text-xs font-medium text-zinc-700">Code (3 lettres max)</label>
+            <label className="mb-1 block text-xs font-medium text-zinc-700">Code (5 caractères max)</label>
             <input
               value={code}
               onChange={(e) => changerCode(e.target.value)}
@@ -183,6 +213,7 @@ export default function HoraireCodeForm({
                 <div key={index} className="flex items-center gap-2">
                   <input
                     type="time"
+                    lang="fr-FR"
                     value={plage.debut}
                     onChange={(e) => changerPlage(index, "debut", e.target.value)}
                     className="rounded border border-zinc-300 px-2 py-1 text-sm"
@@ -190,6 +221,7 @@ export default function HoraireCodeForm({
                   <span className="text-zinc-400">→</span>
                   <input
                     type="time"
+                    lang="fr-FR"
                     value={plage.fin}
                     onChange={(e) => changerPlage(index, "fin", e.target.value)}
                     className="rounded border border-zinc-300 px-2 py-1 text-sm"
@@ -235,32 +267,65 @@ export default function HoraireCodeForm({
               />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700">
-                Total d&apos;heures comptabilisées
-              </label>
-              <select
-                value={regleHeures}
-                onChange={(e) => setRegleHeures(e.target.value as RegleHeuresEvenement)}
-                className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-              >
-                {REGLES_HEURES.map((r) => (
-                  <option key={r.valeur} value={r.valeur}>
-                    {r.libelle}
-                  </option>
+              <label className="mb-1 block text-xs font-medium text-zinc-700">Type d&apos;évènement</label>
+              <div className="space-y-2">
+                {TYPES_EVENEMENT.map((t) => (
+                  <label
+                    key={t.valeur}
+                    className={`flex cursor-pointer items-start gap-2 rounded border p-2 ${
+                      typeEvenement === t.valeur ? "border-blue-400 bg-blue-50" : "border-zinc-200"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="typeEvenement"
+                      checked={typeEvenement === t.valeur}
+                      onChange={() => setTypeEvenement(t.valeur)}
+                      className="mt-0.5"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-zinc-700">{t.libelle}</span>
+                      <span className="block text-[11px] text-zinc-500">{t.description}</span>
+                    </span>
+                  </label>
                 ))}
-              </select>
-              {regleHeures === "personnalise" && (
-                <input
-                  type="number"
-                  min={0}
-                  step={0.5}
-                  value={heuresPersonnalisees}
-                  onChange={(e) => setHeuresPersonnalisees(e.target.value)}
-                  className="mt-2 w-24 rounded border border-zinc-300 px-2 py-1 text-sm"
-                  placeholder="Heures"
-                />
-              )}
+              </div>
             </div>
+            {typeEvenement === "superposition" ? (
+              <div>
+                <label className="mb-1 block text-xs font-medium text-zinc-700">
+                  Total d&apos;heures comptabilisées
+                </label>
+                <select
+                  value={regleHeures}
+                  onChange={(e) => setRegleHeures(e.target.value as RegleHeuresEvenement)}
+                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+                >
+                  {REGLES_HEURES.map((r) => (
+                    <option key={r.valeur} value={r.valeur}>
+                      {r.libelle}
+                    </option>
+                  ))}
+                </select>
+                {regleHeures === "personnalise" && (
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.5}
+                    value={heuresPersonnalisees}
+                    onChange={(e) => setHeuresPersonnalisees(e.target.value)}
+                    className="mt-2 w-24 rounded border border-zinc-300 px-2 py-1 text-sm"
+                    placeholder="Heures"
+                  />
+                )}
+              </div>
+            ) : (
+              <p className="rounded bg-zinc-50 p-2 text-xs text-zinc-500">
+                Les heures sont calculées automatiquement à partir de la plage saisie au moment de
+                positionner l&apos;évènement sur le planning (chevauchement du code de travail = heures en
+                moins, hors travail = heures en plus).
+              </p>
+            )}
           </div>
         )}
 
