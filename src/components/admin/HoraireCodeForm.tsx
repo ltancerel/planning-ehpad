@@ -81,7 +81,10 @@ export default function HoraireCodeForm({
   );
 
   function changerCode(saisie: string) {
-    setCode(saisie.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3));
+    // Les codes existants ne sont pas tous des lettres pures (ex. "60S",
+    // "70A", "185", ".", "?", "??") et peuvent aller jusqu'à 5 caractères
+    // (ex. "NDISP") — cf. retour client du 17/09 ("60S" refusé à l'édition).
+    setCode(saisie.toUpperCase().replace(/[^A-Z0-9.?]/g, "").slice(0, 5));
   }
 
   function changerPlage(index: number, champ: keyof Plage, valeur: string) {
@@ -97,8 +100,8 @@ export default function HoraireCodeForm({
   }
 
   function valider() {
-    if (!/^[A-Z]{1,3}$/.test(code)) {
-      setErreur("Le code doit contenir 1 à 3 lettres majuscules.");
+    if (!/^[A-Z0-9.?]{1,5}$/.test(code)) {
+      setErreur("Le code doit contenir 1 à 5 caractères (lettres majuscules, chiffres, . ou ?).");
       return;
     }
     const autresCode = codesExistants.filter((c) => c !== valeurInitiale?.code.toUpperCase());
@@ -167,7 +170,7 @@ export default function HoraireCodeForm({
 
         <div className="flex gap-3">
           <div className="w-24">
-            <label className="mb-1 block text-xs font-medium text-zinc-700">Code (3 lettres max)</label>
+            <label className="mb-1 block text-xs font-medium text-zinc-700">Code (5 caractères max)</label>
             <input
               value={code}
               onChange={(e) => changerCode(e.target.value)}
