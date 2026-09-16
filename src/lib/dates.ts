@@ -1,7 +1,21 @@
 const JOURS_LETTRE = ["L", "Ma", "M", "J", "V", "S", "D"];
 
+// Formate en heure locale (année/mois/jour "muraux"), pas via toISOString()
+// qui convertit en UTC : pour un fuseau en avance sur UTC (ex. Europe), minuit
+// local peut correspondre à la veille en UTC et décalerait la date d'un jour.
 export function formatDateISO(date: Date): string {
-  return date.toISOString().slice(0, 10);
+  const annee = date.getFullYear();
+  const mois = String(date.getMonth() + 1).padStart(2, "0");
+  const jour = String(date.getDate()).padStart(2, "0");
+  return `${annee}-${mois}-${jour}`;
+}
+
+// Pendant inverse de formatDateISO : reconstruit la date en heure locale à
+// partir d'une chaîne "AAAA-MM-JJ", plutôt que new Date(chaîne) qui
+// l'interprète en UTC et peut la décaler d'un jour selon le fuseau local.
+export function parseDateISO(dateISO: string): Date {
+  const [annee, mois, jour] = dateISO.split("-").map(Number);
+  return new Date(annee, mois - 1, jour);
 }
 
 export function lettreJour(date: Date): string {

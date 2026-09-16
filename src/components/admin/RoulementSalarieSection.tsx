@@ -3,10 +3,10 @@
 import { useState } from "react";
 import type { AffectationRoulement, Roulement } from "@/lib/mock-data";
 import { affectationActuelle, affectationsRecentesDabord } from "@/lib/mock-data";
-import { lundiDeLaSemaine, formatDateISO, formatJourMois } from "@/lib/dates";
+import { lundiDeLaSemaine, formatDateISO, formatJourMois, parseDateISO } from "@/lib/dates";
 
 function formatDateAffichee(dateISO: string): string {
-  return formatJourMois(new Date(dateISO));
+  return formatJourMois(parseDateISO(dateISO));
 }
 
 type RoulementSalarieSectionProps = {
@@ -23,7 +23,7 @@ export default function RoulementSalarieSection({
   onAssigner,
 }: RoulementSalarieSectionProps) {
   const [roulementChoisiId, setRoulementChoisiId] = useState(roulements[0]?.id ?? "");
-  const [dateDebut, setDateDebut] = useState(formatDateISO(lundiDeLaSemaine(new Date(dateReferenceISO))));
+  const [dateDebut, setDateDebut] = useState(formatDateISO(lundiDeLaSemaine(parseDateISO(dateReferenceISO))));
   const [dateFin, setDateFin] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -36,7 +36,7 @@ export default function RoulementSalarieSection({
 
   function changerDateDebut(valeur: string) {
     if (!valeur) return;
-    setDateDebut(formatDateISO(lundiDeLaSemaine(new Date(valeur))));
+    setDateDebut(formatDateISO(lundiDeLaSemaine(parseDateISO(valeur))));
   }
 
   function assigner() {

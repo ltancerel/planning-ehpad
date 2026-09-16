@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { AffectationRoulement, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
 import { SERVICES_ORDRE, MANAGERS, affectationActuelle } from "@/lib/mock-data";
-import { formatDateISO, formatJourMois } from "@/lib/dates";
+import { formatDateISO, formatJourMois, parseDateISO } from "@/lib/dates";
 import RoulementSalariePanel from "@/components/admin/RoulementSalariePanel";
 
 function capitaliser(texte: string): string {
@@ -193,7 +193,7 @@ export default function SalarieForm({
               {modeEdition ? (
                 <p className="mt-0.5 truncate text-xs text-zinc-500">
                   {roulementActuel && nomRoulementActuel
-                    ? `${nomRoulementActuel} — depuis le ${formatJourMois(new Date(roulementActuel.dateDebut))}`
+                    ? `${nomRoulementActuel} — depuis le ${formatJourMois(parseDateISO(roulementActuel.dateDebut))}`
                     : "Aucun roulement assigné"}
                 </p>
               ) : (

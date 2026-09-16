@@ -22,6 +22,7 @@ import {
 } from "@/lib/horaire-codes";
 import {
   formatDateISO,
+  parseDateISO,
   lettreJour,
   estWeekend,
   formatJourMois,
@@ -87,7 +88,7 @@ export default function PlanningGrid() {
     try {
       const enregistree = localStorage.getItem(CLE_STOCKAGE_PERIODE);
       if (!enregistree) return;
-      const periodeEnregistree = lundiDeLaSemaine(new Date(enregistree));
+      const periodeEnregistree = lundiDeLaSemaine(parseDateISO(enregistree));
       // Hydratation depuis localStorage au montage : nécessairement post-render côté client
       // pour éviter un mismatch SSR (le serveur n'a pas accès à localStorage).
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -187,12 +188,16 @@ export default function PlanningGrid() {
     setPositionConfirmation(null);
   }
 
-  // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, à
-  // partir du lundi donné jusqu'à la fin de la période affichée. Retour
-  // client du 16/09 : tout ou rien — si une seule semaine de la période
-  // contient déjà un code horaire, rien n'est appliqué du tout (plutôt que
-  // d'appliquer partiellement les autres semaines), et la semaine bloquante
-  // est renvoyée pour pouvoir le signaler à l'utilisateur.
+  // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, sur
+  // exactement les nbSemaines du roulement à partir du lundi donné (retour
+  // client du 17/09 : la planification démarre sur la semaine du jour choisi
+  // et ne porte que sur la durée propre du roulement, pas au-delà) — que ces
+  // semaines soient ou non actuellement affichées à l'écran (retour client :
+  // une application sur 2 semaines ne montrait que la 1ère si la période
+  // visible au moment du clic ne couvrait pas la 2nde, sans aucun message).
+  // Tout ou rien : si une seule de ces semaines contient déjà un code
+  // horaire, rien n'est appliqué du tout, et la semaine bloquante est
+  // renvoyée pour pouvoir le signaler à l'utilisateur.
   function evaluerProjectionRoulement(
     editionsBase: Record<string, ValeurCellule | undefined>,
     salarieId: string,
@@ -203,23 +208,21 @@ export default function PlanningGrid() {
     bloque: boolean;
     semaineBloqueeISO?: string;
   } {
-    const finVisible = jours[jours.length - 1];
     const valeurDe = (jour: Date) => {
       const cle = `${salarieId}__${formatDateISO(jour)}`;
       return cle in editionsBase ? editionsBase[cle] : PLANNING_DEMO[cle];
     };
 
     const semaines: Date[][] = [];
-    for (let semaine = 0; ; semaine++) {
+    for (let semaine = 0; semaine < roulement.nbSemaines; semaine++) {
       const lundiSemaine = new Date(lundiDebut);
       lundiSemaine.setDate(lundiSemaine.getDate() + semaine * 7);
-      if (lundiSemaine > finVisible) break;
       semaines.push(
         Array.from({ length: 7 }, (_, j) => {
           const jour = new Date(lundiSemaine);
           jour.setDate(jour.getDate() + j);
           return jour;
-        }).filter((jour) => jour <= finVisible)
+        })
       );
     }
 
@@ -230,8 +233,7 @@ export default function PlanningGrid() {
     }
 
     let nouvelles = editionsBase;
-    semaines.forEach((joursDeLaSemaine, semaine) => {
-      const semaineIndex = semaine % roulement.nbSemaines;
+    semaines.forEach((joursDeLaSemaine, semaineIndex) => {
       for (const jour of joursDeLaSemaine) {
         const jourIndex = (jour.getDay() + 6) % 7; // 0 = lundi
         const code = roulement.motif[semaineIndex][jourIndex];
@@ -245,7 +247,7 @@ export default function PlanningGrid() {
 
   function appliquerSelection() {
     if (!selectionEnCours) return;
-    const lundi = lundiDeLaSemaine(new Date(selectionEnCours.dateISO));
+    const lundi = lundiDeLaSemaine(parseDateISO(selectionEnCours.dateISO));
 
     setEditions((prev) => {
       let nouvelles = prev;
@@ -265,12 +267,12 @@ export default function PlanningGrid() {
     const [salarieId, dateISO] = cellEnEdition.split("__");
     const roulement = roulementActuelDuSalarie(salarieId);
     if (!roulement) return;
-    const lundi = lundiDeLaSemaine(new Date(dateISO));
+    const lundi = lundiDeLaSemaine(parseDateISO(dateISO));
     const resultat = evaluerProjectionRoulement(editions, salarieId, lundi, roulement);
     if (resultat.bloque) {
       alert(
         `Impossible d'appliquer le roulement : la semaine du ${formatJourMois(
-          new Date(resultat.semaineBloqueeISO!)
+          parseDateISO(resultat.semaineBloqueeISO!)
         )} contient déjà un code horaire. Effacez-le d'abord (sélectionnez les cases concernées puis Suppr, ou le bouton « Supprimer »).`
       );
       return;
@@ -318,19 +320,21 @@ export default function PlanningGrid() {
 
   function demanderConfirmationEffacement() {
     const cellules = celluleEnSelectionEffacement();
+    // Toute case pas déjà hachurée compte : un jour de repos "vidé" par un
+    // roulement (pas de code travail/évènementiel, donc rien à "supprimer" au
+    // sens strict) doit quand même redevenir hachuré avec le reste de la
+    // plage effacée, plutôt que de rester blanc (retour client du 17/09).
     const remplies = cellules.filter(({ salarieId, dateISO }) => {
       const cle = `${salarieId}__${dateISO}`;
       const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
-      return valeur !== undefined && (valeur.travail || valeur.evenementiel);
+      return valeur !== undefined;
     });
     if (remplies.length === 0) {
       annulerEffacement();
       return;
     }
     const confirme = confirm(
-      `Supprimer le${remplies.length > 1 ? "s" : ""} code${remplies.length > 1 ? "s" : ""} horaire${
-        remplies.length > 1 ? "s" : ""
-      } sur ${remplies.length} case${remplies.length > 1 ? "s" : ""} ?`
+      `Effacer ${remplies.length} case${remplies.length > 1 ? "s" : ""} (codes horaires et jours de repos) ?`
     );
     if (confirme) {
       setEditions((prev) => {
@@ -476,7 +480,7 @@ export default function PlanningGrid() {
                     defaultValue={formatDateISO(debutPeriode)}
                     onChange={(e) => {
                       if (e.target.value) {
-                        setDebutPeriode(lundiDeLaSemaine(new Date(e.target.value)));
+                        setDebutPeriode(lundiDeLaSemaine(parseDateISO(e.target.value)));
                         setSelecteurOuvert(false);
                       }
                     }}
@@ -736,10 +740,10 @@ export default function PlanningGrid() {
           >
             <p className="mb-2 font-medium text-zinc-700">
               {selectionEnCours.salarieIds.length} salarié(s) sélectionné(s) — semaine du{" "}
-              {formatJourMois(lundiDeLaSemaine(new Date(selectionEnCours.dateISO)))}
+              {formatJourMois(lundiDeLaSemaine(parseDateISO(selectionEnCours.dateISO)))}
             </p>
             {(() => {
-              const lundi = lundiDeLaSemaine(new Date(selectionEnCours.dateISO));
+              const lundi = lundiDeLaSemaine(parseDateISO(selectionEnCours.dateISO));
               const evaluation = selectionEnCours.salarieIds.map((id) => {
                 const salarie = SALARIES.find((s) => s.id === id)!;
                 const roulement = roulementActuelDuSalarie(id);
