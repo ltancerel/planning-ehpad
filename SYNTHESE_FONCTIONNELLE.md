@@ -226,6 +226,34 @@ Cette partie documente les décisions structurantes prises en préparation du
 backend, au fur et à mesure qu'elles sont tranchées. Elle est appelée à
 s'enrichir (API, environnements) au fil des prochains échanges.
 
+### Contrainte transverse : hébergement serverless (Vercel)
+
+Le backend (API, logique serveur) est hébergé sur Vercel sous forme de
+fonctions serverless (« Vercel Functions »), pas sur un serveur ou un
+conteneur qu'on gère soi-même. Concrètement, chaque appel à une route API
+provisionne à la demande une instance d'exécution éphémère (isolée dans une
+micro-VM), qui traite la requête puis est libérée ou réutilisée pour une
+requête suivante — sans jamais qu'on ait à dimensionner ni maintenir de
+serveur.
+
+Cette architecture apporte une réelle simplicité de mise en œuvre et de
+déploiement (pas d'infrastructure à administrer, montée en charge
+automatique), mais avec une contrainte structurante : **aucun système de
+fichiers persistant**. L'espace disque temporaire disponible pendant
+l'exécution est remis à zéro entre deux appels (et peut même être une
+machine physique différente d'un appel à l'autre) — impossible donc d'y
+stocker durablement quoi que ce soit (logo d'un EHPAD, export généré,
+fichier de sauvegarde...).
+
+**Conséquence pour notre architecture** : toute donnée qui doit survivre à
+une requête est stockée ailleurs que sur le serveur d'exécution — dans
+notre cas, **Supabase Storage** (déjà retenu pour le logo d'un EHPAD, cf.
+modélisation de la base de données) plutôt qu'un dossier de fichiers côté
+serveur. C'est aussi cette contrainte qui explique pourquoi la sauvegarde
+de la base de données (issue #29) passe par une connexion PostgreSQL
+directe vers un serveur externe, plutôt que par une tâche Vercel qui
+écrirait un fichier de sauvegarde localement.
+
 ### 1. Authentification et gestion des comptes
 
 #### Types de comptes
