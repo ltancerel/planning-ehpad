@@ -273,7 +273,7 @@ export réel, connecteur paie.
   revanche jamais bloquante — retour client du 17/09 : elle est acceptée
   telle quelle et reste simplement sans effet sur le décompte d'heures._
 
-- [ ] **18. Correction de la vue émargement mensuelle** _(issue #20)_
+- [x] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
   - Alignement visuel avec la (future) vue annuelle (#16) : code horaire de
     travail au-dessus du code événementiel (empilés, pas côte à côte comme
@@ -283,6 +283,27 @@ export réel, connecteur paie.
     06:00–13:00 / 14:00–17:30, déjà définies par code horaire — cf. story #8)
     plutôt que le seul code abrégé, tout en conservant la synthèse du temps
     (total d'heures par jour et par mois, déjà présente).
+  _Statut : fait sur la branche de travail, pas encore mergé. Retour client
+  du 17/09 précisé (redesign complet de la case jour) :_
+  _- Code travail empilé au-dessus du code événementiel (au lieu de côte à
+  côte), chacun dans un badge coloré avec son code ET son intitulé (pas
+  seulement le code), plus les plages horaires du code travail._
+  _- Décompte horaire initial du code travail affiché, barré si un code
+  évènement de superposition (CAR/MAL/ABI) l'a modifié, avec le nombre
+  d'heures résultant affiché à côté dans une pastille colorée reprenant les
+  couleurs du code évènement (`→ Xh`) — le simple texte coloré était
+  illisible sur fond blanc pour un code à texte blanc comme CAR/MAL._
+  _- Pour un évènement complément à la volée (ABT/HSP), la plage horaire
+  saisie et le delta (+/-Xh) apparaissent dans le badge de l'évènement,
+  dans son propre code couleur._
+  _- Largeur de la vue élargie (`max-w-2xl` → `max-w-5xl`) et hauteur des
+  cases augmentée pour laisser la place à ce contenu plus riche._
+  _- Exemples de démonstration ajoutés (retour client : "dupliquer la même
+  vue pour chaque salarié, je n'ai pas besoin de plusieurs exemples") :
+  4 dates fixes de septembre 2026 (mois par défaut), identiques pour tous
+  les salariés — une absence (`CP`), une superposition (`MAL`), une absence
+  temporaire à la volée (`ABT`, heures en moins) et des heures
+  supplémentaires à la volée (`HSP`, heures en plus)._
 
 ## Sortie de l'Epic — WAIVED
 

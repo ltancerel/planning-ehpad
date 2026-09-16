@@ -322,3 +322,35 @@ export const PLANNING_DEMO = genererPlanningDemo(
   SALARIES.filter((s) => s.service !== SERVICE_BESOINS),
   genererPeriode(DEMO_DEBUT, DEMO_NB_JOURS).map(formatDateISO)
 );
+
+// Exemples déterministes d'évènements sur septembre 2026 (mois par défaut de
+// la vue émargement), forcés après la génération aléatoire pour garantir la
+// présence des différents cas sur chaque salarié : mêmes dates/codes pour
+// tous (retour client du 17/09 : "dupliquer la même vue pour chaque salarié,
+// je n'ai pas besoin de plusieurs exemples").
+const EXEMPLE_TRAVAIL = "70A"; // 07:00-13:00 / 14:00-19:00
+const EXEMPLES_EMARGEMENT: { date: string; valeur: ValeurCellule }[] = [
+  { date: "2026-09-03", valeur: { travail: "CP" } }, // absence
+  { date: "2026-09-08", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "MAL" } }, // superposition (maladie)
+  {
+    date: "2026-09-15",
+    valeur: {
+      travail: EXEMPLE_TRAVAIL,
+      evenementiel: "ABT",
+      evenementielPlage: { debut: "07:00", fin: "09:00" }, // absence temporaire (heures en moins)
+    },
+  },
+  {
+    date: "2026-09-22",
+    valeur: {
+      travail: EXEMPLE_TRAVAIL,
+      evenementiel: "HSP",
+      evenementielPlage: { debut: "19:00", fin: "21:00" }, // heures supplémentaires (heures en plus)
+    },
+  },
+];
+for (const salarie of SALARIES.filter((s) => s.service !== SERVICE_BESOINS)) {
+  for (const { date, valeur } of EXEMPLES_EMARGEMENT) {
+    PLANNING_DEMO[`${salarie.id}__${date}`] = valeur;
+  }
+}
