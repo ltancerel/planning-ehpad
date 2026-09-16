@@ -224,8 +224,8 @@ seule.
 
 Cette partie documente les décisions structurantes prises en préparation du
 backend, au fur et à mesure qu'elles sont tranchées. Elle est appelée à
-s'enrichir (modélisation de la base de données, API, architecture
-multi-application, environnements) au fil des prochains échanges.
+s'enrichir (API, architecture multi-application, environnements) au fil des
+prochains échanges.
 
 ### 1. Authentification et gestion des comptes
 
@@ -268,6 +268,53 @@ multi-application, environnements) au fil des prochains échanges.
   passe qui respectent les règles ci-dessus tout en restant trivialement
   faibles (ex. « 12345678! »).
 
+### 2. Modélisation de la base de données
+
+Modèle conceptuel (MCD) et logique (MLD) couvrant l'ensemble des exigences
+de la maquette et les décisions ci-dessus, organisé en 7 domaines. Document
+de détail : [modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+(issue #25).
+
+- **Établissement, comptes & applications** : un établissement (EHPAD)
+  porte ses services et ses comptes. L'Administrateur Système est modélisé
+  dans une table séparée des comptes d'établissement, puisqu'il n'est
+  rattaché à aucun EHPAD ni à aucune application — il supervise l'ensemble.
+  Chaque établissement souscrit explicitement aux applications auxquelles il
+  a accès (ex. un établissement qui n'a pas pris l'application Qualité) ;
+  l'accès individuel d'un compte Utilisateur à une application reste
+  toujours contenu dans les applications souscrites par son établissement.
+- **Salariés & organisation** : le salarié reste une entité totalement
+  indépendante du compte utilisateur, conformément à la décision « le
+  salarié n'a pas de compte ». Son contrat de travail est historisé : un
+  salarié peut avoir eu plusieurs contrats successifs (CDD renouvelés,
+  passage en CDI…), un seul étant actif à un instant donné.
+- **Codes horaires** : un code horaire porte les champs communs à toute
+  catégorie (Travail / Informatif / Particulier / Événementiel), ainsi que
+  les champs propres à la catégorie Événementiel (comportement, règle de
+  décompte).
+- **Roulements** : un motif récurrent (nombre de semaines × 7 jours), et son
+  affectation dans le temps à un salarié, avec historique des affectations
+  successives.
+- **Planning & émargement** : une case par salarié et par jour, portant un
+  code de travail et/ou un code événementiel ; un enregistrement dédié
+  matérialise la validation mensuelle d'un salarié.
+- **Calendrier** : une année planifiée par établissement, avec ses jours
+  fériés fixes, calculés et personnalisés.
+- **Traçabilité** : un historique dédié aux valeurs successives d'une case
+  de planning (répond au point ouvert « traçabilité des cellules »), complété
+  par un journal d'audit générique pour les autres opérations (roulements,
+  codes horaires, comptes…). L'auteur d'une opération peut être un compte
+  d'établissement ou l'Administrateur Système : les deux entités partagent
+  la même identité technique sous-jacente.
+
+Certaines règles de cohérence ne peuvent pas être exprimées par une simple
+contrainte sur une table (ex. « au plus un contrat actif par salarié », ou
+« un code posé comme code de travail doit bien être de catégorie Travail »).
+Elles seront garanties directement en base de données (index et contraintes
+dédiés), et non uniquement côté applicatif : l'API générée par Supabase
+étant directement accessible, seules les règles posées en base constituent
+une garantie fiable.
+
 ---
 
 ## Annexes
@@ -292,6 +339,5 @@ développement :
 - Les droits exacts d'un compte Utilisateur (au-delà des trois types de
   compte désormais fixés : Administrateur Système / Administrateur /
   Utilisateur) restent à détailler écran par écran.
-- Que doit précisément recouvrir la notion de « contrat » d'un salarié ?
 - Dans une optique multi-établissements, qui est habilité à créer un
   nouvel établissement dans l'application ?
