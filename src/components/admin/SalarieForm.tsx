@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import type { FicheSalarie, Manager } from "@/lib/mock-data";
-import { SERVICES_ORDRE, MANAGERS } from "@/lib/mock-data";
+import type { AffectationRoulement, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
+import { SERVICES_ORDRE, MANAGERS, affectationActuelle } from "@/lib/mock-data";
+import { formatDateISO, formatJourMois } from "@/lib/dates";
+import RoulementSalariePanel from "@/components/admin/RoulementSalariePanel";
 
 function capitaliser(texte: string): string {
   if (!texte) return texte;
@@ -12,14 +14,20 @@ function capitaliser(texte: string): string {
 type SalarieFormProps = {
   valeurInitiale?: FicheSalarie;
   matriculesExistants: string[];
+  roulements: Roulement[];
+  affectationsRoulement: AffectationRoulement[];
   onValider: (salarie: Omit<FicheSalarie, "id">) => void;
+  onAssignerRoulement: (donnees: Omit<AffectationRoulement, "id">) => void;
   onAnnuler: () => void;
 };
 
 export default function SalarieForm({
   valeurInitiale,
   matriculesExistants,
+  roulements,
+  affectationsRoulement,
   onValider,
+  onAssignerRoulement,
   onAnnuler,
 }: SalarieFormProps) {
   const modeEdition = Boolean(valeurInitiale);
@@ -36,6 +44,12 @@ export default function SalarieForm({
   const [compteUtilisateur, setCompteUtilisateur] = useState(valeurInitiale?.compteUtilisateur ?? false);
   const [email, setEmail] = useState(valeurInitiale?.email ?? "");
   const [erreur, setErreur] = useState<string | null>(null);
+  const [panneauRoulementOuvert, setPanneauRoulementOuvert] = useState(false);
+  const dateReferenceISO = formatDateISO(new Date());
+  const roulementActuel = affectationActuelle(affectationsRoulement, dateReferenceISO);
+  const nomRoulementActuel = roulementActuel
+    ? roulements.find((r) => r.id === roulementActuel.roulementId)?.nom
+    : undefined;
 
   function changerMatricule(saisie: string) {
     setMatricule(saisie.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4));
@@ -172,14 +186,32 @@ export default function SalarieForm({
           </select>
         </div>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-700">Roulement</label>
-          <select disabled className="w-full rounded border border-zinc-200 bg-zinc-50 px-2 py-1.5 text-sm text-zinc-400">
-            <option>Aucun roulement créé pour l&apos;instant</option>
-          </select>
-          <p className="mt-1 text-[11px] text-zinc-400">
-            Sera disponible une fois la story « Créer un roulement » construite.
-          </p>
+        <div className="rounded border border-zinc-200 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-zinc-700">Roulement</p>
+              {modeEdition ? (
+                <p className="mt-0.5 truncate text-xs text-zinc-500">
+                  {roulementActuel && nomRoulementActuel
+                    ? `${nomRoulementActuel} — depuis le ${formatJourMois(new Date(roulementActuel.dateDebut))}`
+                    : "Aucun roulement assigné"}
+                </p>
+              ) : (
+                <p className="mt-0.5 text-xs text-zinc-400">
+                  Aucun par défaut — assignable après création.
+                </p>
+              )}
+            </div>
+            {modeEdition && (
+              <button
+                type="button"
+                onClick={() => setPanneauRoulementOuvert(true)}
+                className="shrink-0 text-xs font-medium text-blue-600 hover:text-blue-800"
+              >
+                Gérer
+              </button>
+            )}
+          </div>
         </div>
 
         <div>
@@ -237,6 +269,17 @@ export default function SalarieForm({
           {modeEdition ? "Enregistrer" : "Créer"}
         </button>
       </div>
+
+      {modeEdition && panneauRoulementOuvert && (
+        <RoulementSalariePanel
+          nomComplet={`${prenom} ${nom}`}
+          roulements={roulements}
+          affectations={affectationsRoulement}
+          dateReferenceISO={dateReferenceISO}
+          onAssigner={onAssignerRoulement}
+          onFermer={() => setPanneauRoulementOuvert(false)}
+        />
+      )}
     </div>
   );
 }

@@ -138,6 +138,50 @@ export const ROULEMENTS_DEMO: Roulement[] = [
   },
 ];
 
+// Affectation d'un roulement à un salarié sur une période donnée (cf. story
+// « Appliquer un roulement à un salarié »). dateDebut est toujours un lundi ;
+// dateFin absente = affectation en cours. Un salarié n'a par défaut aucun
+// roulement : l'affectation est un choix explicite fait depuis sa fiche.
+export type AffectationRoulement = {
+  id: string;
+  roulementId: string;
+  dateDebut: string; // ISO, lundi
+  dateFin?: string; // ISO
+};
+
+// Historique des affectations par salarié (clé = FicheSalarie.id). Un salarié
+// sans entrée n'a jamais eu de roulement assigné.
+export const AFFECTATIONS_ROULEMENT_DEMO: Record<string, AffectationRoulement[]> = {
+  fs1: [
+    { id: "aff1", roulementId: "r2", dateDebut: "2025-01-06", dateFin: "2025-05-25" },
+    { id: "aff2", roulementId: "r1", dateDebut: "2025-06-02" },
+  ],
+};
+
+export function affectationsRecentesDabord(affectations: AffectationRoulement[]): AffectationRoulement[] {
+  return [...affectations].sort((a, b) => b.dateDebut.localeCompare(a.dateDebut));
+}
+
+export function affectationActuelle(
+  affectations: AffectationRoulement[],
+  dateReferenceISO: string
+): AffectationRoulement | undefined {
+  return affectationsRecentesDabord(affectations).find(
+    (a) => a.dateDebut <= dateReferenceISO && (!a.dateFin || a.dateFin >= dateReferenceISO)
+  );
+}
+
+// Pont temporaire entre les deux représentations du salarié dans cette
+// maquette (clé = Salarie.id de la vue Planning, valeur = FicheSalarie.id de
+// l'admin) : ne couvre que les salariés qui existent des deux côtés (cf.
+// point ouvert "deux représentations distinctes du salarié"). Permet à la
+// grille Planning de retrouver le roulement actuel d'un salarié, en
+// attendant l'unification des deux modèles au vrai backend.
+export const CORRESPONDANCE_SALARIE_FICHE_DEMO: Record<string, string> = {
+  "3": "fs1", // BERNARD Claire
+  "13": "fs2", // LAURENT Inès
+};
+
 export type JourFerie = {
   date: string; // ISO yyyy-mm-dd
   label: string;

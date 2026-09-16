@@ -97,11 +97,75 @@ export réel, connecteur paie.
   réglable, grille de répartition réutilisant le vrai sélecteur de code horaire
   sans les codes événementiels)._
 
-- [ ] **9bis. Appliquer un roulement à un salarié dans le planning**
-  Distincte de la story 9 (décision du 16/09) : assigner un roulement à un salarié
-  avec une date de début (alignée sur le lundi de sa semaine) et une date de fin
-  optionnelle, puis projeter le motif dans la grille planning. Vient compléter le
-  champ Roulement désactivé de la story « Ajouter un salarié ».
+- [x] **9bis. Assigner un roulement à un salarié**
+  Distincte de la story 9 (décision du 16/09) : le roulement est assigné à un
+  salarié, avec une date de début (alignée sur le lundi de sa semaine) et une
+  date de fin optionnelle. Vient compléter le champ Roulement désactivé de la
+  story « Ajouter un salarié ». Par défaut, un salarié n'a aucun roulement.
+  _Statut : fait, non encore mergé sur `main`. Fiche salarié (Admin > Salariés
+  > Modifier) : ligne compacte affichant le roulement en cours + bouton
+  « Gérer » ouvrant un panneau dédié (roulement en cours, historique des
+  affectations, formulaire d'assignation avec date de début ramenée au lundi
+  et date de fin optionnelle) — pour ne pas alourdir la fiche elle-même (retour
+  client du 15/09). Pas de projection automatique dans la grille Planning à ce
+  stade — la fiche salarié (`FicheSalarie`) et l'entité utilisée par la grille
+  (`Salarie`) restent deux modèles distincts dans cette maquette (cf. point
+  ouvert dédié)._
+  _Révision du 15/09 : la première version mettait l'assignation dans la vue
+  Planning (icône par ligne) et proposait un « roulement par défaut » assigné
+  automatiquement à la création — retour client : le roulement est un
+  attribut du salarié (donc géré dans sa fiche) et un salarié créé n'a par
+  défaut aucun roulement._
+
+- [x] **9ter. Appliquer le roulement d'un salarié directement dans le planning**
+  Sur une case hachurée (jamais planifiée) uniquement :
+  - **Simple clic** : ouvre le sélecteur de code horaire habituel (saisie ou
+    recherche d'un code) — reste l'action la plus courante, non bloquée. Si le
+    salarié a un roulement actuel, un raccourci « Appliquer le roulement «
+    X » » apparaît en haut du sélecteur pour l'appliquer à partir du lundi de
+    la semaine visée jusqu'à la fin de la période affichée, sans ouvrir de
+    second écran.
+  - **Cliquer-glisser** verticalement : sélectionne plusieurs salariés sur le
+    même jour, puis un panneau permet d'appliquer en une fois le roulement
+    actuel de chacun (celui déjà assigné depuis sa fiche, cf. story 9bis).
+
+  Dans les deux cas, les cases déjà remplies ne sont jamais écrasées, et les
+  salariés sans roulement assigné sont signalés/ignorés plutôt que bloquants.
+  _Statut : fait, non encore mergé sur `main`. Pour cette maquette, ne
+  fonctionne que pour les salariés qui ont un équivalent dans l'admin
+  Salariés (Claire BERNARD, Inès LAURENT) via un pont temporaire entre les
+  deux modèles (`CORRESPONDANCE_SALARIE_FICHE_DEMO`) — à supprimer une fois
+  les deux entités unifiées (cf. point ouvert dédié)._
+  _Révision du 16/09 : première version avec un menu de choix bloquant avant
+  le sélecteur de code — retour client : la saisie d'un code doit rester
+  immédiate (action la plus courante), le raccourci roulement est un ajout
+  dans le même sélecteur, pas une étape supplémentaire._
+
+- [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes**
+  Retour client du 16/09, pour éviter les erreurs : un roulement ne peut plus
+  être appliqué (raccourci ou cliquer-glisser) sur un salarié dont au moins
+  une semaine de la période contient déjà un code horaire — c'est tout ou
+  rien pour ce salarié (aucune semaine n'est remplie, même celles qui
+  seraient libres) plutôt qu'un remplissage partiel qui a semé la confusion
+  lors d'un test client (semaine suivante remplie, semaine en cours non
+  remplie sans explication). L'utilisateur est notifié explicitement :
+  raccourci → message bloquant nommant la semaine en cause et invitant à
+  effacer d'abord ; cliquer-glisser → salariés concernés listés à part dans
+  le panneau de confirmation, non appliqués.
+  Pour permettre de corriger une semaine bloquante, ajout d'une sélection
+  rectangulaire (cliquer-glisser sur des cases déjà remplies, une ou
+  plusieurs lignes/jours) supprimable via la touche Suppr/Retour arrière ou
+  un bouton "Supprimer", avec confirmation avant suppression effective.
+  _Statut : fait, non encore mergé sur `main`. Fonctionnalité admin comme le
+  reste de la gestion du roulement dans le planning._
+  _Révision du 16/09 : la première version appliquait quand même les
+  semaines libres d'un salarié bloqué sur une autre — retour client : tout
+  ou rien par salarié, avec notification explicite plutôt qu'un silence._
+  _Révision du 17/09 : une case effacée (Vider la cellule, ou suppression
+  d'une plage) redevient hachurée (jamais remplie) plutôt que "vidée" —
+  retour client, la distinction initiale entre les deux n'avait pas anticipé
+  le besoin d'effacement ; une case effacée doit redevenir disponible pour
+  la planification, y compris quand elle portait une donnée de démo._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
@@ -112,9 +176,6 @@ export réel, connecteur paie.
   suivante. Suppression d'une année désactivée dans l'UI (retour client du 16/09 :
   une année déjà planifiée ne doit pas pouvoir être supprimée — voir aussi le point
   ouvert "à appliquer côté backend" ci-dessous)._
-
-- [ ] **11. Menu Export**
-  Maquette du menu d'export accessible depuis la vue Planning.
 
 - [ ] **12. Blocage visuel du planning passé**
   Affichage grisé/verrouillé des cellules passées dans la grille (visuel uniquement,
@@ -139,6 +200,36 @@ export réel, connecteur paie.
   _Statut : fait, déployé sur `main`. Logo par défaut "Les Jardins de Rambam"
   (recréé en SVG), menu admin multi-sections ajouté au passage._
 
+- [ ] **16. Vue annuelle d'un salarié**
+  Permettre de visualiser sur une seule page les jours de présence d'un salarié
+  sur toute une année (vue synthétique, à l'opposé de la grille planning qui
+  n'affiche que 4 semaines à la fois). Ajoutée le 16/09, à faire plus tard.
+
+- [ ] **17. Correction des codes horaires événementiels**
+  Retour client du 16/09 : la gestion actuelle des codes événementiels
+  (CAR/MAL/ABI superposables, CP autonome — cf. story #3) ne correspond pas
+  au besoin réel et doit être corrigée ; les règles vont devoir se
+  complexifier. Détail du besoin à préciser avant de démarrer.
+
+- [ ] **18. Correction de la vue émargement mensuelle**
+  Retour client du 16/09, à faire après la story #17 :
+  - Alignement visuel avec la (future) vue annuelle (#16) : code horaire de
+    travail au-dessus du code événementiel (empilés, pas côte à côte comme
+    actuellement), centrés dans la case — au lieu du rendu actuel qui les
+    affiche l'un à côté de l'autre en haut à gauche de la case.
+  - Afficher les plages horaires réellement effectuées chaque jour (ex.
+    06:00–13:00 / 14:00–17:30, déjà définies par code horaire — cf. story #8)
+    plutôt que le seul code abrégé, tout en conservant la synthèse du temps
+    (total d'heures par jour et par mois, déjà présente).
+
+## Sortie de l'Epic — à préciser avant de reprendre
+
+- **Menu Export** (retiré de l'EPIC le 15/09, issue #12 détachée) : la maquette du
+  menu d'export accessible depuis la vue Planning avait une spécification trop
+  imprécise pour être développée en l'état (contenu du menu ? formats ? périmètre
+  des données exportées ?). À clarifier avec le client avant de la réintégrer dans
+  un prochain Epic.
+
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
 - **Export PDF téléchargeable** (ajouté le 15/09, suite à la case signature de la
@@ -147,7 +238,8 @@ export réel, connecteur paie.
   vrai bouton « Télécharger le PDF » nécessiterait une génération côté serveur
   (ex: Puppeteer/Playwright headless, ou une lib type `react-pdf`) puisque
   l'application n'a pas encore de backend. À prévoir dans l'Epic backend, probablement
-  en même temps que la story Export (actuellement #12 sur la vue Planning).
+  en même temps que la story Menu Export (#12, sortie de l'Epic v0 en attente de
+  clarification — voir section dédiée ci-dessus).
 
 ## Points ouverts (hors périmètre maquette graphique, à trancher avant le backend)
 
@@ -159,6 +251,18 @@ export réel, connecteur paie.
 - Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
   l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
   hors application pour l'instant ?
+- **Deux représentations distinctes du salarié dans la maquette** (relevé le
+  16/09 en construisant la story 9bis) : la vue Planning utilise une entité
+  `Salarie` (simple, sert de support à la démo de plein de salariés) tandis que
+  l'écran Admin « Ajouter un salarié » utilise une entité `FicheSalarie` plus
+  complète, non reliée par identifiant à la première. L'affectation de
+  roulement (historique, roulement en cours) vit donc côté `FicheSalarie`
+  (fiche salarié). Un pont temporaire (`CORRESPONDANCE_SALARIE_FICHE_DEMO`,
+  ajouté pour la story 9ter) relie les deux id pour les 2 salariés qui
+  existent des deux côtés (Claire BERNARD, Inès LAURENT), afin que le
+  planning puisse retrouver leur roulement actuel — à supprimer au profit
+  d'un seul modèle Salarié lors du passage au vrai backend, qui couvrira
+  alors tous les salariés sans pont temporaire.
 - **Intégrité des données à valider côté backend, pas seulement côté front**
   (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
   toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur

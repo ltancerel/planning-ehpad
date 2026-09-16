@@ -11,6 +11,10 @@ type HoraireCodeSelectorProps = {
   /** Masque les codes événementiels (superposition) — non pertinents hors du
    * planning réel, ex. dans un roulement qui définit un motif récurrent. */
   masquerEvenementiels?: boolean;
+  /** Raccourci proposé sur une case jamais remplie dont le salarié a un
+   * roulement actuel : l'appliquer directement, sans bloquer la saisie
+   * manuelle d'un code qui reste l'action la plus courante. */
+  actionRoulement?: { nomRoulement: string; onAppliquer: () => void };
   onChoisir: (code: string | null) => void;
   onFermer: () => void;
 };
@@ -19,6 +23,7 @@ export default function HoraireCodeSelector({
   position,
   aUneValeur,
   masquerEvenementiels,
+  actionRoulement,
   onChoisir,
   onFermer,
 }: HoraireCodeSelectorProps) {
@@ -82,6 +87,15 @@ export default function HoraireCodeSelector({
         placeholder="Rechercher un code ou un libellé…"
         className="border-b border-zinc-200 px-2 py-1.5 text-sm outline-none"
       />
+      {actionRoulement && (
+        <button
+          type="button"
+          onClick={actionRoulement.onAppliquer}
+          className="border-b border-zinc-100 bg-blue-50 px-2 py-1.5 text-left text-xs font-medium text-blue-700 hover:bg-blue-100"
+        >
+          Appliquer le roulement « {actionRoulement.nomRoulement} »
+        </button>
+      )}
       <ul className="flex-1 overflow-auto py-1">
         {resultats.map((horaire, index) => {
           const superposable = estCodeSuperposable(horaire.code);
