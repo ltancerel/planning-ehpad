@@ -465,6 +465,15 @@ l'implémentation du backend dans un epic ultérieur.
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
+- **EPIC — Administration Système (logs & statistiques d'usage)** _(issue #30)_
+  — ajouté le 17/09, non prioritaire. Outiller le compte Administrateur
+  Système (défini dans l'EPIC #23) avec des écrans de supervision technique
+  transverse à tous les EHPAD : visualisation des logs (journal d'audit
+  `log_audit`, cf. issue #25, et logs applicatifs) et statistiques
+  d'utilisation de l'application (indicateurs à définir avec le client). À
+  détailler en stories et prioriser après l'EPIC « Fondations
+  architecturales » (#23) et son implémentation backend.
+
 - **Mettre en place une suite de tests automatisés rejouables (Playwright)**
   _(issue #21)_ — ajouté le 17/09, décision du client. Pendant la maquette,
   les vérifications de non-régression sont faites via des scripts Playwright
