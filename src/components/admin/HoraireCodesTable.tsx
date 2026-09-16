@@ -10,6 +10,11 @@ const LIBELLE_CATEGORIE: Record<HoraireCode["categorie"], string> = {
   special: "Particulier",
 };
 
+const LIBELLE_TYPE_EVENEMENT: Record<"superposition" | "complement", string> = {
+  superposition: "Superposition",
+  complement: "Complément à la volée",
+};
+
 type HoraireCodesTableProps = {
   codes: HoraireCode[];
   onModifier: (code: HoraireCode) => void;
@@ -47,7 +52,14 @@ export default function HoraireCodesTable({ codes, onModifier, onSupprimer }: Ho
               </span>
             </td>
             <td className="px-3 py-2">{code.intitule}</td>
-            <td className="px-3 py-2 text-zinc-600">{LIBELLE_CATEGORIE[code.categorie]}</td>
+            <td className="px-3 py-2 text-zinc-600">
+              {LIBELLE_CATEGORIE[code.categorie]}
+              {code.categorie === "evenementiel" && code.typeEvenement && (
+                <span className="ml-1 text-[11px] text-zinc-400">
+                  ({LIBELLE_TYPE_EVENEMENT[code.typeEvenement]})
+                </span>
+              )}
+            </td>
             <td className="px-3 py-2 text-zinc-600">{resumePlages(code)}</td>
             <td className="px-3 py-2 text-zinc-600">
               {code.categorie === "travail" ? `${dureeHeures(code.plages)}h` : "—"}

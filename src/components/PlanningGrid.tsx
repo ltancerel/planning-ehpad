@@ -18,7 +18,9 @@ import {
   HORAIRE_CODES_PAR_CODE,
   estCodeSuperposable,
   heuresReellesCellule,
+  deltaEvenementielCellule,
   type ValeurCellule,
+  type Plage,
 } from "@/lib/horaire-codes";
 import {
   formatDateISO,
@@ -155,8 +157,19 @@ export default function PlanningGrid() {
       }
       const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
       const nouvelle: ValeurCellule = estCodeSuperposable(codeChoisi)
-        ? { ...actuelle, evenementiel: codeChoisi }
+        ? { ...actuelle, evenementiel: codeChoisi, evenementielPlage: undefined }
         : { travail: codeChoisi }; // code travail/informatif/particulier : remplace tout
+      return { ...prev, [cle]: nouvelle };
+    });
+    fermerEdition();
+  }
+
+  // Évènement "complement" (à la volée) : la plage horaire vient d'être
+  // saisie au moment de positionner l'évènement — cf. retour client du 17/09.
+  function choisirCodeComplement(cle: string, codeChoisi: string, plage: Plage) {
+    setEditions((prev) => {
+      const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
+      const nouvelle: ValeurCellule = { ...actuelle, evenementiel: codeChoisi, evenementielPlage: plage };
       return { ...prev, [cle]: nouvelle };
     });
     fermerEdition();
@@ -599,6 +612,11 @@ export default function PlanningGrid() {
                       const horaireEvenementiel = valeur?.evenementiel
                         ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel]
                         : undefined;
+                      // Type "superposition" : le code travail est barré, le décompte est
+                      // écrasé. Type "complement" : le code travail reste normal, le delta
+                      // (+/-) est calculé depuis la plage saisie à la volée.
+                      const travailBarre = horaireEvenementiel?.typeEvenement === "superposition";
+                      const deltaComplement = valeur ? deltaEvenementielCellule(valeur) : undefined;
                       const enEdition = cellEnEdition === cle;
                       const enSelection =
                         jamaisRemplie &&
@@ -634,6 +652,10 @@ export default function PlanningGrid() {
                       const infoBulle = valeur?.travail
                         ? `${horaireTravail?.intitule ?? valeur.travail}${
                             horaireEvenementiel ? ` + ${horaireEvenementiel.intitule}` : ""
+                          }${
+                            deltaComplement !== undefined
+                              ? ` (${deltaComplement >= 0 ? "+" : ""}${deltaComplement}h)`
+                              : ""
                           } — ${heuresReellesCellule(valeur)}h`
                         : jamaisRemplie
                           ? "Jamais planifiée — cliquer-glisser sur plusieurs salariés pour appliquer leur roulement"
@@ -688,7 +710,10 @@ export default function PlanningGrid() {
                           title={infoBulle}
                         >
                           {valeur?.travail && (
-                            <span className="block px-1 pt-0.5 text-xs font-semibold leading-tight">
+                            <span
+                              className="block px-1 pt-0.5 text-xs font-semibold leading-tight"
+                              style={travailBarre ? { textDecoration: "line-through" } : undefined}
+                            >
                               {valeur.travail}
                             </span>
                           )}
@@ -726,6 +751,7 @@ export default function PlanningGrid() {
                 : undefined
             }
             onChoisir={(code) => choisirCode(cellEnEdition, code)}
+            onChoisirComplement={(code, plage) => choisirCodeComplement(cellEnEdition, code, plage)}
             onFermer={fermerEdition}
           />
         </>

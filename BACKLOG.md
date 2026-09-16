@@ -227,11 +227,31 @@ export réel, connecteur paie.
   sur toute une année (vue synthétique, à l'opposé de la grille planning qui
   n'affiche que 4 semaines à la fois). Ajoutée le 16/09, à faire plus tard.
 
-- [ ] **17. Correction des codes horaires événementiels** _(issue #19)_
+- [x] **17. Correction des codes horaires événementiels** _(issue #19)_
   Retour client du 16/09 : la gestion actuelle des codes événementiels
   (CAR/MAL/ABI superposables, CP autonome — cf. story #3) ne correspond pas
   au besoin réel et doit être corrigée ; les règles vont devoir se
   complexifier. Détail du besoin à préciser avant de démarrer.
+  _Statut : fait sur la branche de travail, pas encore mergé. Retour client
+  du 16/09 précisé : deux types d'évènement, configurables par code dans
+  l'admin "Créer un code horaire" :_
+  _- "Superposition" (comportement historique CAR/ABI/MAL) : se superpose au
+  code de travail et écrase entièrement le décompte d'heures (`regleHeures`)
+  — le code de travail reste visible mais est désormais barré dans la vue
+  planning et dans l'émargement mensuel._
+  _- "Complément à la volée" (nouveau) : une plage horaire est saisie au
+  moment de positionner l'évènement sur le planning (mini-formulaire heure
+  début/fin dans le sélecteur de code) ; la partie qui chevauche le code de
+  travail est décomptée en heures en moins, la partie hors travail est
+  ajoutée en heures en plus (delta signé calculé dynamiquement). Le code de
+  travail n'est pas barré ; le delta (+Xh / -Xh) est affiché explicitement
+  à côté des heures dans l'émargement mensuel, et dans l'infobulle de la
+  case planning. Nouveau code de démonstration `AJT` ("Ajustement ponctuel")
+  ajouté pour illustrer ce second type — à valider/renommer avec le client._
+  _Le formulaire admin de création/modification d'un code horaire événementiel
+  propose désormais le choix du type (avec description de chacun), et masque
+  la règle de décompte d'heures pour le type "Complément à la volée" (calculée
+  dynamiquement, non paramétrable)._
 
 - [ ] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :

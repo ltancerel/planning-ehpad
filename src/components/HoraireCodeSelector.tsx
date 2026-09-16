@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type KeyboardEvent } from "react";
-import { HORAIRE_CODES, estCodeSuperposable } from "@/lib/horaire-codes";
+import { HORAIRE_CODES, estCodeSuperposable, estCodeComplement, type Plage } from "@/lib/horaire-codes";
 
 export type PositionSelecteur = { top: number; left: number; width: number };
 
@@ -16,6 +16,9 @@ type HoraireCodeSelectorProps = {
    * manuelle d'un code qui reste l'action la plus courante. */
   actionRoulement?: { nomRoulement: string; onAppliquer: () => void };
   onChoisir: (code: string | null) => void;
+  /** Un évènement "complement" (à la volée) demande une plage horaire avant
+   * d'être posé — cf. retour client du 17/09. */
+  onChoisirComplement?: (code: string, plage: Plage) => void;
   onFermer: () => void;
 };
 
@@ -25,10 +28,14 @@ export default function HoraireCodeSelector({
   masquerEvenementiels,
   actionRoulement,
   onChoisir,
+  onChoisirComplement,
   onFermer,
 }: HoraireCodeSelectorProps) {
   const [recherche, setRecherche] = useState("");
   const [indexSurligne, setIndexSurligne] = useState(0);
+  const [codeComplementEnSaisie, setCodeComplementEnSaisie] = useState<string | null>(null);
+  const [plageDebut, setPlageDebut] = useState("");
+  const [plageFin, setPlageFin] = useState("");
 
   const codesDisponibles = useMemo(
     () =>
@@ -68,10 +75,76 @@ export default function HoraireCodeSelector({
     } else if (e.key === "Enter") {
       e.preventDefault();
       const choisi = resultats[indexSurligne];
-      if (choisi) onChoisir(choisi.code);
+      if (choisi) surChoixCode(choisi.code);
     } else if (e.key === "Escape") {
       onFermer();
     }
+  }
+
+  function surChoixCode(code: string) {
+    if (onChoisirComplement && estCodeComplement(code)) {
+      setCodeComplementEnSaisie(code);
+      return;
+    }
+    onChoisir(code);
+  }
+
+  function validerComplement() {
+    if (!codeComplementEnSaisie || !onChoisirComplement || !plageDebut || !plageFin) return;
+    onChoisirComplement(codeComplementEnSaisie, { debut: plageDebut, fin: plageFin });
+    setCodeComplementEnSaisie(null);
+    setPlageDebut("");
+    setPlageFin("");
+  }
+
+  if (codeComplementEnSaisie) {
+    const horaire = HORAIRE_CODES.find((h) => h.code === codeComplementEnSaisie);
+    return (
+      <div
+        className="fixed z-50 flex flex-col rounded border border-zinc-200 bg-white p-3 shadow-lg"
+        style={{ top: position.top, left: position.left, width: Math.max(position.width, 240) }}
+      >
+        <p className="mb-2 text-xs font-medium text-zinc-700">
+          Plage horaire pour «&nbsp;{horaire?.intitule ?? codeComplementEnSaisie}&nbsp;»
+        </p>
+        <div className="mb-2 flex items-center gap-2">
+          <input
+            autoFocus
+            type="time"
+            value={plageDebut}
+            onChange={(e) => setPlageDebut(e.target.value)}
+            className="rounded border border-zinc-300 px-2 py-1 text-sm"
+          />
+          <span className="text-zinc-400">→</span>
+          <input
+            type="time"
+            value={plageFin}
+            onChange={(e) => setPlageFin(e.target.value)}
+            className="rounded border border-zinc-300 px-2 py-1 text-sm"
+          />
+        </div>
+        <p className="mb-2 text-[11px] text-zinc-400">
+          Chevauche le code de travail : heures en moins. Hors du code de travail : heures en plus.
+        </p>
+        <div className="flex justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setCodeComplementEnSaisie(null)}
+            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            onClick={validerComplement}
+            disabled={!plageDebut || !plageFin}
+            className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Ajouter
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -110,7 +183,7 @@ export default function HoraireCodeSelector({
               )}
               <button
                 type="button"
-                onClick={() => onChoisir(horaire.code)}
+                onClick={() => surChoixCode(horaire.code)}
                 onMouseEnter={() => setIndexSurligne(index)}
                 className={`flex w-full items-center gap-2 px-2 py-1 text-left text-sm ${
                   index === indexSurligne ? "bg-zinc-100" : ""
