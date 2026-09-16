@@ -405,6 +405,11 @@ l'implémentation du backend dans un epic ultérieur.
   _Tranché le 17/09 : pas de restriction mono-session (multi-session
   autorisé), mais déconnexion automatique après 15 minutes d'inactivité,
   quel que soit le type de compte._
+  _Tranché le 17/09 : mot de passe — longueur minimale 8 caractères, au
+  moins un caractère spécial, et un indicateur de robustesse (jauge de
+  complexité) qui doit passer au vert avant validation, pour écarter les
+  mots de passe qui respectent les règles de format mais restent
+  trivialement faibles (ex. `12345678!`)._
 
 - [ ] **2. Modéliser la base de données** _(issue #25)_
   Unification des deux représentations actuelles du salarié, entité EHPAD et
@@ -466,7 +471,9 @@ jusqu'à leur résolution effective._
   autorisé, déconnexion automatique après 15 min d'inactivité — _cf. issue #24._
 - Notion de contrat à préciser — _cf. story « Modéliser la base de données »,
   issue #25._
-- Complexité du mot de passe à définir — _cf. issue #24._
+- ~~Complexité du mot de passe à définir~~ → **tranché le 17/09** : 8
+  caractères min., 1 caractère spécial min., indicateur de robustesse au
+  vert obligatoire — _cf. issue #24._
 - Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
   l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
   hors application pour l'instant ? — _cf. story « Concevoir l'architecture
