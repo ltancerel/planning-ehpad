@@ -188,12 +188,13 @@ export default function PlanningGrid() {
     setPositionConfirmation(null);
   }
 
-  // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, à
-  // partir du lundi donné jusqu'à la fin de la période affichée. Retour
-  // client du 16/09 : tout ou rien — si une seule semaine de la période
-  // contient déjà un code horaire, rien n'est appliqué du tout (plutôt que
-  // d'appliquer partiellement les autres semaines), et la semaine bloquante
-  // est renvoyée pour pouvoir le signaler à l'utilisateur.
+  // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, sur
+  // exactement les nbSemaines du roulement à partir du lundi donné (retour
+  // client du 17/09 : la planification démarre sur la semaine du jour choisi
+  // et ne porte que sur la durée propre du roulement, pas au-delà). Tout ou
+  // rien : si une seule de ces semaines contient déjà un code horaire, rien
+  // n'est appliqué du tout, et la semaine bloquante est renvoyée pour pouvoir
+  // le signaler à l'utilisateur.
   function evaluerProjectionRoulement(
     editionsBase: Record<string, ValeurCellule | undefined>,
     salarieId: string,
@@ -211,10 +212,10 @@ export default function PlanningGrid() {
     };
 
     const semaines: Date[][] = [];
-    for (let semaine = 0; ; semaine++) {
+    for (let semaine = 0; semaine < roulement.nbSemaines; semaine++) {
       const lundiSemaine = new Date(lundiDebut);
       lundiSemaine.setDate(lundiSemaine.getDate() + semaine * 7);
-      if (lundiSemaine > finVisible) break;
+      if (lundiSemaine > finVisible) break; // période affichée trop courte pour ce roulement
       semaines.push(
         Array.from({ length: 7 }, (_, j) => {
           const jour = new Date(lundiSemaine);
@@ -231,8 +232,7 @@ export default function PlanningGrid() {
     }
 
     let nouvelles = editionsBase;
-    semaines.forEach((joursDeLaSemaine, semaine) => {
-      const semaineIndex = semaine % roulement.nbSemaines;
+    semaines.forEach((joursDeLaSemaine, semaineIndex) => {
       for (const jour of joursDeLaSemaine) {
         const jourIndex = (jour.getDay() + 6) % 7; // 0 = lundi
         const code = roulement.motif[semaineIndex][jourIndex];

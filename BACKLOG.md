@@ -175,6 +175,14 @@ export réel, connecteur paie.
   déclenchait un blocage sur la semaine du 28/09). Corrigé en formatant et en
   reparsant les dates en heure locale (`parseDateISO` ajouté dans
   `src/lib/dates.ts`), dans tout le planning et l'émargement._
+  _Correction du 17/09 : la portée de la projection (et donc de la
+  vérification de blocage) allait jusqu'à la fin de la période affichée
+  (jusqu'à 4 semaines) au lieu de s'arrêter après les `nbSemaines` propres au
+  roulement — un salarié pouvait ainsi se voir bloqué par une semaine bien
+  au-delà de la plage visée, ou voir son roulement appliqué sur plus de
+  semaines que prévu (2 attendues, 3 constatées par le client). La
+  planification démarre désormais sur la semaine du jour choisi et ne porte
+  que sur les `nbSemaines` du roulement, ni plus ni moins._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
