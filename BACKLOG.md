@@ -367,6 +367,67 @@ export réel, connecteur paie.
   pour écran mobile (le CDC exige un affichage web *et* mobile). Mise de côté sans
   raison de spécification précisée ; à reprendre si besoin dans un prochain Epic.
 
+## EPIC — Fondations architecturales (backend) _(issue #23)_
+
+**Objectif** : poser les bases architecturales de l'application avant d'attaquer
+l'implémentation réelle du backend (Supabase) : exigences de login, modélisation
+de la base de données, définition de l'API (spécification OpenAPI/Swagger), et
+prise en compte de l'ajout à terme d'une seconde application (plan d'action
+qualité) partageant les mêmes comptes utilisateurs. Ajoutée le 17/09.
+
+**Nature de cet Epic** : contrairement à l'EPIC #1 (Maquette graphique v0) qui a
+produit des écrans, celui-ci produit des **livrables de conception**
+(spécifications, schémas, décisions documentées) qui serviront de base à
+l'implémentation du backend dans un epic ultérieur.
+
+**Décisions déjà actées (échanges du 17/09)** :
+- Trois profils de compte : *Administrateur Système* (supervision globale, dont
+  visualisation des logs), *Administrateur* (métier — directeur EHPAD ou
+  adjoint, commun aux applications), *Utilisateur* (accès indépendant par
+  application : aucune, une seule, ou les deux). Le salarié n'a pas de compte.
+- Réinitialisation de mot de passe : l'administrateur fixe directement un
+  nouveau mot de passe (flux principal, sans email) ; un flux libre-service par
+  email nécessiterait un fournisseur SMTP externe (le service email intégré de
+  Supabase n'est pas dimensionné pour la production).
+- Architecture multi-application : un socle commun (comptes, EHPAD,
+  authentification) découplé du métier Planning.
+- Environnements : deux projets Supabase distincts (dev/recette + production)
+  plutôt que le branching payant, cohérent avec l'objectif de minimisation des
+  coûts ; environnements Vercel Production/Preview standards.
+
+### Stories
+
+- [ ] **1. Spécifier l'authentification et la gestion des comptes** _(issue #24)_
+  Types de comptes et droits, réinitialisation de mot de passe, session
+  mono/multi, règles de complexité du mot de passe. Résout les points ouverts
+  "nombre de types d'utilisateur et droits", "salariés = utilisateurs ou
+  non", "login mono-session", "complexité du mot de passe".
+
+- [ ] **2. Modéliser la base de données** _(issue #25)_
+  Unification des deux représentations actuelles du salarié, entité EHPAD et
+  segmentation multi-établissement (`ehpad_id` + Row Level Security),
+  traçabilité des cellules de planning + log d'audit, intégrité des règles
+  métier côté serveur, notion de contrat à préciser. Résout les points
+  ouverts "deux représentations du salarié", "traçabilité des cellules",
+  "intégrité des données à valider côté backend", "notion de contrat".
+
+- [ ] **3. Définir l'API backend (spécification OpenAPI/Swagger)** _(issue #26)_
+  Endpoints couvrant l'ensemble des écrans maquettés, conventions communes
+  (erreurs, pagination, authentification, versionnement), anticipation du
+  futur connecteur paie. Dépend des stories 1 et 2.
+
+- [ ] **4. Concevoir l'architecture multi-application** _(issue #27)_
+  Socle commun (comptes, EHPAD, authentification) découplé du métier
+  Planning, pour permettre le branchement d'une future application (ex. plan
+  d'action qualité) partageant les mêmes comptes. Droits par application,
+  point d'entrée/portail de navigation entre applications. Résout le point
+  ouvert "multi-EHPAD : qui peut créer un nouvel EHPAD".
+
+- [ ] **5. Définir la stratégie d'environnements (Vercel / Supabase)** _(issue #28)_
+  Environnements Vercel (Production/Preview), deux projets Supabase distincts
+  (dev/recette + production) avec migrations versionnées, gestion des
+  secrets par environnement.
+
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
 - **Mettre en place une suite de tests automatisés rejouables (Playwright)**
@@ -390,14 +451,22 @@ export réel, connecteur paie.
 
 ## Points ouverts (hors périmètre maquette graphique, à trancher avant le backend)
 
+_Les points ci-dessous sont désormais pris en charge par l'EPIC « Fondations
+architecturales (backend) » (issue #23) ci-dessus — conservés ici pour mémoire
+jusqu'à leur résolution effective._
+
 - Nombre de types d'utilisateur (2 vs 3) et droits exacts de l'utilisateur standard
-- Salariés = utilisateurs de l'app ou simples lignes de planning ?
-- Login mono-session : pertinent ?
-- Notion de contrat à préciser
-- Complexité du mot de passe à définir
+  — _cf. story « Spécifier l'authentification et la gestion des comptes »,
+  issue #24._
+- Salariés = utilisateurs de l'app ou simples lignes de planning ? — _cf. issue #24._
+- Login mono-session : pertinent ? — _cf. issue #24._
+- Notion de contrat à préciser — _cf. story « Modéliser la base de données »,
+  issue #25._
+- Complexité du mot de passe à définir — _cf. issue #24._
 - Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
   l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
-  hors application pour l'instant ?
+  hors application pour l'instant ? — _cf. story « Concevoir l'architecture
+  multi-application », issue #27._
 - **Deux représentations distinctes du salarié dans la maquette** (relevé le
   16/09 en construisant la story 9bis) : la vue Planning utilise une entité
   `Salarie` (simple, sert de support à la démo de plein de salariés) tandis que
@@ -409,7 +478,8 @@ export réel, connecteur paie.
   existent des deux côtés (Claire BERNARD, Inès LAURENT), afin que le
   planning puisse retrouver leur roulement actuel — à supprimer au profit
   d'un seul modèle Salarié lors du passage au vrai backend, qui couvrira
-  alors tous les salariés sans pont temporaire.
+  alors tous les salariés sans pont temporaire. — _cf. story « Modéliser la
+  base de données », issue #25._
 - **Intégrité des données à valider côté backend, pas seulement côté front**
   (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
   toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur
@@ -417,7 +487,7 @@ export réel, connecteur paie.
   qu'un confort UX — contournable via appel direct à l'API, DevTools, etc. À
   reprendre explicitement dans les specs backend pour chaque règle de suppression
   déjà mockée côté front (années, et sans doute plus tard salariés/utilisateurs
-  avec historique).
+  avec historique). — _cf. story « Modéliser la base de données », issue #25._
 - **Traçabilité des cellules du planning** (précisé par le client le 17/09) :
   le modèle de données backend devra historiser chaque modification d'une
   cellule de planning, pour pouvoir récupérer via l'API l'ensemble des
@@ -426,4 +496,5 @@ export réel, connecteur paie.
   modification, effacement, application d'un roulement...) devront aussi être
   journalisées côté backend (log d'audit), au-delà du seul historique de
   valeurs. À intégrer dans le schéma de la table planning/journée lors de la
-  conception du backend.
+  conception du backend. — _cf. story « Modéliser la base de données »,
+  issue #25._
