@@ -241,7 +241,7 @@ export default function EmargementContenu() {
                       </td>
                     );
                   })}
-                  <td className="border border-zinc-200 bg-zinc-50 px-1.5 py-1 text-right align-top text-xs font-semibold text-zinc-700">
+                  <td className="border border-zinc-200 bg-white px-1.5 py-1 text-right align-top text-xs font-semibold text-zinc-700">
                     {totalSemaine > 0 ? `${totalSemaine}h` : ""}
                   </td>
                 </tr>
