@@ -12,7 +12,9 @@ import {
   CORRESPONDANCE_SALARIE_FICHE_DEMO,
   UTILISATEUR_CONNECTE,
   affectationActuelle,
+  ficheDuSalarie,
   type Roulement,
+  type Salarie,
 } from "@/lib/mock-data";
 import {
   HORAIRE_CODES_PAR_CODE,
@@ -35,6 +37,30 @@ import {
 import UserMenu from "@/components/UserMenu";
 import { useEhpad } from "@/context/EhpadProvider";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
+
+// Filtre d'affichage des salariés (retour client du 17/09, story #19) :
+// "avec_planning"/"sans_planning" sont recalculés à chaque navigation dans
+// le temps (dépendent de la période affichée), les autres dépendent de la
+// fiche salarié (contrat/présence). Un salarié sans fiche (ex. lignes
+// "Besoin") n'est exclu que par les filtres autres que "tous".
+type FiltreSalarie =
+  | "tous"
+  | "presents"
+  | "non_presents"
+  | "contrat_actif"
+  | "contrat_inactif"
+  | "avec_planning"
+  | "sans_planning";
+
+const FILTRES_SALARIE: { valeur: FiltreSalarie; libelle: string }[] = [
+  { valeur: "tous", libelle: "Tous" },
+  { valeur: "presents", libelle: "Présents" },
+  { valeur: "non_presents", libelle: "Non présents" },
+  { valeur: "contrat_actif", libelle: "Contrat actif" },
+  { valeur: "contrat_inactif", libelle: "Contrat inactif" },
+  { valeur: "avec_planning", libelle: "Avec planning" },
+  { valeur: "sans_planning", libelle: "Sans planning" },
+];
 
 const NB_SEMAINES = 4;
 const NB_JOURS = NB_SEMAINES * 7;
@@ -61,6 +87,7 @@ export default function PlanningGrid() {
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
   const [positionEdition, setPositionEdition] = useState<PositionSelecteur | null>(null);
   const [selecteurOuvert, setSelecteurOuvert] = useState(false);
+  const [filtreSalarie, setFiltreSalarie] = useState<FiltreSalarie>("tous");
   // Sélection multi-salariés par glisser sur des cases hachurées (jamais remplies)
   // pour appliquer en une fois le roulement actuel de chaque salarié sélectionné.
   const [enTrainDeGlisser, setEnTrainDeGlisser] = useState(false);
@@ -110,9 +137,44 @@ export default function PlanningGrid() {
     }
   }, [debutPeriode]);
 
+  // "Avec/sans planning" dépend de la période actuellement affichée (retour
+  // client du 17/09) : au moins un jour de la période a un code travail ou
+  // évènementiel, en tenant compte des éditions en cours (même résolution
+  // que le rendu des cases : édition locale prioritaire sur la démo).
+  function salarieAUnPlanningSurPeriode(salarieId: string): boolean {
+    return jours.some((jour) => {
+      const cle = `${salarieId}__${formatDateISO(jour)}`;
+      const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
+      return valeur !== undefined;
+    });
+  }
+
+  function salarieCorrespondAuFiltre(salarie: Salarie): boolean {
+    if (filtreSalarie === "tous") return true;
+    // Sans fiche (ex. lignes "Besoin", pas de vrais salariés) : exclu de
+    // tout filtre autre que "Tous".
+    const fiche = ficheDuSalarie(salarie.id);
+    if (!fiche) return false;
+    switch (filtreSalarie) {
+      case "presents":
+        return fiche.contratActif && fiche.presence === "Présent";
+      case "non_presents":
+        return fiche.contratActif && fiche.presence === "Absent";
+      case "contrat_actif":
+        return fiche.contratActif;
+      case "contrat_inactif":
+        return !fiche.contratActif;
+      case "avec_planning":
+        return fiche.contratActif && fiche.presence === "Présent" && salarieAUnPlanningSurPeriode(salarie.id);
+      case "sans_planning":
+        return fiche.contratActif && fiche.presence === "Présent" && !salarieAUnPlanningSurPeriode(salarie.id);
+    }
+  }
+
   const groupes = useMemo(() => {
+    const salariesFiltres = SALARIES.filter(salarieCorrespondAuFiltre);
     const parService = new Map<string, typeof SALARIES>();
-    for (const salarie of SALARIES) {
+    for (const salarie of salariesFiltres) {
       const liste = parService.get(salarie.service) ?? [];
       liste.push(salarie);
       parService.set(salarie.service, liste);
@@ -121,7 +183,10 @@ export default function PlanningGrid() {
       service,
       salaries: parService.get(service)!,
     }));
-  }, []);
+    // salarieCorrespondAuFiltre est recréée à chaque rendu mais lit filtreSalarie/
+    // jours/editions au moment de l'appel : les lister explicitement suffit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filtreSalarie, jours, editions]);
 
   // Ordre à plat des lignes salarié tel qu'affiché (groupé par service) et
   // index par jour affiché : nécessaires pour calculer le rectangle d'une
@@ -469,9 +534,23 @@ export default function PlanningGrid() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1 text-xs text-zinc-600">
+            Afficher :
+            <select
+              value={filtreSalarie}
+              onChange={(e) => setFiltreSalarie(e.target.value as FiltreSalarie)}
+              className="rounded border border-zinc-300 px-1.5 py-1 text-xs font-medium hover:bg-zinc-50"
+            >
+              {FILTRES_SALARIE.map((f) => (
+                <option key={f.valeur} value={f.valeur}>
+                  {f.libelle}
+                </option>
+              ))}
+            </select>
+          </label>
           <button
             onClick={() => changerPeriode(-1)}
-            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+            className="ml-2 rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
             aria-label="Période précédente"
             title="Période précédente"
           >

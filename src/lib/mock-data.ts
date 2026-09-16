@@ -107,6 +107,126 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     presence: "Présent",
     compteUtilisateur: false,
   },
+  {
+    id: "fs3",
+    matricule: "DUPM",
+    nom: "DUPONT",
+    prenom: "Marie",
+    service: "ADMINISTRATIF",
+    typeContrat: "CDI",
+    contratActif: true,
+    manager: "Aucun",
+    presence: "Présent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs4",
+    matricule: "MARJ",
+    nom: "MARTIN",
+    prenom: "Julie",
+    service: "ADMINISTRATIF",
+    typeContrat: "CDI",
+    contratActif: true,
+    manager: "Aucun",
+    presence: "Présent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs5",
+    matricule: "DURS",
+    nom: "DURAND",
+    prenom: "Sophie",
+    service: "ADMINISTRATIF",
+    typeContrat: "CDI",
+    contratActif: true,
+    manager: "Aucun",
+    presence: "Absent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs6",
+    matricule: "PETL",
+    nom: "PETIT",
+    prenom: "Léa",
+    service: "ASH CDD",
+    typeContrat: "CDD",
+    contratActif: true,
+    manager: "IDEC",
+    presence: "Présent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs7",
+    matricule: "ROBE",
+    nom: "ROBERT",
+    prenom: "Emma",
+    service: "ASH CDD",
+    typeContrat: "CDD",
+    contratActif: true,
+    manager: "IDEC",
+    presence: "Présent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs8",
+    matricule: "RICC",
+    nom: "RICHARD",
+    prenom: "Chloé",
+    service: "ASH CDD",
+    typeContrat: "CDD",
+    contratActif: false,
+    manager: "IDEC",
+    presence: "Absent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs9",
+    matricule: "DUBC",
+    nom: "DUBOIS",
+    prenom: "Camille",
+    service: "ASH CDD",
+    typeContrat: "CDD",
+    contratActif: true,
+    manager: "IDEC",
+    presence: "Présent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs10",
+    matricule: "MORL",
+    nom: "MOREAU",
+    prenom: "Lucas",
+    service: "ASH CDD",
+    typeContrat: "CDD",
+    contratActif: true,
+    manager: "IDEC",
+    presence: "Absent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs11",
+    matricule: "SIMM",
+    nom: "SIMON",
+    prenom: "Manon",
+    service: "IDE",
+    typeContrat: "CDI",
+    contratActif: true,
+    manager: "Maîtresse de maison",
+    presence: "Présent",
+    compteUtilisateur: false,
+  },
+  {
+    id: "fs12",
+    matricule: "MICA",
+    nom: "MICHEL",
+    prenom: "Anna",
+    service: "IDE",
+    typeContrat: "CDI",
+    contratActif: false,
+    manager: "Maîtresse de maison",
+    presence: "Absent",
+    compteUtilisateur: false,
+  },
 ];
 
 // Un roulement est une structure répétitive (pattern) d'horaires sur une ou
@@ -173,14 +293,34 @@ export function affectationActuelle(
 
 // Pont temporaire entre les deux représentations du salarié dans cette
 // maquette (clé = Salarie.id de la vue Planning, valeur = FicheSalarie.id de
-// l'admin) : ne couvre que les salariés qui existent des deux côtés (cf.
-// point ouvert "deux représentations distinctes du salarié"). Permet à la
-// grille Planning de retrouver le roulement actuel d'un salarié, en
-// attendant l'unification des deux modèles au vrai backend.
+// l'admin) : cf. point ouvert "deux représentations distinctes du salarié".
+// Couvre désormais tous les salariés réels (hors lignes "Besoin", qui n'ont
+// pas de fiche) pour permettre à la grille Planning de retrouver le
+// roulement actuel d'un salarié ET son contrat/présence (cf. story #19 —
+// filtre d'affichage), en attendant l'unification des deux modèles au vrai
+// backend.
 export const CORRESPONDANCE_SALARIE_FICHE_DEMO: Record<string, string> = {
+  "1": "fs3", // DUPONT Marie
+  "2": "fs4", // MARTIN Julie
   "3": "fs1", // BERNARD Claire
+  "4": "fs5", // DURAND Sophie
+  "8": "fs6", // PETIT Léa
+  "9": "fs7", // ROBERT Emma
+  "10": "fs8", // RICHARD Chloé
+  "11": "fs9", // DUBOIS Camille
+  "12": "fs10", // MOREAU Lucas
   "13": "fs2", // LAURENT Inès
+  "14": "fs11", // SIMON Manon
+  "15": "fs12", // MICHEL Anna
 };
+
+// Fiche salarié (contrat/présence) d'un salarié de la vue Planning, via le
+// pont ci-dessus — undefined pour un salarié sans fiche (ex. lignes
+// "Besoin", qui ne sont pas de vrais salariés).
+export function ficheDuSalarie(salarieId: string): FicheSalarie | undefined {
+  const ficheId = CORRESPONDANCE_SALARIE_FICHE_DEMO[salarieId];
+  return ficheId ? FICHES_SALARIES_DEMO.find((f) => f.id === ficheId) : undefined;
+}
 
 export type JourFerie = {
   date: string; // ISO yyyy-mm-dd
