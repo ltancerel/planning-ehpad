@@ -271,3 +271,12 @@ export réel, connecteur paie.
   reprendre explicitement dans les specs backend pour chaque règle de suppression
   déjà mockée côté front (années, et sans doute plus tard salariés/utilisateurs
   avec historique).
+- **Traçabilité des cellules du planning** (précisé par le client le 17/09) :
+  le modèle de données backend devra historiser chaque modification d'une
+  cellule de planning, pour pouvoir récupérer via l'API l'ensemble des
+  valeurs successivement prises par une cellule (sans que cet historique soit
+  utilisé côté front pour l'instant). Toutes ces opérations (création,
+  modification, effacement, application d'un roulement...) devront aussi être
+  journalisées côté backend (log d'audit), au-delà du seul historique de
+  valeurs. À intégrer dans le schéma de la table planning/journée lors de la
+  conception du backend.
