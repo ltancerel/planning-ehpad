@@ -402,6 +402,9 @@ l'implémentation du backend dans un epic ultérieur.
   mono/multi, règles de complexité du mot de passe. Résout les points ouverts
   "nombre de types d'utilisateur et droits", "salariés = utilisateurs ou
   non", "login mono-session", "complexité du mot de passe".
+  _Tranché le 17/09 : pas de restriction mono-session (multi-session
+  autorisé), mais déconnexion automatique après 15 minutes d'inactivité,
+  quel que soit le type de compte._
 
 - [ ] **2. Modéliser la base de données** _(issue #25)_
   Unification des deux représentations actuelles du salarié, entité EHPAD et
@@ -459,7 +462,8 @@ jusqu'à leur résolution effective._
   — _cf. story « Spécifier l'authentification et la gestion des comptes »,
   issue #24._
 - Salariés = utilisateurs de l'app ou simples lignes de planning ? — _cf. issue #24._
-- Login mono-session : pertinent ? — _cf. issue #24._
+- ~~Login mono-session : pertinent ?~~ → **tranché le 17/09** : multi-session
+  autorisé, déconnexion automatique après 15 min d'inactivité — _cf. issue #24._
 - Notion de contrat à préciser — _cf. story « Modéliser la base de données »,
   issue #25._
 - Complexité du mot de passe à définir — _cf. issue #24._
