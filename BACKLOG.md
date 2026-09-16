@@ -174,6 +174,11 @@ export réel, connecteur paie.
   _Statut : fait, déployé sur `main`. Logo par défaut "Les Jardins de Rambam"
   (recréé en SVG), menu admin multi-sections ajouté au passage._
 
+- [ ] **16. Vue annuelle d'un salarié**
+  Permettre de visualiser sur une seule page les jours de présence d'un salarié
+  sur toute une année (vue synthétique, à l'opposé de la grille planning qui
+  n'affiche que 4 semaines à la fois). Ajoutée le 16/09, à faire plus tard.
+
 ## Sortie de l'Epic — à préciser avant de reprendre
 
 - **Menu Export** (retiré de l'EPIC le 15/09, issue #12 détachée) : la maquette du
