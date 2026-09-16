@@ -111,7 +111,7 @@ export default function PlanningGrid() {
   function changerPeriode(deltaSemaines: number) {
     setDebutPeriode((prev) => {
       const d = new Date(prev);
-      d.setDate(d.getDate() + deltaSemaines * 7 * NB_SEMAINES);
+      d.setDate(d.getDate() + deltaSemaines * 7);
       return d;
     });
   }
