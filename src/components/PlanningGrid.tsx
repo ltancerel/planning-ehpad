@@ -320,19 +320,21 @@ export default function PlanningGrid() {
 
   function demanderConfirmationEffacement() {
     const cellules = celluleEnSelectionEffacement();
+    // Toute case pas déjà hachurée compte : un jour de repos "vidé" par un
+    // roulement (pas de code travail/évènementiel, donc rien à "supprimer" au
+    // sens strict) doit quand même redevenir hachuré avec le reste de la
+    // plage effacée, plutôt que de rester blanc (retour client du 17/09).
     const remplies = cellules.filter(({ salarieId, dateISO }) => {
       const cle = `${salarieId}__${dateISO}`;
       const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
-      return valeur !== undefined && (valeur.travail || valeur.evenementiel);
+      return valeur !== undefined;
     });
     if (remplies.length === 0) {
       annulerEffacement();
       return;
     }
     const confirme = confirm(
-      `Supprimer le${remplies.length > 1 ? "s" : ""} code${remplies.length > 1 ? "s" : ""} horaire${
-        remplies.length > 1 ? "s" : ""
-      } sur ${remplies.length} case${remplies.length > 1 ? "s" : ""} ?`
+      `Effacer ${remplies.length} case${remplies.length > 1 ? "s" : ""} (codes horaires et jours de repos) ?`
     );
     if (confirme) {
       setEditions((prev) => {

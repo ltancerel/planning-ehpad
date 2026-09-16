@@ -190,6 +190,12 @@ export réel, connecteur paie.
   (retour client : "je ne vois que la 1ère semaine", sans aucun message).
   Retiré : la projection couvre désormais les `nbSemaines` du roulement que
   ces semaines soient ou non visibles au moment de l'action._
+  _Correction du 17/09 : l'effacement d'une plage ne repassait en hachuré que
+  les cases portant un code travail/événementiel — un jour de repos "vidé"
+  par un roulement (case blanche sans code) n'avait donc rien à "supprimer"
+  et restait blanc au lieu de redevenir hachuré avec le reste de la plage
+  (retour client : "le samedi dimanche reste en blanc"). Le critère est
+  désormais "case pas déjà hachurée", qu'elle porte un code ou non._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
