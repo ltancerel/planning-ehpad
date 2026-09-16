@@ -15,7 +15,9 @@ réinitialisées à chaque nouvelle visite).
 
 ---
 
-## 1. Vue Planning (écran principal)
+## Partie 1 — Écrans et parcours (maquette graphique)
+
+### 1. Vue Planning (écran principal)
 
 Grille principale de gestion du planning des salariés.
 
@@ -36,7 +38,7 @@ Grille principale de gestion du planning des salariés.
     recalculés automatiquement selon la période affichée : un salarié peut
     apparaître ou disparaître selon la période consultée.
 
-### Saisie d'un code horaire
+#### Saisie d'un code horaire
 
 - Un clic sur une case ouvre un sélecteur de code horaire (recherche par
   code ou par intitulé), avec aperçu de la couleur du code.
@@ -65,7 +67,7 @@ Grille principale de gestion du planning des salariés.
 - Une case peut être vidée à tout moment ; elle redevient alors disponible
   pour une nouvelle planification.
 
-### Roulements (motifs récurrents)
+#### Roulements (motifs récurrents)
 
 - Un salarié peut se voir assigner un **roulement** : un motif d'horaires se
   répétant sur une ou plusieurs semaines complètes.
@@ -81,21 +83,21 @@ Grille principale de gestion du planning des salariés.
   du roulement est bloquée pour ce salarié et la semaine en cause est
   signalée, plutôt que d'appliquer partiellement le roulement.
 
-### Effacement de plages
+#### Effacement de plages
 
 - Il est possible de sélectionner un ensemble de cases déjà remplies (une ou
   plusieurs lignes, un ou plusieurs jours) et de les effacer en une seule
   action, après confirmation. Les cases effacées redeviennent disponibles
   pour une nouvelle planification.
 
-### Accès à la fiche d'un salarié
+#### Accès à la fiche d'un salarié
 
 - Cliquer sur le nom d'un salarié ouvre sa vue « Émargement » pour le mois
   actuellement affiché.
 
 ---
 
-## 2. Émargement — vue mensuelle
+### 2. Émargement — vue mensuelle
 
 Vue calendaire mensuelle du planning d'un salarié, destinée à sa validation.
 
@@ -120,7 +122,7 @@ Vue calendaire mensuelle du planning d'un salarié, destinée à sa validation.
   usage papier, avec un bouton d'impression qui adapte l'affichage au
   format imprimé.
 
-## 3. Émargement — vue annuelle
+### 3. Émargement — vue annuelle
 
 Vue de repérage rapide des évènements particuliers sur une année complète
 pour un salarié, accessible depuis un sélecteur « Mensuel / Annuel » en haut
@@ -144,11 +146,11 @@ d'impression).
 
 ---
 
-## 4. Administration
+### 4. Administration
 
 Écrans réservés au profil Administrateur, regroupés dans un menu dédié.
 
-### Codes horaires
+#### Codes horaires
 
 - Liste des codes horaires existants, avec création, modification et
   suppression.
@@ -164,14 +166,14 @@ d'impression).
   annuelle d'un salarié.
 - Un champ commentaire libre est disponible sur chaque code.
 
-### Roulements
+#### Roulements
 
 - Liste des roulements existants, avec création et modification.
 - Un roulement est défini par un nom et un nombre de semaines ; pour chaque
   semaine, la répartition des codes horaires est saisie jour par jour (du
   lundi au dimanche) à l'aide du même sélecteur de code que la vue Planning.
 
-### Salariés
+#### Salariés
 
 - Liste des salariés, avec création et modification de leur fiche.
 - Une fiche salarié comporte : matricule, nom, prénom, service, type de
@@ -183,20 +185,20 @@ d'impression).
   des roulements assignés et d'en assigner un nouveau (avec une date de
   début et, éventuellement, une date de fin).
 
-### Utilisateurs
+#### Utilisateurs
 
 - Liste des utilisateurs de l'application, avec création et modification.
 - Une fiche utilisateur comporte : identifiant, nom, prénom, email, type
   d'utilisateur (Administrateur / Utilisateur), service, poste.
 
-### Années et jours fériés
+#### Années et jours fériés
 
 - Création d'une nouvelle année planifiée : jours fériés fixes et jours
   fériés calculés (ex. lundi de Pâques), jours fériés personnalisés
   additionnels, gestion automatique des années bissextiles.
 - Une année déjà planifiée ne peut pas être supprimée.
 
-### Identité de l'établissement
+#### Identité de l'établissement
 
 - Configuration du nom affiché et du logo de l'établissement, visibles dans
   l'ensemble de l'application.
@@ -207,7 +209,7 @@ d'impression).
 
 ---
 
-## 5. Profil utilisateur
+### 5. Profil utilisateur
 
 Un menu accessible en haut à droite des écrans principaux permet à
 l'utilisateur connecté de consulter son profil (type d'utilisateur, nom,
@@ -216,7 +218,59 @@ seule.
 
 ---
 
-## 6. Fonctionnalités envisagées mais non encore traitées
+## Partie 2 — Fondations architecturales
+
+Cette partie documente les décisions structurantes prises en préparation du
+backend, au fur et à mesure qu'elles sont tranchées. Elle est appelée à
+s'enrichir (modélisation de la base de données, API, architecture
+multi-application, environnements) au fil des prochains échanges.
+
+### 1. Authentification et gestion des comptes
+
+#### Types de comptes
+
+- **Administrateur Système** : supervision globale de l'application, tous
+  établissements confondus. Porteur des futures fonctions d'administration
+  technique, notamment la visualisation des logs (écrans à concevoir dans un
+  epic ultérieur).
+- **Administrateur** : compte métier, par établissement (le directeur ou son
+  adjoint) — accès automatique à toutes les applications de son
+  établissement (Planning, et une future application Qualité).
+- **Utilisateur** : l'accès à chaque application est indépendant — un compte
+  peut être rattaché à aucune, une seule, ou plusieurs applications.
+- Le salarié ne dispose pas de compte utilisateur.
+
+#### Réinitialisation de mot de passe
+
+- Flux principal : l'administrateur fixe directement un nouveau mot de passe
+  pour un utilisateur, sans envoi d'email.
+- Flux complémentaire, en libre-service : un lien de réinitialisation envoyé
+  par email (« mot de passe oublié »), pour un déploiement de taille réduite
+  dans un premier temps — ce flux reste un confort secondaire, non
+  bloquant : le flux administrateur ci-dessus reste toujours disponible en
+  repli.
+
+#### Session
+
+- Plusieurs sessions simultanées sont autorisées pour un même compte (pas de
+  restriction à une seule connexion active).
+- Une session est fermée automatiquement après **15 minutes d'inactivité**,
+  quel que soit le type de compte.
+
+#### Règles de mot de passe
+
+- Longueur minimale de **8 caractères**.
+- Au moins **un caractère spécial**.
+- Un indicateur de robustesse (jauge de complexité) doit passer au vert
+  avant de pouvoir valider le mot de passe, afin d'écarter les mots de
+  passe qui respectent les règles ci-dessus tout en restant trivialement
+  faibles (ex. « 12345678! »).
+
+---
+
+## Annexes
+
+### Fonctionnalités envisagées mais non encore traitées
 
 Ces besoins ont été identifiés mais nécessitent d'être précisés avant
 développement :
@@ -231,14 +285,11 @@ développement :
 - **Export PDF téléchargeable** de la vue Émargement (au-delà de
   l'impression navigateur déjà disponible).
 
-## 7. Questions fonctionnelles restant à trancher
+### Questions fonctionnelles restant à trancher
 
-- Combien de types d'utilisateurs l'application doit-elle distinguer, et
-  quels sont les droits exacts d'un utilisateur non-administrateur ?
-- Un salarié doit-il nécessairement disposer d'un compte utilisateur, ou
-  peut-il rester une simple ligne de planning sans connexion possible ?
-- Un utilisateur doit-il être limité à une seule session active à la fois ?
+- Les droits exacts d'un compte Utilisateur (au-delà des trois types de
+  compte désormais fixés : Administrateur Système / Administrateur /
+  Utilisateur) restent à détailler écran par écran.
 - Que doit précisément recouvrir la notion de « contrat » d'un salarié ?
-- Quelles règles de complexité pour les mots de passe ?
 - Dans une optique multi-établissements, qui est habilité à créer un
   nouvel établissement dans l'application ?
