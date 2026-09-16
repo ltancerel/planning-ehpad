@@ -117,6 +117,21 @@ export réel, connecteur paie.
   attribut du salarié (donc géré dans sa fiche) et un salarié créé n'a par
   défaut aucun roulement._
 
+- [x] **9ter. Appliquer le roulement d'un salarié directement dans le planning**
+  Sur une case hachurée (jamais planifiée) uniquement : cliquer-glisser
+  verticalement pour sélectionner plusieurs salariés sur le même jour, puis
+  appliquer en une fois le roulement actuel de chacun (celui déjà assigné
+  depuis sa fiche, cf. story 9bis) à partir du lundi de la semaine visée,
+  jusqu'à la fin de la période affichée. Les cases déjà remplies ne sont
+  jamais écrasées ; les salariés sans roulement assigné sont listés à part et
+  ignorés. Un simple clic (sans glisser) garde le comportement actuel
+  (sélecteur de code horaire pour cette seule case).
+  _Statut : fait, non encore mergé sur `main`. Pour cette maquette, ne
+  fonctionne que pour les salariés qui ont un équivalent dans l'admin
+  Salariés (Claire BERNARD, Inès LAURENT) via un pont temporaire entre les
+  deux modèles (`CORRESPONDANCE_SALARIE_FICHE_DEMO`) — à supprimer une fois
+  les deux entités unifiées (cf. point ouvert dédié)._
+
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
   année bissextile).
@@ -185,10 +200,12 @@ export réel, connecteur paie.
   l'écran Admin « Ajouter un salarié » utilise une entité `FicheSalarie` plus
   complète, non reliée par identifiant à la première. L'affectation de
   roulement (historique, roulement en cours) vit donc côté `FicheSalarie`
-  (fiche salarié) sans se répercuter sur la grille Planning pour l'instant. À
-  unifier en un seul modèle Salarié lors du passage au vrai backend — c'est ce
-  modèle unifié qui permettra de vraiment projeter le roulement assigné dans
-  la grille planning.
+  (fiche salarié). Un pont temporaire (`CORRESPONDANCE_SALARIE_FICHE_DEMO`,
+  ajouté pour la story 9ter) relie les deux id pour les 2 salariés qui
+  existent des deux côtés (Claire BERNARD, Inès LAURENT), afin que le
+  planning puisse retrouver leur roulement actuel — à supprimer au profit
+  d'un seul modèle Salarié lors du passage au vrai backend, qui couvrira
+  alors tous les salariés sans pont temporaire.
 - **Intégrité des données à valider côté backend, pas seulement côté front**
   (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
   toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur

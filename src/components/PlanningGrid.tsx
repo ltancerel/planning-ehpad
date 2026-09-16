@@ -2,7 +2,17 @@
 
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { SALARIES, SERVICES_ORDRE, JOURS_FERIES_2026, PLANNING_DEMO } from "@/lib/mock-data";
+import {
+  SALARIES,
+  SERVICES_ORDRE,
+  JOURS_FERIES_2026,
+  PLANNING_DEMO,
+  ROULEMENTS_DEMO,
+  AFFECTATIONS_ROULEMENT_DEMO,
+  CORRESPONDANCE_SALARIE_FICHE_DEMO,
+  affectationActuelle,
+  type Roulement,
+} from "@/lib/mock-data";
 import {
   HORAIRE_CODES_PAR_CODE,
   estCodeSuperposable,
@@ -44,6 +54,16 @@ export default function PlanningGrid() {
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
   const [positionEdition, setPositionEdition] = useState<PositionSelecteur | null>(null);
   const [selecteurOuvert, setSelecteurOuvert] = useState(false);
+  // Sélection multi-salariés par glisser sur des cases hachurées (jamais remplies)
+  // pour appliquer en une fois le roulement actuel de chaque salarié sélectionné.
+  const [enTrainDeGlisser, setEnTrainDeGlisser] = useState(false);
+  const [selectionEnCours, setSelectionEnCours] = useState<{
+    dateISO: string;
+    salarieIds: string[];
+  } | null>(null);
+  const [positionConfirmation, setPositionConfirmation] = useState<{ top: number; left: number } | null>(
+    null
+  );
 
   // Mémorisation de la période affichée d'une ouverture à l'autre (cf. CDC)
   useEffect(() => {
@@ -107,6 +127,79 @@ export default function PlanningGrid() {
     });
     fermerEdition();
   }
+
+  function roulementActuelDuSalarie(salarieId: string): Roulement | undefined {
+    const ficheId = CORRESPONDANCE_SALARIE_FICHE_DEMO[salarieId];
+    if (!ficheId) return undefined;
+    const affectations = AFFECTATIONS_ROULEMENT_DEMO[ficheId] ?? [];
+    const actuelle = affectationActuelle(affectations, formatDateISO(new Date()));
+    return actuelle ? ROULEMENTS_DEMO.find((r) => r.id === actuelle.roulementId) : undefined;
+  }
+
+  function demarrerSelection(salarieId: string, dateISO: string) {
+    setEnTrainDeGlisser(true);
+    setSelectionEnCours({ dateISO, salarieIds: [salarieId] });
+  }
+
+  function etendreSelection(salarieId: string, dateISO: string) {
+    if (!enTrainDeGlisser) return;
+    setSelectionEnCours((prev) => {
+      if (!prev || prev.dateISO !== dateISO || prev.salarieIds.includes(salarieId)) return prev;
+      return { ...prev, salarieIds: [...prev.salarieIds, salarieId] };
+    });
+  }
+
+  function annulerSelection() {
+    setSelectionEnCours(null);
+    setPositionConfirmation(null);
+  }
+
+  function appliquerSelection() {
+    if (!selectionEnCours) return;
+    const lundi = lundiDeLaSemaine(new Date(selectionEnCours.dateISO));
+    const finVisible = jours[jours.length - 1];
+    const nbJours = Math.round((finVisible.getTime() - lundi.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+
+    setEditions((prev) => {
+      const nouvelles = { ...prev };
+      for (const salarieId of selectionEnCours.salarieIds) {
+        const roulement = roulementActuelDuSalarie(salarieId);
+        if (!roulement) continue;
+        for (let i = 0; i < nbJours; i++) {
+          const jour = new Date(lundi);
+          jour.setDate(jour.getDate() + i);
+          const cle = `${salarieId}__${formatDateISO(jour)}`;
+          const existante = cle in nouvelles ? nouvelles[cle] : PLANNING_DEMO[cle];
+          if (existante !== undefined) continue; // ne jamais écraser une case déjà remplie
+          const semaineIndex = Math.floor(i / 7) % roulement.nbSemaines;
+          const jourIndex = i % 7; // lundi est aligné sur l'index 0
+          const code = roulement.motif[semaineIndex][jourIndex];
+          nouvelles[cle] = code ? { travail: code } : {};
+        }
+      }
+      return nouvelles;
+    });
+
+    annulerSelection();
+  }
+
+  useEffect(() => {
+    function surRelachementSouris(e: MouseEvent) {
+      setEnTrainDeGlisser((etaitEnTrain) => {
+        if (!etaitEnTrain) return false;
+        setSelectionEnCours((sel) => {
+          if (sel && sel.salarieIds.length > 1) {
+            setPositionConfirmation({ top: e.clientY + 4, left: e.clientX });
+            return sel;
+          }
+          return null; // simple clic (pas de glisser) : rien à confirmer
+        });
+        return false;
+      });
+    }
+    document.addEventListener("mouseup", surRelachementSouris);
+    return () => document.removeEventListener("mouseup", surRelachementSouris);
+  }, []);
 
   function changerPeriode(deltaSemaines: number) {
     setDebutPeriode((prev) => {
@@ -287,32 +380,53 @@ export default function PlanningGrid() {
                         ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel]
                         : undefined;
                       const enEdition = cellEnEdition === cle;
+                      const enSelection =
+                        jamaisRemplie &&
+                        selectionEnCours?.dateISO === dateISO &&
+                        selectionEnCours.salarieIds.includes(salarie.id);
                       const infoBulle = valeur?.travail
                         ? `${horaireTravail?.intitule ?? valeur.travail}${
                             horaireEvenementiel ? ` + ${horaireEvenementiel.intitule}` : ""
                           } — ${heuresReellesCellule(valeur)}h`
                         : jamaisRemplie
-                          ? "Jamais planifiée"
+                          ? "Jamais planifiée — cliquer-glisser sur plusieurs salariés pour appliquer leur roulement"
                           : undefined;
 
                       return (
                         <td
                           key={cle}
                           onClick={(e) => ouvrirEdition(cle, e.currentTarget)}
-                          className="cursor-pointer border border-zinc-200 p-0 text-center align-middle"
+                          onMouseDown={
+                            jamaisRemplie
+                              ? (e) => {
+                                  e.preventDefault();
+                                  demarrerSelection(salarie.id, dateISO);
+                                }
+                              : undefined
+                          }
+                          onMouseEnter={
+                            jamaisRemplie ? () => etendreSelection(salarie.id, dateISO) : undefined
+                          }
+                          className="cursor-pointer select-none border border-zinc-200 p-0 text-center align-middle"
                           style={{
                             backgroundColor: enEdition
                               ? "#eff6ff"
-                              : jamaisRemplie
-                                ? "#fafafa"
-                                : horaireTravail?.couleurFond ?? "#fff",
+                              : enSelection
+                                ? "#dbeafe"
+                                : jamaisRemplie
+                                  ? "#fafafa"
+                                  : horaireTravail?.couleurFond ?? "#fff",
                             backgroundImage:
-                              !enEdition && jamaisRemplie
+                              !enEdition && !enSelection && jamaisRemplie
                                 ? "repeating-linear-gradient(45deg, #e4e4e7 0px, #e4e4e7 4px, transparent 4px, transparent 10px)"
                                 : undefined,
                             color: horaireTravail?.couleurTexte ?? "#000",
-                            outline: enEdition ? "2px solid #60a5fa" : undefined,
-                            outlineOffset: enEdition ? "-2px" : undefined,
+                            outline: enEdition
+                              ? "2px solid #60a5fa"
+                              : enSelection
+                                ? "2px solid #3b82f6"
+                                : undefined,
+                            outlineOffset: enEdition || enSelection ? "-2px" : undefined,
                           }}
                           title={infoBulle}
                         >
@@ -352,6 +466,67 @@ export default function PlanningGrid() {
             onChoisir={(code) => choisirCode(cellEnEdition, code)}
             onFermer={fermerEdition}
           />
+        </>
+      )}
+
+      {selectionEnCours && positionConfirmation && selectionEnCours.salarieIds.length > 1 && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={annulerSelection} />
+          <div
+            className="fixed z-50 w-72 rounded border border-zinc-200 bg-white p-3 text-xs shadow-lg"
+            style={{ top: positionConfirmation.top, left: positionConfirmation.left }}
+          >
+            <p className="mb-2 font-medium text-zinc-700">
+              {selectionEnCours.salarieIds.length} salarié(s) sélectionné(s) — semaine du{" "}
+              {formatJourMois(lundiDeLaSemaine(new Date(selectionEnCours.dateISO)))}
+            </p>
+            {(() => {
+              const applicables = selectionEnCours.salarieIds
+                .map((id) => ({
+                  salarie: SALARIES.find((s) => s.id === id)!,
+                  roulement: roulementActuelDuSalarie(id),
+                }))
+                .filter((e) => e.roulement);
+              const sansRoulement = selectionEnCours.salarieIds
+                .map((id) => SALARIES.find((s) => s.id === id)!)
+                .filter((s) => !roulementActuelDuSalarie(s.id));
+              return (
+                <>
+                  {applicables.length > 0 && (
+                    <ul className="mb-2 space-y-0.5 text-zinc-600">
+                      {applicables.map(({ salarie, roulement }) => (
+                        <li key={salarie.id}>
+                          {salarie.nom} {salarie.prenom} —{" "}
+                          <span className="font-medium">{roulement!.nom}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {sansRoulement.length > 0 && (
+                    <p className="mb-2 text-[11px] text-amber-600">
+                      Sans roulement assigné (ignorés) :{" "}
+                      {sansRoulement.map((s) => `${s.nom} ${s.prenom}`).join(", ")}
+                    </p>
+                  )}
+                  <div className="flex justify-end gap-2">
+                    <button
+                      onClick={annulerSelection}
+                      className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+                    >
+                      Annuler
+                    </button>
+                    <button
+                      onClick={appliquerSelection}
+                      disabled={applicables.length === 0}
+                      className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Appliquer le roulement de chacun
+                    </button>
+                  </div>
+                </>
+              );
+            })()}
+          </div>
         </>
       )}
     </div>

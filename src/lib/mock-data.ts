@@ -171,6 +171,17 @@ export function affectationActuelle(
   );
 }
 
+// Pont temporaire entre les deux représentations du salarié dans cette
+// maquette (clé = Salarie.id de la vue Planning, valeur = FicheSalarie.id de
+// l'admin) : ne couvre que les salariés qui existent des deux côtés (cf.
+// point ouvert "deux représentations distinctes du salarié"). Permet à la
+// grille Planning de retrouver le roulement actuel d'un salarié, en
+// attendant l'unification des deux modèles au vrai backend.
+export const CORRESPONDANCE_SALARIE_FICHE_DEMO: Record<string, string> = {
+  "3": "fs1", // BERNARD Claire
+  "13": "fs2", // LAURENT Inès
+};
+
 export type JourFerie = {
   date: string; // ISO yyyy-mm-dd
   label: string;
