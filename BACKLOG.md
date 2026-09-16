@@ -207,14 +207,6 @@ export réel, connecteur paie.
   une année déjà planifiée ne doit pas pouvoir être supprimée — voir aussi le point
   ouvert "à appliquer côté backend" ci-dessous)._
 
-- [ ] **12. Blocage visuel du planning passé**
-  Affichage grisé/verrouillé des cellules passées dans la grille (visuel uniquement,
-  sans logique de verrouillage réelle à ce stade).
-
-- [ ] **13. Adaptation mobile de la grille**
-  Version condensée/scrollable de la grille planning pour écran mobile (le CDC exige
-  un affichage web *et* mobile).
-
 - [x] **14. Consulter son profil**
   Menu utilisateur en haut à droite (nom/avatar) sur les écrans principaux, ouvrant
   un panneau de consultation du profil : type d'utilisateur, nom, prénom, service,
@@ -252,13 +244,23 @@ export réel, connecteur paie.
     plutôt que le seul code abrégé, tout en conservant la synthèse du temps
     (total d'heures par jour et par mois, déjà présente).
 
-## Sortie de l'Epic — à préciser avant de reprendre
+## Sortie de l'Epic — WAIVED
 
-- **Menu Export** (retiré de l'EPIC le 15/09, issue #12 détachée) : la maquette du
-  menu d'export accessible depuis la vue Planning avait une spécification trop
-  imprécise pour être développée en l'état (contenu du menu ? formats ? périmètre
-  des données exportées ?). À clarifier avec le client avant de la réintégrer dans
-  un prochain Epic.
+- **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis
+  à jour le 17/09 pour porter WAIVED explicitement : la maquette du menu d'export
+  accessible depuis la vue Planning avait une spécification trop imprécise pour être
+  développée en l'état (contenu du menu ? formats ? périmètre des données
+  exportées ?). À clarifier avec le client avant de la réintégrer dans un prochain
+  Epic.
+- **Blocage visuel du planning passé (WAIVED)** — issue #13, sortie de l'EPIC et
+  titre GitHub mis à jour le 17/09. Affichage grisé/verrouillé des cellules passées
+  dans la grille (visuel uniquement, sans logique de verrouillage réelle). Mise de
+  côté sans raison de spécification précisée ; à reprendre si besoin dans un
+  prochain Epic.
+- **Adaptation mobile de la grille (WAIVED)** — issue #14, sortie de l'EPIC et titre
+  GitHub mis à jour le 17/09. Version condensée/scrollable de la grille planning
+  pour écran mobile (le CDC exige un affichage web *et* mobile). Mise de côté sans
+  raison de spécification précisée ; à reprendre si besoin dans un prochain Epic.
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
