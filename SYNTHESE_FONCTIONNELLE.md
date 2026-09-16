@@ -1,9 +1,11 @@
 # Synthèse fonctionnelle — Application de planning EHPAD
 
-Ce document reprend, sous une forme proche d'un cahier des charges, l'ensemble
-des éléments fonctionnels aujourd'hui présents dans la maquette de
-l'application. Il décrit **ce que l'application permet de faire**, sans
-détail d'implémentation.
+Ce document reprend, sous une forme proche d'un cahier des charges,
+l'ensemble des éléments fonctionnels de l'application décidés à ce jour :
+d'une part ceux déjà présents dans la maquette graphique (Partie 1), d'autre
+part les décisions structurantes prises en préparation du backend (Partie 2).
+Il décrit **ce que l'application permet ou permettra de faire**, sans détail
+d'implémentation, et est mis à jour au fil des échanges.
 
 ## Périmètre actuel
 
