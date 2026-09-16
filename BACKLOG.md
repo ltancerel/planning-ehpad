@@ -304,6 +304,16 @@ export réel, connecteur paie.
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
+- **Mettre en place une suite de tests automatisés rejouables (Playwright)**
+  _(issue #21)_ — ajouté le 17/09, décision du client. Pendant la maquette,
+  les vérifications de non-régression sont faites via des scripts Playwright
+  ponctuels (dossier temporaire hors dépôt), non commités et non rejouables.
+  À remplacer par une vraie suite e2e commitée dans le dépôt (`npm run
+  test:e2e`), couvrant les parcours déjà validés manuellement (planning,
+  codes événementiels, émargement, roulements, config). Volontairement hors
+  périmètre de l'EPIC #1 : à traiter lors de la mise en place du backend,
+  une fois la maquette graphique figée sur une première version.
+
 - **Export PDF téléchargeable** (ajouté le 15/09, suite à la case signature de la
   vue émargement) : au-delà de l'impression navigateur déjà en place
   (`window.print()`, qui permet déjà d'enregistrer en PDF via le navigateur), un
