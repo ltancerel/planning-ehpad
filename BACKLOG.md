@@ -397,7 +397,7 @@ l'implémentation du backend dans un epic ultérieur.
 
 ### Stories
 
-- [ ] **1. Spécifier l'authentification et la gestion des comptes** _(issue #24)_
+- [x] **1. Spécifier l'authentification et la gestion des comptes** _(issue #24)_
   Types de comptes et droits, réinitialisation de mot de passe, session
   mono/multi, règles de complexité du mot de passe. Résout les points ouverts
   "nombre de types d'utilisateur et droits", "salariés = utilisateurs ou
@@ -422,14 +422,31 @@ l'implémentation du backend dans un epic ultérieur.
   300 emails/jour) possible plus tard par simple configuration, sans
   changement de code, si le besoin grandit._
   _Tous les points de cette story sont désormais tranchés._
+  _Statut : fait — document de spécification rédigé (Synthèse fonctionnelle,
+  Partie 2 § 1)._
 
-- [ ] **2. Modéliser la base de données** _(issue #25)_
+- [x] **2. Modéliser la base de données** _(issue #25)_
   Unification des deux représentations actuelles du salarié, entité EHPAD et
   segmentation multi-établissement (`ehpad_id` + Row Level Security),
   traçabilité des cellules de planning + log d'audit, intégrité des règles
   métier côté serveur, notion de contrat à préciser. Résout les points
   ouverts "deux représentations du salarié", "traçabilité des cellules",
   "intégrité des données à valider côté backend", "notion de contrat".
+  _Tranché le 17/09, à l'issue d'une revue de conception détaillée du
+  MCD/MLD : Administrateur Système extrait en table séparée (au lieu d'un
+  `ehpad_id` nullable sur `compte`) ; ajout de `ehpad_application` pour
+  plafonner les applications souscrites par un établissement ; ajout d'une
+  table `contrat` historisant les contrats successifs d'un salarié (un seul
+  actif à la fois, garanti par index unique partiel) ; cohérence
+  catégorie/code horaire garantie par trigger PostgreSQL plutôt que par le
+  seul code applicatif (l'API Supabase étant directement accessible) ;
+  conservation de `log_audit` comme table (préféré à des logs à plat, pour
+  la requêtabilité et l'absence de filesystem persistant sur Vercel) ; les
+  deux colonnes "auteur" (`journee_historique`, `log_audit`) référencent
+  `auth.users.id`, partagé par `compte` et `administrateur_systeme`._
+  _Statut : fait — modèle documenté dans l'
+  [artifact MCD/MLD](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV) et
+  dans la Synthèse fonctionnelle (Partie 2 § 2)._
 
 - [ ] **3. Définir l'API backend (spécification OpenAPI/Swagger)** _(issue #26)_
   Endpoints couvrant l'ensemble des écrans maquettés, conventions communes
@@ -505,8 +522,9 @@ jusqu'à leur résolution effective._
 - Salariés = utilisateurs de l'app ou simples lignes de planning ? — _cf. issue #24._
 - ~~Login mono-session : pertinent ?~~ → **tranché le 17/09** : multi-session
   autorisé, déconnexion automatique après 15 min d'inactivité — _cf. issue #24._
-- Notion de contrat à préciser — _cf. story « Modéliser la base de données »,
-  issue #25._
+- ~~Notion de contrat à préciser~~ → **tranché le 17/09** : table `contrat`
+  dédiée, historisant les contrats successifs d'un salarié, un seul actif à
+  la fois — _cf. issue #25._
 - ~~Complexité du mot de passe à définir~~ → **tranché le 17/09** : 8
   caractères min., 1 caractère spécial min., indicateur de robustesse au
   vert obligatoire — _cf. issue #24._
@@ -514,34 +532,19 @@ jusqu'à leur résolution effective._
   l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
   hors application pour l'instant ? — _cf. story « Concevoir l'architecture
   multi-application », issue #27._
-- **Deux représentations distinctes du salarié dans la maquette** (relevé le
-  16/09 en construisant la story 9bis) : la vue Planning utilise une entité
-  `Salarie` (simple, sert de support à la démo de plein de salariés) tandis que
-  l'écran Admin « Ajouter un salarié » utilise une entité `FicheSalarie` plus
-  complète, non reliée par identifiant à la première. L'affectation de
-  roulement (historique, roulement en cours) vit donc côté `FicheSalarie`
-  (fiche salarié). Un pont temporaire (`CORRESPONDANCE_SALARIE_FICHE_DEMO`,
-  ajouté pour la story 9ter) relie les deux id pour les 2 salariés qui
-  existent des deux côtés (Claire BERNARD, Inès LAURENT), afin que le
-  planning puisse retrouver leur roulement actuel — à supprimer au profit
-  d'un seul modèle Salarié lors du passage au vrai backend, qui couvrira
-  alors tous les salariés sans pont temporaire. — _cf. story « Modéliser la
-  base de données », issue #25._
-- **Intégrité des données à valider côté backend, pas seulement côté front**
-  (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
-  toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur
-  (contrainte DB / policy Supabase / vérification API), le front ne pouvant être
-  qu'un confort UX — contournable via appel direct à l'API, DevTools, etc. À
-  reprendre explicitement dans les specs backend pour chaque règle de suppression
-  déjà mockée côté front (années, et sans doute plus tard salariés/utilisateurs
-  avec historique). — _cf. story « Modéliser la base de données », issue #25._
-- **Traçabilité des cellules du planning** (précisé par le client le 17/09) :
-  le modèle de données backend devra historiser chaque modification d'une
-  cellule de planning, pour pouvoir récupérer via l'API l'ensemble des
-  valeurs successivement prises par une cellule (sans que cet historique soit
-  utilisé côté front pour l'instant). Toutes ces opérations (création,
-  modification, effacement, application d'un roulement...) devront aussi être
-  journalisées côté backend (log d'audit), au-delà du seul historique de
-  valeurs. À intégrer dans le schéma de la table planning/journée lors de la
-  conception du backend. — _cf. story « Modéliser la base de données »,
-  issue #25._
+- ~~**Deux représentations distinctes du salarié dans la maquette**~~ (relevé
+  le 16/09 en construisant la story 9bis) → **tranché le 17/09** : un modèle
+  `salarie` unique dans le schéma backend (table `salarie`, cf. issue #25) ;
+  le pont temporaire `CORRESPONDANCE_SALARIE_FICHE_DEMO` reste un artefact de
+  la maquette, à abandonner lors du passage au vrai backend.
+- ~~**Intégrité des données à valider côté backend, pas seulement côté
+  front**~~ (retour client du 16/09) → **tranché le 17/09** : les règles qui
+  ne peuvent pas s'exprimer par une simple contrainte sur une table (ex. « un
+  seul contrat actif par salarié », cohérence catégorie/code horaire) sont
+  garanties en base par index/contraintes/triggers PostgreSQL, et non
+  seulement côté applicatif — l'API PostgREST de Supabase étant directement
+  accessible, le code applicatif seul ne suffit pas. — _cf. issue #25._
+- ~~**Traçabilité des cellules du planning**~~ (précisé par le client le
+  17/09) → **tranché le 17/09** : table `journee_historique` (append-only,
+  valeurs successives d'une cellule) + `log_audit` (journal générique des
+  opérations), auteur référencé via `auth.users.id`. — _cf. issue #25._
