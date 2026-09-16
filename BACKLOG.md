@@ -141,6 +141,18 @@ export réel, connecteur paie.
   immédiate (action la plus courante), le raccourci roulement est un ajout
   dans le même sélecteur, pas une étape supplémentaire._
 
+- [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes**
+  Retour client du 16/09, pour éviter les erreurs : un roulement ne peut plus
+  être appliqué (raccourci ou cliquer-glisser) sur une semaine où au moins un
+  jour porte déjà un code horaire — la semaine entière est alors ignorée
+  (les autres semaines de la période continuent d'être remplies normalement).
+  Pour permettre de corriger une semaine bloquante, ajout d'une sélection
+  rectangulaire (cliquer-glisser sur des cases déjà remplies, une ou
+  plusieurs lignes/jours) supprimable via la touche Suppr/Retour arrière ou
+  un bouton "Supprimer", avec confirmation avant suppression effective.
+  _Statut : fait, non encore mergé sur `main`. Fonctionnalité admin comme le
+  reste de la gestion du roulement dans le planning._
+
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
   année bissextile).

@@ -10,6 +10,7 @@ import {
   ROULEMENTS_DEMO,
   AFFECTATIONS_ROULEMENT_DEMO,
   CORRESPONDANCE_SALARIE_FICHE_DEMO,
+  UTILISATEUR_CONNECTE,
   affectationActuelle,
   type Roulement,
 } from "@/lib/mock-data";
@@ -64,6 +65,19 @@ export default function PlanningGrid() {
   const [positionConfirmation, setPositionConfirmation] = useState<{ top: number; left: number } | null>(
     null
   );
+  // Sélection rectangulaire (glisser sur des cases déjà remplies) pour effacer
+  // des codes horaires sur une ou plusieurs lignes/jours — fonctionnalité admin.
+  const [enTrainDeSelectionnerEffacement, setEnTrainDeSelectionnerEffacement] = useState(false);
+  const [ancreEffacement, setAncreEffacement] = useState<{ salarieId: string; dateISO: string } | null>(
+    null
+  );
+  const [survolEffacement, setSurvolEffacement] = useState<{ salarieId: string; dateISO: string } | null>(
+    null
+  );
+  const [positionActionEffacement, setPositionActionEffacement] = useState<{
+    top: number;
+    left: number;
+  } | null>(null);
 
   // Mémorisation de la période affichée d'une ouverture à l'autre (cf. CDC)
   useEffect(() => {
@@ -102,6 +116,20 @@ export default function PlanningGrid() {
       salaries: parService.get(service)!,
     }));
   }, []);
+
+  // Ordre à plat des lignes salarié tel qu'affiché (groupé par service) et
+  // index par jour affiché : nécessaires pour calculer le rectangle d'une
+  // sélection d'effacement (lignes × colonnes) à partir de deux coins.
+  const salariesOrdonnes = useMemo(() => groupes.flatMap((g) => g.salaries), [groupes]);
+  const indexSalarie = useMemo(
+    () => new Map(salariesOrdonnes.map((s, i) => [s.id, i])),
+    [salariesOrdonnes]
+  );
+  const indexJour = useMemo(
+    () => new Map(jours.map((j, i) => [formatDateISO(j), i])),
+    [jours]
+  );
+  const estAdministrateur = UTILISATEUR_CONNECTE.typeUtilisateur === "Administrateur";
 
   function ouvrirEdition(cle: string, cellule: HTMLElement) {
     const rect = cellule.getBoundingClientRect();
@@ -155,27 +183,46 @@ export default function PlanningGrid() {
   }
 
   // Projette le motif d'un roulement pour un salarié, à partir du lundi donné
-  // jusqu'à la fin de la période affichée, sans jamais écraser une case déjà
-  // remplie. Retourne un nouvel objet editions à partir de celui donné.
+  // jusqu'à la fin de la période affichée, semaine par semaine. Retour client
+  // du 16/09 : pour éviter les erreurs, une semaine n'est jamais modifiée si un
+  // code horaire y est déjà planifié un jour ou plus (une case "hachurée" ou
+  // "vidée" n'a pas de code planifié et ne bloque donc pas). Retourne un
+  // nouvel objet editions à partir de celui donné.
   function projeterRoulementDepuis(
     editionsBase: Record<string, ValeurCellule>,
     salarieId: string,
-    lundi: Date,
+    lundiDebut: Date,
     roulement: Roulement
   ): Record<string, ValeurCellule> {
     const finVisible = jours[jours.length - 1];
-    const nbJours = Math.round((finVisible.getTime() - lundi.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-    const nouvelles = { ...editionsBase };
-    for (let i = 0; i < nbJours; i++) {
-      const jour = new Date(lundi);
-      jour.setDate(jour.getDate() + i);
+    const valeurDe = (nouvelles: Record<string, ValeurCellule>, jour: Date) => {
       const cle = `${salarieId}__${formatDateISO(jour)}`;
-      const existante = cle in nouvelles ? nouvelles[cle] : PLANNING_DEMO[cle];
-      if (existante !== undefined) continue; // ne jamais écraser une case déjà remplie
-      const semaineIndex = Math.floor(i / 7) % roulement.nbSemaines;
-      const jourIndex = i % 7; // lundi est aligné sur l'index 0
-      const code = roulement.motif[semaineIndex][jourIndex];
-      nouvelles[cle] = code ? { travail: code } : {};
+      return cle in nouvelles ? nouvelles[cle] : PLANNING_DEMO[cle];
+    };
+
+    let nouvelles = editionsBase;
+    for (let semaine = 0; ; semaine++) {
+      const lundiSemaine = new Date(lundiDebut);
+      lundiSemaine.setDate(lundiSemaine.getDate() + semaine * 7);
+      if (lundiSemaine > finVisible) break;
+
+      const joursDeLaSemaine = Array.from({ length: 7 }, (_, j) => {
+        const jour = new Date(lundiSemaine);
+        jour.setDate(jour.getDate() + j);
+        return jour;
+      }).filter((jour) => jour <= finVisible);
+
+      const semaineBloquee = joursDeLaSemaine.some((jour) => Boolean(valeurDe(nouvelles, jour)?.travail));
+      if (semaineBloquee) continue; // semaine ignorée entièrement, on passe à la suivante
+
+      const semaineIndex = semaine % roulement.nbSemaines;
+      for (const jour of joursDeLaSemaine) {
+        const jourIndex = (jour.getDay() + 6) % 7; // 0 = lundi
+        const code = roulement.motif[semaineIndex][jourIndex];
+        const cle = `${salarieId}__${formatDateISO(jour)}`;
+        const existante = valeurDe(nouvelles, jour);
+        nouvelles = { ...nouvelles, [cle]: code ? { ...existante, travail: code } : {} };
+      }
     }
     return nouvelles;
   }
@@ -207,6 +254,71 @@ export default function PlanningGrid() {
     fermerEdition();
   }
 
+  function demarrerEffacement(salarieId: string, dateISO: string) {
+    setEnTrainDeSelectionnerEffacement(true);
+    setAncreEffacement({ salarieId, dateISO });
+    setSurvolEffacement({ salarieId, dateISO });
+  }
+
+  function etendreEffacement(salarieId: string, dateISO: string) {
+    if (!enTrainDeSelectionnerEffacement) return;
+    setSurvolEffacement({ salarieId, dateISO });
+  }
+
+  function annulerEffacement() {
+    setAncreEffacement(null);
+    setSurvolEffacement(null);
+    setPositionActionEffacement(null);
+  }
+
+  // Coins → rectangle : toutes les cases (salarié, jour) comprises entre
+  // l'ancre et le point survolé au relâchement.
+  function celluleEnSelectionEffacement(): { salarieId: string; dateISO: string }[] {
+    if (!ancreEffacement || !survolEffacement) return [];
+    const rA = indexSalarie.get(ancreEffacement.salarieId);
+    const rB = indexSalarie.get(survolEffacement.salarieId);
+    const cA = indexJour.get(ancreEffacement.dateISO);
+    const cB = indexJour.get(survolEffacement.dateISO);
+    if (rA === undefined || rB === undefined || cA === undefined || cB === undefined) return [];
+    const [rMin, rMax] = [Math.min(rA, rB), Math.max(rA, rB)];
+    const [cMin, cMax] = [Math.min(cA, cB), Math.max(cA, cB)];
+    const resultat: { salarieId: string; dateISO: string }[] = [];
+    for (let r = rMin; r <= rMax; r++) {
+      for (let c = cMin; c <= cMax; c++) {
+        resultat.push({ salarieId: salariesOrdonnes[r].id, dateISO: formatDateISO(jours[c]) });
+      }
+    }
+    return resultat;
+  }
+
+  function demanderConfirmationEffacement() {
+    const cellules = celluleEnSelectionEffacement();
+    const remplies = cellules.filter(({ salarieId, dateISO }) => {
+      const cle = `${salarieId}__${dateISO}`;
+      const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
+      return valeur !== undefined && (valeur.travail || valeur.evenementiel);
+    });
+    if (remplies.length === 0) {
+      annulerEffacement();
+      return;
+    }
+    const confirme = confirm(
+      `Supprimer le${remplies.length > 1 ? "s" : ""} code${remplies.length > 1 ? "s" : ""} horaire${
+        remplies.length > 1 ? "s" : ""
+      } sur ${remplies.length} case${remplies.length > 1 ? "s" : ""} ?`
+    );
+    if (confirme) {
+      setEditions((prev) => {
+        const nouvelles = { ...prev };
+        for (const { salarieId, dateISO } of remplies) {
+          nouvelles[`${salarieId}__${dateISO}`] = {}; // vidée explicitement, comme "Vider la cellule"
+        }
+        return nouvelles;
+      });
+    }
+    annulerEffacement();
+  }
+
   useEffect(() => {
     function surRelachementSouris(e: MouseEvent) {
       setEnTrainDeGlisser((etaitEnTrain) => {
@@ -224,6 +336,50 @@ export default function PlanningGrid() {
     document.addEventListener("mouseup", surRelachementSouris);
     return () => document.removeEventListener("mouseup", surRelachementSouris);
   }, []);
+
+  // Fin du glisser d'une sélection d'effacement : si l'ancre et le point
+  // relâché diffèrent (vrai glisser), on garde la sélection et on affiche
+  // l'action « Supprimer » ; sinon (simple clic) on l'annule et on laisse le
+  // clic normal ouvrir le sélecteur de code.
+  useEffect(() => {
+    function surRelachementSourisEffacement(e: MouseEvent) {
+      if (!enTrainDeSelectionnerEffacement) return;
+      setEnTrainDeSelectionnerEffacement(false);
+      const memeCase =
+        ancreEffacement &&
+        survolEffacement &&
+        ancreEffacement.salarieId === survolEffacement.salarieId &&
+        ancreEffacement.dateISO === survolEffacement.dateISO;
+      if (memeCase) {
+        annulerEffacement();
+      } else {
+        setPositionActionEffacement({ top: e.clientY + 4, left: e.clientX });
+      }
+    }
+    document.addEventListener("mouseup", surRelachementSourisEffacement);
+    return () => document.removeEventListener("mouseup", surRelachementSourisEffacement);
+  }, [enTrainDeSelectionnerEffacement, ancreEffacement, survolEffacement]);
+
+  // Touche Suppr/Retour arrière : efface la sélection en cours (si elle porte
+  // sur plus d'une case), sauf si l'utilisateur est en train de saisir du
+  // texte ailleurs (recherche de code, champ de date...).
+  useEffect(() => {
+    function surTouche(e: KeyboardEvent) {
+      if (e.key !== "Delete" && e.key !== "Backspace") return;
+      if (!ancreEffacement || !survolEffacement) return;
+      if (ancreEffacement.salarieId === survolEffacement.salarieId && ancreEffacement.dateISO === survolEffacement.dateISO)
+        return;
+      const cible = e.target as HTMLElement | null;
+      if (cible && (cible.tagName === "INPUT" || cible.tagName === "TEXTAREA")) return;
+      e.preventDefault();
+      demanderConfirmationEffacement();
+    }
+    document.addEventListener("keydown", surTouche);
+    return () => document.removeEventListener("keydown", surTouche);
+    // demanderConfirmationEffacement est recréée à chaque rendu mais lit l'état
+    // courant : la ré-abonner sur les mêmes dépendances suffit, pas besoin de useCallback.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ancreEffacement, survolEffacement]);
 
   function changerPeriode(deltaSemaines: number) {
     setDebutPeriode((prev) => {
@@ -244,7 +400,7 @@ export default function PlanningGrid() {
   // l'appliquer directement depuis le sélecteur de code, sans bloquer la saisie
   // manuelle qui reste l'action la plus courante.
   const roulementPourEdition =
-    cellEnEdition && valeurActuelleEdition === undefined
+    estAdministrateur && cellEnEdition && valeurActuelleEdition === undefined
       ? roulementActuelDuSalarie(cellEnEdition.split("__")[0])
       : undefined;
 
@@ -415,6 +571,33 @@ export default function PlanningGrid() {
                         jamaisRemplie &&
                         selectionEnCours?.dateISO === dateISO &&
                         selectionEnCours.salarieIds.includes(salarie.id);
+                      const enEffacement =
+                        estAdministrateur &&
+                        ancreEffacement &&
+                        survolEffacement &&
+                        (() => {
+                          const rA = indexSalarie.get(ancreEffacement.salarieId);
+                          const rB = indexSalarie.get(survolEffacement.salarieId);
+                          const cA = indexJour.get(ancreEffacement.dateISO);
+                          const cB = indexJour.get(survolEffacement.dateISO);
+                          const r = indexSalarie.get(salarie.id);
+                          const c = indexJour.get(dateISO);
+                          if (
+                            rA === undefined ||
+                            rB === undefined ||
+                            cA === undefined ||
+                            cB === undefined ||
+                            r === undefined ||
+                            c === undefined
+                          )
+                            return false;
+                          return (
+                            r >= Math.min(rA, rB) &&
+                            r <= Math.max(rA, rB) &&
+                            c >= Math.min(cA, cB) &&
+                            c <= Math.max(cA, cB)
+                          );
+                        })();
                       const infoBulle = valeur?.travail
                         ? `${horaireTravail?.intitule ?? valeur.travail}${
                             horaireEvenementiel ? ` + ${horaireEvenementiel.intitule}` : ""
@@ -428,25 +611,33 @@ export default function PlanningGrid() {
                           key={cle}
                           onClick={(e) => ouvrirEdition(cle, e.currentTarget)}
                           onMouseDown={
-                            jamaisRemplie
-                              ? (e) => {
+                            !estAdministrateur
+                              ? undefined
+                              : (e) => {
                                   e.preventDefault();
-                                  demarrerSelection(salarie.id, dateISO);
+                                  if (jamaisRemplie) demarrerSelection(salarie.id, dateISO);
+                                  else demarrerEffacement(salarie.id, dateISO);
                                 }
-                              : undefined
                           }
                           onMouseEnter={
-                            jamaisRemplie ? () => etendreSelection(salarie.id, dateISO) : undefined
+                            !estAdministrateur
+                              ? undefined
+                              : () => {
+                                  if (jamaisRemplie) etendreSelection(salarie.id, dateISO);
+                                  etendreEffacement(salarie.id, dateISO);
+                                }
                           }
                           className="cursor-pointer select-none border border-zinc-200 p-0 text-center align-middle"
                           style={{
                             backgroundColor: enEdition
                               ? "#eff6ff"
-                              : enSelection
-                                ? "#dbeafe"
-                                : jamaisRemplie
-                                  ? "#fafafa"
-                                  : horaireTravail?.couleurFond ?? "#fff",
+                              : enEffacement
+                                ? "#fee2e2"
+                                : enSelection
+                                  ? "#dbeafe"
+                                  : jamaisRemplie
+                                    ? "#fafafa"
+                                    : horaireTravail?.couleurFond ?? "#fff",
                             backgroundImage:
                               !enEdition && !enSelection && jamaisRemplie
                                 ? "repeating-linear-gradient(45deg, #e4e4e7 0px, #e4e4e7 4px, transparent 4px, transparent 10px)"
@@ -454,10 +645,12 @@ export default function PlanningGrid() {
                             color: horaireTravail?.couleurTexte ?? "#000",
                             outline: enEdition
                               ? "2px solid #60a5fa"
-                              : enSelection
-                                ? "2px solid #3b82f6"
-                                : undefined,
-                            outlineOffset: enEdition || enSelection ? "-2px" : undefined,
+                              : enEffacement
+                                ? "2px solid #ef4444"
+                                : enSelection
+                                  ? "2px solid #3b82f6"
+                                  : undefined,
+                            outlineOffset: enEdition || enEffacement || enSelection ? "-2px" : undefined,
                           }}
                           title={infoBulle}
                         >
@@ -544,6 +737,9 @@ export default function PlanningGrid() {
                       {sansRoulement.map((s) => `${s.nom} ${s.prenom}`).join(", ")}
                     </p>
                   )}
+                  <p className="mb-2 text-[11px] text-zinc-400">
+                    Une semaine contenant déjà un code horaire n&apos;est jamais modifiée.
+                  </p>
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={annulerSelection}
@@ -562,6 +758,37 @@ export default function PlanningGrid() {
                 </>
               );
             })()}
+          </div>
+        </>
+      )}
+
+      {estAdministrateur && ancreEffacement && survolEffacement && positionActionEffacement && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={annulerEffacement} />
+          <div
+            className="fixed z-50 w-56 rounded border border-zinc-200 bg-white p-3 text-xs shadow-lg"
+            style={{ top: positionActionEffacement.top, left: positionActionEffacement.left }}
+          >
+            <p className="mb-2 font-medium text-zinc-700">
+              {celluleEnSelectionEffacement().length} case(s) sélectionnée(s)
+            </p>
+            <p className="mb-2 text-[11px] text-zinc-400">
+              Touche Suppr/Retour arrière, ou bouton ci-dessous.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={annulerEffacement}
+                className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={demanderConfirmationEffacement}
+                className="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700"
+              >
+                Supprimer
+              </button>
+            </div>
           </div>
         </>
       )}
