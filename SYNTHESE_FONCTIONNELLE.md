@@ -224,7 +224,7 @@ seule.
 
 Cette partie documente les décisions structurantes prises en préparation du
 backend, au fur et à mesure qu'elles sont tranchées. Elle est appelée à
-s'enrichir (API, environnements) au fil des prochains échanges.
+s'enrichir (environnements) au fil des prochains échanges.
 
 ### Contrainte transverse : hébergement serverless (Vercel)
 
@@ -391,6 +391,44 @@ l'**Administrateur Système** peut créer, consulter et gérer les
   **désactivation** (résiliation, impayé…) sans suppression des données —
   la désactivation coupe automatiquement l'accès de tous les comptes de cet
   établissement, sans avoir à les désactiver un par un.
+
+### 4. API backend
+
+Document de détail : [spécification de l'API](https://claude.ai/artifact/QKjB7PgsJZXJqnDpyZSLNM)
+(issue #26).
+
+L'essentiel de l'API n'est pas écrit à la main : elle est exposée
+directement par la base de données (Supabase/PostgREST), qui génère le
+CRUD standard à partir du schéma. Seules quatre opérations, qui doivent
+créer ou consulter des informations sensibles côté serveur, passent par une
+fonction dédiée :
+
+- **Connexion par identifiant** : la connexion se fait avec l'identifiant
+  court de l'utilisateur (pas son email), résolu vers l'adresse email
+  correspondante côté serveur avant de vérifier le mot de passe — un
+  identifiant inconnu et un mot de passe incorrect renvoient exactement le
+  même message, pour ne jamais laisser deviner quels identifiants existent.
+- **Création d'un établissement**, **création d'un compte** (ou d'un
+  Administrateur Système) et **réinitialisation d'un mot de passe** :
+  chacune de ces opérations crée ou modifie un utilisateur, ce qui
+  nécessite un accès serveur que l'application ne délègue jamais au
+  navigateur.
+
+Le reste de l'API (planning, roulements, codes horaires, salariés,
+calendrier…) suit les mêmes règles d'accès que l'écran qui les consomme,
+sans détour par une brique intermédiaire — y compris les opérations qui
+portent une vraie règle métier (ex. l'application d'un roulement, qui
+respecte le principe déjà énoncé : tout ou rien par salarié si une semaine
+est déjà remplie), traitées directement au niveau de la base de données.
+
+La documentation de l'API n'est pas publiée sur une route ouverte à tous :
+un écran dédié, réservé à l'**Administrateur Système**, la rend consultable
+(rejoint le périmètre de l'EPIC « Administration Système », issue #30).
+
+Chaque opération, quel que soit son chemin d'accès, reste tracée dans le
+journal d'audit (cf. modélisation de la base de données) — la traçabilité
+ne dépend donc pas de la discipline de chaque écran à la déclencher
+explicitement.
 
 ---
 

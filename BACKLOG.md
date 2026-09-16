@@ -448,10 +448,36 @@ l'implémentation du backend dans un epic ultérieur.
   [artifact MCD/MLD](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV) et
   dans la Synthèse fonctionnelle (Partie 2 § 2)._
 
-- [ ] **3. Définir l'API backend (spécification OpenAPI/Swagger)** _(issue #26)_
+- [x] **3. Définir l'API backend (spécification OpenAPI/Swagger)** _(issue #26)_
   Endpoints couvrant l'ensemble des écrans maquettés, conventions communes
   (erreurs, pagination, authentification, versionnement), anticipation du
   futur connecteur paie. Dépend des stories 1 et 2.
+  _Tranché le 17/09 : l'essentiel de l'API n'est pas écrit à la main — elle
+  est exposée directement par PostgREST (Supabase), CRUD standard sur le
+  schéma (documenté par domaine plutôt que par mécanisme, pour rester
+  cohérent) plus des fonctions Postgres en RPC pour la logique métier qui
+  dépasse un CRUD simple (`appliquer_roulement`, `generer_annee_planifiee`),
+  toutes deux sur la même base URL/authentification que le CRUD. Seules 4
+  opérations, qui ont besoin de la clé serveur `service_role`, sont des
+  fonctions Vercel séparées : connexion par identifiant (résolution
+  `identifiant → email` côté serveur, Supabase Auth n'authentifiant
+  nativement que par email), création d'un EHPAD, création d'un compte ou
+  d'un Administrateur Système, réinitialisation de mot de passe — dans tous
+  les cas parce que l'opération crée/modifie un utilisateur Supabase Auth ou
+  lirait une donnée à ne jamais exposer à un rôle client. Traçabilité
+  généralisée : un trigger générique alimente `log_audit` pour toute table
+  CRUD auditée, `journee` gardant son propre trigger dédié vers
+  `journee_historique` ; toute fonction RPC suit la même règle sous-jacente
+  (le trigger suffit si elle écrit une table déjà auditée, sinon elle
+  loggue elle-même). Documentation de l'API : écran dédié réservé à
+  l'Administrateur Système plutôt qu'une route publique (rejoint l'EPIC
+  #30). Petits compléments au modèle de données (issue #25, déjà close) :
+  colonnes d'horodatage unifiées sous le nom `horodatage`, `DELETE`
+  exceptionnel sur `contrat` réservé à l'Administrateur Système, trigger
+  d'unicité de `identifiant` entre `compte` et `administrateur_systeme`._
+  _Statut : fait — spécification détaillée dans l'
+  [artifact API](https://claude.ai/artifact/QKjB7PgsJZXJqnDpyZSLNM), à
+  résumer dans la Synthèse fonctionnelle (Partie 2 § 4)._
 
 - [x] **4. Concevoir l'architecture multi-application** _(issue #27)_
   Socle commun (comptes, EHPAD, authentification) découplé du métier
