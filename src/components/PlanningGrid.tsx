@@ -154,33 +154,57 @@ export default function PlanningGrid() {
     setPositionConfirmation(null);
   }
 
+  // Projette le motif d'un roulement pour un salarié, à partir du lundi donné
+  // jusqu'à la fin de la période affichée, sans jamais écraser une case déjà
+  // remplie. Retourne un nouvel objet editions à partir de celui donné.
+  function projeterRoulementDepuis(
+    editionsBase: Record<string, ValeurCellule>,
+    salarieId: string,
+    lundi: Date,
+    roulement: Roulement
+  ): Record<string, ValeurCellule> {
+    const finVisible = jours[jours.length - 1];
+    const nbJours = Math.round((finVisible.getTime() - lundi.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+    const nouvelles = { ...editionsBase };
+    for (let i = 0; i < nbJours; i++) {
+      const jour = new Date(lundi);
+      jour.setDate(jour.getDate() + i);
+      const cle = `${salarieId}__${formatDateISO(jour)}`;
+      const existante = cle in nouvelles ? nouvelles[cle] : PLANNING_DEMO[cle];
+      if (existante !== undefined) continue; // ne jamais écraser une case déjà remplie
+      const semaineIndex = Math.floor(i / 7) % roulement.nbSemaines;
+      const jourIndex = i % 7; // lundi est aligné sur l'index 0
+      const code = roulement.motif[semaineIndex][jourIndex];
+      nouvelles[cle] = code ? { travail: code } : {};
+    }
+    return nouvelles;
+  }
+
   function appliquerSelection() {
     if (!selectionEnCours) return;
     const lundi = lundiDeLaSemaine(new Date(selectionEnCours.dateISO));
-    const finVisible = jours[jours.length - 1];
-    const nbJours = Math.round((finVisible.getTime() - lundi.getTime()) / (24 * 60 * 60 * 1000)) + 1;
 
     setEditions((prev) => {
-      const nouvelles = { ...prev };
+      let nouvelles = prev;
       for (const salarieId of selectionEnCours.salarieIds) {
         const roulement = roulementActuelDuSalarie(salarieId);
         if (!roulement) continue;
-        for (let i = 0; i < nbJours; i++) {
-          const jour = new Date(lundi);
-          jour.setDate(jour.getDate() + i);
-          const cle = `${salarieId}__${formatDateISO(jour)}`;
-          const existante = cle in nouvelles ? nouvelles[cle] : PLANNING_DEMO[cle];
-          if (existante !== undefined) continue; // ne jamais écraser une case déjà remplie
-          const semaineIndex = Math.floor(i / 7) % roulement.nbSemaines;
-          const jourIndex = i % 7; // lundi est aligné sur l'index 0
-          const code = roulement.motif[semaineIndex][jourIndex];
-          nouvelles[cle] = code ? { travail: code } : {};
-        }
+        nouvelles = projeterRoulementDepuis(nouvelles, salarieId, lundi, roulement);
       }
       return nouvelles;
     });
 
     annulerSelection();
+  }
+
+  function appliquerRoulementDepuisEdition() {
+    if (!cellEnEdition) return;
+    const [salarieId, dateISO] = cellEnEdition.split("__");
+    const roulement = roulementActuelDuSalarie(salarieId);
+    if (!roulement) return;
+    const lundi = lundiDeLaSemaine(new Date(dateISO));
+    setEditions((prev) => projeterRoulementDepuis(prev, salarieId, lundi, roulement));
+    fermerEdition();
   }
 
   useEffect(() => {
@@ -216,6 +240,13 @@ export default function PlanningGrid() {
     ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition])
     : undefined;
   const editionAUneValeur = Boolean(valeurActuelleEdition?.travail || valeurActuelleEdition?.evenementiel);
+  // Cellule jamais remplie dont le salarié a un roulement actuel : proposer de
+  // l'appliquer directement depuis le sélecteur de code, sans bloquer la saisie
+  // manuelle qui reste l'action la plus courante.
+  const roulementPourEdition =
+    cellEnEdition && valeurActuelleEdition === undefined
+      ? roulementActuelDuSalarie(cellEnEdition.split("__")[0])
+      : undefined;
 
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
@@ -463,6 +494,11 @@ export default function PlanningGrid() {
           <HoraireCodeSelector
             position={positionEdition}
             aUneValeur={editionAUneValeur}
+            actionRoulement={
+              roulementPourEdition
+                ? { nomRoulement: roulementPourEdition.nom, onAppliquer: appliquerRoulementDepuisEdition }
+                : undefined
+            }
             onChoisir={(code) => choisirCode(cellEnEdition, code)}
             onFermer={fermerEdition}
           />

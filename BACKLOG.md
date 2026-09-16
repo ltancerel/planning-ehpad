@@ -118,19 +118,28 @@ export réel, connecteur paie.
   défaut aucun roulement._
 
 - [x] **9ter. Appliquer le roulement d'un salarié directement dans le planning**
-  Sur une case hachurée (jamais planifiée) uniquement : cliquer-glisser
-  verticalement pour sélectionner plusieurs salariés sur le même jour, puis
-  appliquer en une fois le roulement actuel de chacun (celui déjà assigné
-  depuis sa fiche, cf. story 9bis) à partir du lundi de la semaine visée,
-  jusqu'à la fin de la période affichée. Les cases déjà remplies ne sont
-  jamais écrasées ; les salariés sans roulement assigné sont listés à part et
-  ignorés. Un simple clic (sans glisser) garde le comportement actuel
-  (sélecteur de code horaire pour cette seule case).
+  Sur une case hachurée (jamais planifiée) uniquement :
+  - **Simple clic** : ouvre le sélecteur de code horaire habituel (saisie ou
+    recherche d'un code) — reste l'action la plus courante, non bloquée. Si le
+    salarié a un roulement actuel, un raccourci « Appliquer le roulement «
+    X » » apparaît en haut du sélecteur pour l'appliquer à partir du lundi de
+    la semaine visée jusqu'à la fin de la période affichée, sans ouvrir de
+    second écran.
+  - **Cliquer-glisser** verticalement : sélectionne plusieurs salariés sur le
+    même jour, puis un panneau permet d'appliquer en une fois le roulement
+    actuel de chacun (celui déjà assigné depuis sa fiche, cf. story 9bis).
+
+  Dans les deux cas, les cases déjà remplies ne sont jamais écrasées, et les
+  salariés sans roulement assigné sont signalés/ignorés plutôt que bloquants.
   _Statut : fait, non encore mergé sur `main`. Pour cette maquette, ne
   fonctionne que pour les salariés qui ont un équivalent dans l'admin
   Salariés (Claire BERNARD, Inès LAURENT) via un pont temporaire entre les
   deux modèles (`CORRESPONDANCE_SALARIE_FICHE_DEMO`) — à supprimer une fois
   les deux entités unifiées (cf. point ouvert dédié)._
+  _Révision du 16/09 : première version avec un menu de choix bloquant avant
+  le sélecteur de code — retour client : la saisie d'un code doit rester
+  immédiate (action la plus courante), le raccourci roulement est un ajout
+  dans le même sélecteur, pas une étape supplémentaire._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
