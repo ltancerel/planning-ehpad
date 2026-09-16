@@ -447,6 +447,21 @@ l'implémentation du backend dans un epic ultérieur.
   Environnements Vercel (Production/Preview), deux projets Supabase distincts
   (dev/recette + production) avec migrations versionnées, gestion des
   secrets par environnement.
+  _Précisé le 17/09 : les sauvegardes automatiques gérées ne sont incluses
+  qu'à partir du plan Supabase Pro (25$/mois, sauvegardes quotidiennes,
+  rétention 7 jours) — gratuites nulle part. Le plan Pro devient donc le
+  minimum recommandé pour le projet de production (pas pour dev/recette).
+  Point-in-Time Recovery disponible en option payante (100$/mois) mais
+  disproportionné pour ce déploiement — une sauvegarde quotidienne suffit._
+
+- [ ] **6. Sauvegarde manuelle programmée (solution de démarrage)** _(issue #29)_
+  Retour client du 17/09 : en attendant un éventuel passage au plan Pro,
+  sauvegarde régulière programmée (`pg_dump` + cron) sur un serveur externe
+  déjà disponible côté client, via la chaîne de connexion PostgreSQL directe
+  exposée par Supabase (disponible même sur le plan gratuit). Couvre
+  fréquence, rétention, sécurisation des identifiants, et une procédure de
+  restauration testée. Solution de démarrage, non exclusive d'un passage
+  ultérieur aux sauvegardes gérées de la story 5 si le besoin grandit.
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
