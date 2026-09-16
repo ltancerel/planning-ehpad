@@ -28,6 +28,12 @@ export type HoraireCode = {
   typeEvenement?: TypeEvenement;
   regleHeures?: RegleHeuresEvenement; // uniquement pour typeEvenement === "superposition"
   heuresPersonnalisees?: number;
+  // Si coché, ce code colore son jour dans la vue annuelle d'un salarié
+  // (repérage rapide des évènements particuliers sur 365/366 jours, sans
+  // détail d'horaire) — cf. retour client du 17/09, story #16. Disponible
+  // pour toute catégorie : a priori réservé aux codes événementiels, mais
+  // le client ne veut pas exclure un code de travail.
+  afficherVueAnnuelle?: boolean;
 };
 
 function minutesDeLaPlage(plage: Plage): { debut: number; fin: number } | null {
@@ -157,6 +163,7 @@ export const HORAIRE_CODES: HoraireCode[] = [
     action: "Se superpose au code horaire",
     typeEvenement: "superposition",
     regleHeures: "zero",
+    afficherVueAnnuelle: true,
   },
   {
     code: "ABI",
@@ -167,6 +174,7 @@ export const HORAIRE_CODES: HoraireCode[] = [
     action: "Se superpose au code horaire",
     typeEvenement: "superposition",
     regleHeures: "zero",
+    afficherVueAnnuelle: true,
   },
   {
     code: "MAL",
@@ -177,9 +185,24 @@ export const HORAIRE_CODES: HoraireCode[] = [
     action: "Se superpose au code horaire",
     typeEvenement: "superposition",
     regleHeures: "code_initial",
+    afficherVueAnnuelle: true,
   },
-  { code: "ABA", intitule: "Congé sans solde", categorie: "evenementiel", couleurFond: "#a1a1aa", couleurTexte: "#ffffff" },
-  { code: "CP", intitule: "Congés", categorie: "evenementiel", couleurFond: "#60a5fa", couleurTexte: "#1e3a8a" },
+  {
+    code: "ABA",
+    intitule: "Congé sans solde",
+    categorie: "evenementiel",
+    couleurFond: "#a1a1aa",
+    couleurTexte: "#ffffff",
+    afficherVueAnnuelle: true,
+  },
+  {
+    code: "CP",
+    intitule: "Congés",
+    categorie: "evenementiel",
+    couleurFond: "#60a5fa",
+    couleurTexte: "#1e3a8a",
+    afficherVueAnnuelle: true,
+  },
 
   // Horaires événementiels — type "complement" (plage horaire saisie à la
   // volée : chevauchement du travail = heures en moins, hors travail =

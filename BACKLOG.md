@@ -222,10 +222,29 @@ export réel, connecteur paie.
   _Statut : fait, déployé sur `main`. Logo par défaut "Les Jardins de Rambam"
   (recréé en SVG), menu admin multi-sections ajouté au passage._
 
-- [ ] **16. Vue annuelle d'un salarié** _(issue #18)_
+- [x] **16. Vue annuelle d'un salarié** _(issue #18)_
   Permettre de visualiser sur une seule page les jours de présence d'un salarié
   sur toute une année (vue synthétique, à l'opposé de la grille planning qui
   n'affiche que 4 semaines à la fois). Ajoutée le 16/09, à faire plus tard.
+  _Statut : fait sur la branche de travail, pas encore mergé. Intégrée à la vue
+  émargement (`/emargement`), avec un sélecteur "Mensuel / Annuel" dans l'en-tête
+  (mêmes salarié/couleurs/bouton Imprimer, sans la section signature/validation —
+  cette vue n'a pas vocation à être émargée, cf. retour client du 17/09)._
+  _Mise en page : grille à 12 colonnes (une par mois) et jusqu'à 31 lignes (un
+  jour du mois par ligne), pour tenir les 365/366 jours sur un seul écran. Chaque
+  case n'affiche qu'une couleur (pas de détail d'horaire), avec une info-bulle au
+  survol (date + intitulé) ; une légende sous la grille rappelle la correspondance
+  couleur → intitulé._
+  _Nouveau champ admin "Afficher dans la vue annuelle" (`afficherVueAnnuelle`)
+  sur le formulaire de code horaire, disponible pour toute catégorie (le client
+  ne veut pas exclure un code de travail, même si a priori réservé aux absences).
+  Seuls les codes cochés colorent leur jour ; codes cochés par défaut dans la démo :
+  CAR, ABI, MAL, ABA, CP. Si un jour a à la fois un code travail et un code
+  évènementiel cochés, l'évènementiel est prioritaire._
+  _Refactor : la logique mensuelle (auparavant tout dans `EmargementContenu.tsx`)
+  extraite dans `EmargementMensuel.tsx` ; nouveau `EmargementAnnuel.tsx` pour la
+  grille annuelle ; `EmargementContenu.tsx` devient la coquille commune
+  (en-tête, sélecteur de vue, salarié) qui rend l'un ou l'autre._
 
 - [x] **17. Correction des codes horaires événementiels** _(issue #19)_
   Retour client du 16/09 : la gestion actuelle des codes événementiels
