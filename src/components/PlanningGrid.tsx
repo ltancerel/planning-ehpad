@@ -440,6 +440,9 @@ export default function PlanningGrid() {
     ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition])
     : undefined;
   const editionAUneValeur = Boolean(valeurActuelleEdition?.travail || valeurActuelleEdition?.evenementiel);
+  const plagesTravailEdition = valeurActuelleEdition?.travail
+    ? (HORAIRE_CODES_PAR_CODE[valeurActuelleEdition.travail.toUpperCase()]?.plages ?? [])
+    : [];
   // Cellule jamais remplie dont le salarié a un roulement actuel : proposer de
   // l'appliquer directement depuis le sélecteur de code, sans bloquer la saisie
   // manuelle qui reste l'action la plus courante.
@@ -752,6 +755,7 @@ export default function PlanningGrid() {
             }
             onChoisir={(code) => choisirCode(cellEnEdition, code)}
             onChoisirComplement={(code, plage) => choisirCodeComplement(cellEnEdition, code, plage)}
+            plagesTravail={plagesTravailEdition}
             onFermer={fermerEdition}
           />
         </>

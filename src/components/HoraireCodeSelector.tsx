@@ -1,9 +1,24 @@
 "use client";
 
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { HORAIRE_CODES, estCodeSuperposable, estCodeComplement, type Plage } from "@/lib/horaire-codes";
+import {
+  HORAIRE_CODES,
+  estCodeSuperposable,
+  estCodeComplement,
+  plageComplementValide,
+  type Plage,
+} from "@/lib/horaire-codes";
 
 export type PositionSelecteur = { top: number; left: number; width: number };
+
+// Sélecteurs heure/minute indépendants de la locale du navigateur : le
+// <input type="time"> natif peut afficher un 3e segment AM/PM selon la
+// locale système (repérage via clavier réel en sandbox Linux/Chromium sans
+// données ICU fr-FR) — la valeur restait alors vide tant que ce segment
+// n'était pas choisi, bloquant silencieusement le bouton "Ajouter" et la
+// touche Entrée (retour client du 17/09).
+const HEURES = Array.from({ length: 24 }, (_, h) => h.toString().padStart(2, "0"));
+const MINUTES = ["00", "15", "30", "45"];
 
 type HoraireCodeSelectorProps = {
   position: PositionSelecteur;
@@ -19,6 +34,10 @@ type HoraireCodeSelectorProps = {
   /** Un évènement "complement" (à la volée) demande une plage horaire avant
    * d'être posé — cf. retour client du 17/09. */
   onChoisirComplement?: (code: string, plage: Plage) => void;
+  /** Plages du code de travail de la case en cours d'édition, pour valider
+   * que la plage saisie ne le chevauche pas partiellement (retour client
+   * du 17/09 : ex. code 8h-18h, refuser un évènement 16h-20h). */
+  plagesTravail?: Plage[];
   onFermer: () => void;
 };
 
@@ -29,13 +48,21 @@ export default function HoraireCodeSelector({
   actionRoulement,
   onChoisir,
   onChoisirComplement,
+  plagesTravail,
   onFermer,
 }: HoraireCodeSelectorProps) {
   const [recherche, setRecherche] = useState("");
   const [indexSurligne, setIndexSurligne] = useState(0);
   const [codeComplementEnSaisie, setCodeComplementEnSaisie] = useState<string | null>(null);
-  const [plageDebut, setPlageDebut] = useState("");
-  const [plageFin, setPlageFin] = useState("");
+  // Heure et minute sont gardées séparées (plutôt qu'une seule chaîne
+  // "HH:MM") pour ne pas perdre le premier segment choisi tant que le
+  // second n'est pas encore renseigné.
+  const [heureDebut, setHeureDebut] = useState("");
+  const [minuteDebut, setMinuteDebut] = useState("");
+  const [heureFin, setHeureFin] = useState("");
+  const [minuteFin, setMinuteFin] = useState("");
+  const plageDebut = heureDebut && minuteDebut ? `${heureDebut}:${minuteDebut}` : "";
+  const plageFin = heureFin && minuteFin ? `${heureFin}:${minuteFin}` : "";
 
   // La position d'ancrage (sous la case cliquée) peut pousser le popover hors
   // de l'écran pour une case proche du bord droit/bas — le bouton "Ajouter"
@@ -112,12 +139,19 @@ export default function HoraireCodeSelector({
     onChoisir(code);
   }
 
+  const plageComplete = Boolean(plageDebut && plageFin);
+  const plageValide = plageComplete
+    ? plageComplementValide({ debut: plageDebut, fin: plageFin }, plagesTravail ?? [])
+    : true;
+
   function validerComplement() {
-    if (!codeComplementEnSaisie || !onChoisirComplement || !plageDebut || !plageFin) return;
+    if (!codeComplementEnSaisie || !onChoisirComplement || !plageComplete || !plageValide) return;
     onChoisirComplement(codeComplementEnSaisie, { debut: plageDebut, fin: plageFin });
     setCodeComplementEnSaisie(null);
-    setPlageDebut("");
-    setPlageFin("");
+    setHeureDebut("");
+    setMinuteDebut("");
+    setHeureFin("");
+    setMinuteFin("");
   }
 
   if (codeComplementEnSaisie) {
@@ -126,30 +160,78 @@ export default function HoraireCodeSelector({
       <div
         ref={conteneurRef}
         className="fixed z-50 flex flex-col rounded border border-zinc-200 bg-white p-3 shadow-lg"
-        style={{ top: positionAffichee.top, left: positionAffichee.left, width: Math.max(position.width, 240) }}
+        style={{ top: positionAffichee.top, left: positionAffichee.left, width: Math.max(position.width, 260) }}
       >
         <p className="mb-2 text-xs font-medium text-zinc-700">
           Plage horaire pour «&nbsp;{horaire?.intitule ?? codeComplementEnSaisie}&nbsp;»
         </p>
-        <div className="mb-2 flex items-center gap-2">
-          <input
+        <div
+          className="mb-2 flex items-center gap-2"
+          onKeyDown={(e) => e.key === "Enter" && validerComplement()}
+        >
+          <select
             autoFocus
-            type="time"
-            value={plageDebut}
-            onChange={(e) => setPlageDebut(e.target.value)}
-            className="rounded border border-zinc-300 px-2 py-1 text-sm"
-          />
+            value={heureDebut}
+            onChange={(e) => setHeureDebut(e.target.value)}
+            className="rounded border border-zinc-300 px-1 py-1 text-sm"
+          >
+            <option value="">--</option>
+            {HEURES.map((h) => (
+              <option key={h} value={h}>
+                {h}
+              </option>
+            ))}
+          </select>
+          <span>:</span>
+          <select
+            value={minuteDebut}
+            onChange={(e) => setMinuteDebut(e.target.value)}
+            className="rounded border border-zinc-300 px-1 py-1 text-sm"
+          >
+            <option value="">--</option>
+            {MINUTES.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
           <span className="text-zinc-400">→</span>
-          <input
-            type="time"
-            value={plageFin}
-            onChange={(e) => setPlageFin(e.target.value)}
-            className="rounded border border-zinc-300 px-2 py-1 text-sm"
-          />
+          <select
+            value={heureFin}
+            onChange={(e) => setHeureFin(e.target.value)}
+            className="rounded border border-zinc-300 px-1 py-1 text-sm"
+          >
+            <option value="">--</option>
+            {HEURES.map((h) => (
+              <option key={h} value={h}>
+                {h}
+              </option>
+            ))}
+          </select>
+          <span>:</span>
+          <select
+            value={minuteFin}
+            onChange={(e) => setMinuteFin(e.target.value)}
+            className="rounded border border-zinc-300 px-1 py-1 text-sm"
+          >
+            <option value="">--</option>
+            {MINUTES.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
         </div>
-        <p className="mb-2 text-[11px] text-zinc-400">
-          Chevauche le code de travail : heures en moins. Hors du code de travail : heures en plus.
-        </p>
+        {plageComplete && !plageValide ? (
+          <p className="mb-2 text-[11px] font-medium text-red-600">
+            Cette plage chevauche partiellement le code de travail : choisissez une plage entièrement
+            incluse dedans (heures en moins) ou entièrement en dehors (heures en plus).
+          </p>
+        ) : (
+          <p className="mb-2 text-[11px] text-zinc-400">
+            Chevauche le code de travail : heures en moins. Hors du code de travail : heures en plus.
+          </p>
+        )}
         <div className="flex justify-end gap-2">
           <button
             type="button"
@@ -161,7 +243,7 @@ export default function HoraireCodeSelector({
           <button
             type="button"
             onClick={validerComplement}
-            disabled={!plageDebut || !plageFin}
+            disabled={!plageComplete || !plageValide}
             className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Ajouter

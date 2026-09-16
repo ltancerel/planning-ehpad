@@ -72,6 +72,22 @@ export function deltaComplementHeures(plageEvenement: Plage, plagesTravail: Plag
   return horsTravail - chevauchementTotal;
 }
 
+// Une plage "complement" doit être, pour chaque plage de travail, soit
+// entièrement incluse dedans (heures en moins), soit entièrement en dehors
+// (heures en plus) — un chevauchement partiel serait ambigu pour
+// l'utilisateur (retour client du 17/09 : ex. code 8h-18h, refuser 16h-20h).
+export function plageComplementValide(plageEvenement: Plage, plagesTravail: Plage[]): boolean {
+  const evenement = minutesDeLaPlage(plageEvenement);
+  if (!evenement) return false;
+  return plagesTravail.every((plageTravail) => {
+    const travail = minutesDeLaPlage(plageTravail);
+    if (!travail) return true;
+    const chevauche = Math.min(evenement.fin, travail.fin) - Math.max(evenement.debut, travail.debut) > 0;
+    if (!chevauche) return true;
+    return evenement.debut >= travail.debut && evenement.fin <= travail.fin;
+  });
+}
+
 export const HORAIRE_CODES: HoraireCode[] = [
   // Horaires particuliers
   { code: ".", intitule: "REPOS", categorie: "special", couleurFond: "#f4f4f5", couleurTexte: "#71717a" },

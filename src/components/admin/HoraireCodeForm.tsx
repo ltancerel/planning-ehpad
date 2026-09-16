@@ -213,6 +213,7 @@ export default function HoraireCodeForm({
                 <div key={index} className="flex items-center gap-2">
                   <input
                     type="time"
+                    lang="fr-FR"
                     value={plage.debut}
                     onChange={(e) => changerPlage(index, "debut", e.target.value)}
                     className="rounded border border-zinc-300 px-2 py-1 text-sm"
@@ -220,6 +221,7 @@ export default function HoraireCodeForm({
                   <span className="text-zinc-400">→</span>
                   <input
                     type="time"
+                    lang="fr-FR"
                     value={plage.fin}
                     onChange={(e) => changerPlage(index, "fin", e.target.value)}
                     className="rounded border border-zinc-300 px-2 py-1 text-sm"

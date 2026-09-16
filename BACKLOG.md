@@ -252,6 +252,24 @@ export réel, connecteur paie.
   propose désormais le choix du type (avec description de chacun), et masque
   la règle de décompte d'heures pour le type "Complément à la volée" (calculée
   dynamiquement, non paramétrable)._
+  _Correction du 17/09 (popover hors écran) : le popover de saisie de la
+  plage horaire (comme la liste de codes) pouvait s'afficher partiellement
+  hors de la fenêtre pour une case proche du bord droit/bas de l'écran,
+  rendant le bouton "Ajouter" inatteignable au clic. Il se recadre désormais
+  dans la zone visible une fois affiché._
+  _Correction du 17/09 (bouton "Ajouter" et touche Entrée inactifs) : le
+  `<input type="time">` natif peut afficher un 3e segment (AM/PM) selon la
+  locale du navigateur, qui restait vide tant qu'il n'était pas choisi — la
+  plage horaire ne se validait donc jamais, quel que soit le poste de
+  l'utilisateur. Remplacé par deux sélecteurs heure/minute (pas de 15 min)
+  indépendants de la locale ; la touche Entrée valide désormais aussi la
+  saisie une fois la plage complète et valide._
+  _Ajout du 17/09 (retour client) : la plage saisie pour un évènement
+  "complément à la volée" doit, pour chaque plage du code de travail, être
+  entièrement incluse dedans (heures en moins) ou entièrement en dehors
+  (heures en plus) — un chevauchement partiel est ambigu et est désormais
+  refusé (ex. code 8h-18h : un évènement 16h-20h est rejeté avec un message
+  explicite, le bouton "Ajouter" restant désactivé)._
 
 - [ ] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
