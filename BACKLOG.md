@@ -143,15 +143,24 @@ export réel, connecteur paie.
 
 - [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes**
   Retour client du 16/09, pour éviter les erreurs : un roulement ne peut plus
-  être appliqué (raccourci ou cliquer-glisser) sur une semaine où au moins un
-  jour porte déjà un code horaire — la semaine entière est alors ignorée
-  (les autres semaines de la période continuent d'être remplies normalement).
+  être appliqué (raccourci ou cliquer-glisser) sur un salarié dont au moins
+  une semaine de la période contient déjà un code horaire — c'est tout ou
+  rien pour ce salarié (aucune semaine n'est remplie, même celles qui
+  seraient libres) plutôt qu'un remplissage partiel qui a semé la confusion
+  lors d'un test client (semaine suivante remplie, semaine en cours non
+  remplie sans explication). L'utilisateur est notifié explicitement :
+  raccourci → message bloquant nommant la semaine en cause et invitant à
+  effacer d'abord ; cliquer-glisser → salariés concernés listés à part dans
+  le panneau de confirmation, non appliqués.
   Pour permettre de corriger une semaine bloquante, ajout d'une sélection
   rectangulaire (cliquer-glisser sur des cases déjà remplies, une ou
   plusieurs lignes/jours) supprimable via la touche Suppr/Retour arrière ou
   un bouton "Supprimer", avec confirmation avant suppression effective.
   _Statut : fait, non encore mergé sur `main`. Fonctionnalité admin comme le
   reste de la gestion du roulement dans le planning._
+  _Révision du 16/09 : la première version appliquait quand même les
+  semaines libres d'un salarié bloqué sur une autre — retour client : tout
+  ou rien par salarié, avec notification explicite plutôt qu'un silence._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion

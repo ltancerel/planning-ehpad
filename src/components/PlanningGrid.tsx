@@ -182,49 +182,56 @@ export default function PlanningGrid() {
     setPositionConfirmation(null);
   }
 
-  // Projette le motif d'un roulement pour un salarié, à partir du lundi donné
-  // jusqu'à la fin de la période affichée, semaine par semaine. Retour client
-  // du 16/09 : pour éviter les erreurs, une semaine n'est jamais modifiée si un
-  // code horaire y est déjà planifié un jour ou plus (une case "hachurée" ou
-  // "vidée" n'a pas de code planifié et ne bloque donc pas). Retourne un
-  // nouvel objet editions à partir de celui donné.
-  function projeterRoulementDepuis(
+  // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, à
+  // partir du lundi donné jusqu'à la fin de la période affichée. Retour
+  // client du 16/09 : tout ou rien — si une seule semaine de la période
+  // contient déjà un code horaire, rien n'est appliqué du tout (plutôt que
+  // d'appliquer partiellement les autres semaines), et la semaine bloquante
+  // est renvoyée pour pouvoir le signaler à l'utilisateur.
+  function evaluerProjectionRoulement(
     editionsBase: Record<string, ValeurCellule>,
     salarieId: string,
     lundiDebut: Date,
     roulement: Roulement
-  ): Record<string, ValeurCellule> {
+  ): { editions: Record<string, ValeurCellule>; bloque: boolean; semaineBloqueeISO?: string } {
     const finVisible = jours[jours.length - 1];
-    const valeurDe = (nouvelles: Record<string, ValeurCellule>, jour: Date) => {
+    const valeurDe = (jour: Date) => {
       const cle = `${salarieId}__${formatDateISO(jour)}`;
-      return cle in nouvelles ? nouvelles[cle] : PLANNING_DEMO[cle];
+      return cle in editionsBase ? editionsBase[cle] : PLANNING_DEMO[cle];
     };
 
-    let nouvelles = editionsBase;
+    const semaines: Date[][] = [];
     for (let semaine = 0; ; semaine++) {
       const lundiSemaine = new Date(lundiDebut);
       lundiSemaine.setDate(lundiSemaine.getDate() + semaine * 7);
       if (lundiSemaine > finVisible) break;
+      semaines.push(
+        Array.from({ length: 7 }, (_, j) => {
+          const jour = new Date(lundiSemaine);
+          jour.setDate(jour.getDate() + j);
+          return jour;
+        }).filter((jour) => jour <= finVisible)
+      );
+    }
 
-      const joursDeLaSemaine = Array.from({ length: 7 }, (_, j) => {
-        const jour = new Date(lundiSemaine);
-        jour.setDate(jour.getDate() + j);
-        return jour;
-      }).filter((jour) => jour <= finVisible);
+    for (const joursDeLaSemaine of semaines) {
+      if (joursDeLaSemaine.some((jour) => Boolean(valeurDe(jour)?.travail))) {
+        return { editions: editionsBase, bloque: true, semaineBloqueeISO: formatDateISO(joursDeLaSemaine[0]) };
+      }
+    }
 
-      const semaineBloquee = joursDeLaSemaine.some((jour) => Boolean(valeurDe(nouvelles, jour)?.travail));
-      if (semaineBloquee) continue; // semaine ignorée entièrement, on passe à la suivante
-
+    let nouvelles = editionsBase;
+    semaines.forEach((joursDeLaSemaine, semaine) => {
       const semaineIndex = semaine % roulement.nbSemaines;
       for (const jour of joursDeLaSemaine) {
         const jourIndex = (jour.getDay() + 6) % 7; // 0 = lundi
         const code = roulement.motif[semaineIndex][jourIndex];
         const cle = `${salarieId}__${formatDateISO(jour)}`;
-        const existante = valeurDe(nouvelles, jour);
+        const existante = valeurDe(jour);
         nouvelles = { ...nouvelles, [cle]: code ? { ...existante, travail: code } : {} };
       }
-    }
-    return nouvelles;
+    });
+    return { editions: nouvelles, bloque: false };
   }
 
   function appliquerSelection() {
@@ -236,7 +243,7 @@ export default function PlanningGrid() {
       for (const salarieId of selectionEnCours.salarieIds) {
         const roulement = roulementActuelDuSalarie(salarieId);
         if (!roulement) continue;
-        nouvelles = projeterRoulementDepuis(nouvelles, salarieId, lundi, roulement);
+        nouvelles = evaluerProjectionRoulement(nouvelles, salarieId, lundi, roulement).editions;
       }
       return nouvelles;
     });
@@ -250,7 +257,16 @@ export default function PlanningGrid() {
     const roulement = roulementActuelDuSalarie(salarieId);
     if (!roulement) return;
     const lundi = lundiDeLaSemaine(new Date(dateISO));
-    setEditions((prev) => projeterRoulementDepuis(prev, salarieId, lundi, roulement));
+    const resultat = evaluerProjectionRoulement(editions, salarieId, lundi, roulement);
+    if (resultat.bloque) {
+      alert(
+        `Impossible d'appliquer le roulement : la semaine du ${formatJourMois(
+          new Date(resultat.semaineBloqueeISO!)
+        )} contient déjà un code horaire. Effacez-le d'abord (sélectionnez les cases concernées puis Suppr, ou le bouton « Supprimer »).`
+      );
+      return;
+    }
+    setEditions(resultat.editions);
     fermerEdition();
   }
 
@@ -710,15 +726,18 @@ export default function PlanningGrid() {
               {formatJourMois(lundiDeLaSemaine(new Date(selectionEnCours.dateISO)))}
             </p>
             {(() => {
-              const applicables = selectionEnCours.salarieIds
-                .map((id) => ({
-                  salarie: SALARIES.find((s) => s.id === id)!,
-                  roulement: roulementActuelDuSalarie(id),
-                }))
-                .filter((e) => e.roulement);
-              const sansRoulement = selectionEnCours.salarieIds
-                .map((id) => SALARIES.find((s) => s.id === id)!)
-                .filter((s) => !roulementActuelDuSalarie(s.id));
+              const lundi = lundiDeLaSemaine(new Date(selectionEnCours.dateISO));
+              const evaluation = selectionEnCours.salarieIds.map((id) => {
+                const salarie = SALARIES.find((s) => s.id === id)!;
+                const roulement = roulementActuelDuSalarie(id);
+                const resultat = roulement
+                  ? evaluerProjectionRoulement(editions, id, lundi, roulement)
+                  : undefined;
+                return { salarie, roulement, bloque: resultat?.bloque ?? false };
+              });
+              const applicables = evaluation.filter((e) => e.roulement && !e.bloque);
+              const bloques = evaluation.filter((e) => e.roulement && e.bloque);
+              const sansRoulement = evaluation.filter((e) => !e.roulement);
               return (
                 <>
                   {applicables.length > 0 && (
@@ -731,15 +750,18 @@ export default function PlanningGrid() {
                       ))}
                     </ul>
                   )}
+                  {bloques.length > 0 && (
+                    <p className="mb-2 text-[11px] text-red-600">
+                      Semaine déjà planifiée, effacez d&apos;abord (ignorés) :{" "}
+                      {bloques.map(({ salarie }) => `${salarie.nom} ${salarie.prenom}`).join(", ")}
+                    </p>
+                  )}
                   {sansRoulement.length > 0 && (
                     <p className="mb-2 text-[11px] text-amber-600">
                       Sans roulement assigné (ignorés) :{" "}
-                      {sansRoulement.map((s) => `${s.nom} ${s.prenom}`).join(", ")}
+                      {sansRoulement.map(({ salarie }) => `${salarie.nom} ${salarie.prenom}`).join(", ")}
                     </p>
                   )}
-                  <p className="mb-2 text-[11px] text-zinc-400">
-                    Une semaine contenant déjà un code horaire n&apos;est jamais modifiée.
-                  </p>
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={annulerSelection}
