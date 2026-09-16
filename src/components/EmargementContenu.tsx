@@ -135,10 +135,19 @@ export default function EmargementContenu() {
                     {j}
                   </th>
                 ))}
+                <th className="w-16 border border-zinc-200 bg-zinc-100 py-1 text-xs font-medium text-zinc-600">
+                  Total
+                </th>
               </tr>
             </thead>
             <tbody>
-              {semaines.map((semaine, index) => (
+              {semaines.map((semaine, index) => {
+                const totalSemaine = semaine.reduce(
+                  (total, jour) =>
+                    jour.getMonth() === dateMois.getMonth() ? total + valeurDuJour(jour).heures : total,
+                  0
+                );
+                return (
                 <tr key={index}>
                   {semaine.map((jour) => {
                     const dansLeMois = jour.getMonth() === dateMois.getMonth();
@@ -232,8 +241,12 @@ export default function EmargementContenu() {
                       </td>
                     );
                   })}
+                  <td className="border border-zinc-200 bg-zinc-50 px-1.5 py-1 text-right align-top text-xs font-semibold text-zinc-700">
+                    {totalSemaine > 0 ? `${totalSemaine}h` : ""}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>
