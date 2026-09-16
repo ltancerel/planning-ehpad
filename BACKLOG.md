@@ -410,6 +410,18 @@ l'implémentation du backend dans un epic ultérieur.
   complexité) qui doit passer au vert avant validation, pour écarter les
   mots de passe qui respectent les règles de format mais restent
   trivialement faibles (ex. `12345678!`)._
+  _Tranché le 17/09 : réinitialisation de mot de passe — flux principal
+  sans email (l'administrateur fixe directement le mot de passe). Flux
+  libre-service « mot de passe oublié » par email activé via le service
+  SMTP intégré de Supabase (pas de fournisseur externe pour l'instant, vu
+  la taille très réduite du déploiement), en connaissance de sa limite de
+  2 emails/heure par projet (tous utilisateurs confondus) et de l'absence
+  de garantie de délivrabilité — acceptable car ce flux reste un confort
+  secondaire non bloquant, le flux admin restant toujours disponible en
+  repli. Bascule vers un fournisseur externe (ex. Brevo, gratuit jusqu'à
+  300 emails/jour) possible plus tard par simple configuration, sans
+  changement de code, si le besoin grandit._
+  _Tous les points de cette story sont désormais tranchés._
 
 - [ ] **2. Modéliser la base de données** _(issue #25)_
   Unification des deux représentations actuelles du salarié, entité EHPAD et
