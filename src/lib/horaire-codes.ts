@@ -162,15 +162,24 @@ export const HORAIRE_CODES: HoraireCode[] = [
   { code: "ABA", intitule: "Congé sans solde", categorie: "evenementiel", couleurFond: "#a1a1aa", couleurTexte: "#ffffff" },
   { code: "CP", intitule: "Congés", categorie: "evenementiel", couleurFond: "#60a5fa", couleurTexte: "#1e3a8a" },
 
-  // Horaire événementiel — type "complement" (plage horaire saisie à la
+  // Horaires événementiels — type "complement" (plage horaire saisie à la
   // volée : chevauchement du travail = heures en moins, hors travail =
   // heures en plus, cf. retour client du 17/09)
   {
-    code: "AJT",
-    intitule: "Ajustement ponctuel (absence ou heures sup.)",
+    code: "ABT",
+    intitule: "Absence temporaire",
     categorie: "evenementiel",
-    couleurFond: "#facc15",
+    couleurFond: "#fed7aa",
     couleurTexte: "#713f12",
+    action: "Complète le code horaire sur une plage saisie à la volée",
+    typeEvenement: "complement",
+  },
+  {
+    code: "HSP",
+    intitule: "Heures supplémentaires",
+    categorie: "evenementiel",
+    couleurFond: "#bbf7d0",
+    couleurTexte: "#14532d",
     action: "Complète le code horaire sur une plage saisie à la volée",
     typeEvenement: "complement",
   },
