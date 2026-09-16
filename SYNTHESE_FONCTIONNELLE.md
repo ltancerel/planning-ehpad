@@ -242,17 +242,19 @@ automatique), mais avec une contrainte structurante : **aucun système de
 fichiers persistant**. L'espace disque temporaire disponible pendant
 l'exécution est remis à zéro entre deux appels (et peut même être une
 machine physique différente d'un appel à l'autre) — impossible donc d'y
-stocker durablement quoi que ce soit (logo d'un EHPAD, export généré,
-fichier de sauvegarde...).
+stocker durablement quoi que ce soit (export généré, fichier de
+sauvegarde...).
 
 **Conséquence pour notre architecture** : toute donnée qui doit survivre à
-une requête est stockée ailleurs que sur le serveur d'exécution — dans
-notre cas, **Supabase Storage** (déjà retenu pour le logo d'un EHPAD, cf.
-modélisation de la base de données) plutôt qu'un dossier de fichiers côté
-serveur. C'est aussi cette contrainte qui explique pourquoi la sauvegarde
-de la base de données (issue #29) passe par une connexion PostgreSQL
-directe vers un serveur externe, plutôt que par une tâche Vercel qui
-écrirait un fichier de sauvegarde localement.
+une requête est stockée ailleurs que sur le serveur d'exécution, dans
+Supabase — soit dans la base de données, soit dans un service de stockage
+de fichiers séparé selon le cas (ex. le logo d'un EHPAD, petit fichier
+rarement modifié, est stocké directement en base sous forme d'image
+encodée en base64, cf. modélisation de la base de données, plutôt que via
+un service de stockage à part). C'est aussi cette même contrainte qui
+explique pourquoi la sauvegarde de la base de données (issue #29) passe
+par une connexion PostgreSQL directe vers un serveur externe, plutôt que
+par une tâche Vercel qui écrirait un fichier de sauvegarde localement.
 
 ### 1. Authentification et gestion des comptes
 

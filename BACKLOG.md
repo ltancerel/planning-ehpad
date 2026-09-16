@@ -469,6 +469,14 @@ l'implémentation du backend dans un epic ultérieur.
   sinon. Petit complément au modèle de données (issue #25, déjà close) :
   ajout d'un champ `ehpad.actif`, avec désactivation en cascade de tous les
   comptes de l'EHPAD via trigger PostgreSQL._
+  _Tranché le 17/09 : le logo d'un EHPAD est stocké directement en base
+  (colonne `ehpad.logo_base64`, image PNG encodée en base64) plutôt que via
+  Supabase Storage — une dépendance de moins à sécuriser/sauvegarder
+  séparément, volume négligeable à cette échelle (un logo par
+  établissement, rarement modifié), cohérence transactionnelle avec le
+  reste de la fiche EHPAD. En contrepartie : upload normalisé en PNG et
+  redimensionné côté client avant encodage, colonne exclue par défaut des
+  requêtes de liste._
   _Statut : fait — spécification rédigée dans la Synthèse fonctionnelle
   (Partie 2 § 3) et dans l'
   [artifact MCD/MLD](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
