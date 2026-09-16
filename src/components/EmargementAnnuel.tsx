@@ -87,7 +87,12 @@ export default function EmargementAnnuel({ salarie }: { salarie: Salarie }) {
                       className="border border-zinc-100"
                       style={{ backgroundColor: code?.couleurFond ?? "#ffffff" }}
                     >
-                      <div className="h-4" />
+                      <div
+                        className="flex h-4 items-center justify-center text-[8px] font-medium leading-none"
+                        style={{ color: code?.couleurTexte }}
+                      >
+                        {code?.code}
+                      </div>
                     </td>
                   );
                 })}
