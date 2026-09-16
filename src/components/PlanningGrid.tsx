@@ -51,7 +51,10 @@ function estJourGrise(date: Date): boolean {
 export default function PlanningGrid() {
   const [debutPeriode, setDebutPeriode] = useState(() => lundiDeLaSemaine(PERIODE_PAR_DEFAUT));
   const jours = useMemo(() => genererPeriode(debutPeriode, NB_JOURS), [debutPeriode]);
-  const [editions, setEditions] = useState<Record<string, ValeurCellule>>({});
+  // undefined = case hachurée (jamais remplie), y compris quand une case est
+  // effacée : l'effacement remet la case en attente de planification plutôt
+  // que de la marquer comme "vidée" (retour client du 17/09).
+  const [editions, setEditions] = useState<Record<string, ValeurCellule | undefined>>({});
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
   const [positionEdition, setPositionEdition] = useState<PositionSelecteur | null>(null);
   const [selecteurOuvert, setSelecteurOuvert] = useState(false);
@@ -145,7 +148,9 @@ export default function PlanningGrid() {
   function choisirCode(cle: string, codeChoisi: string | null) {
     setEditions((prev) => {
       if (codeChoisi === null) {
-        return { ...prev, [cle]: {} }; // vide entièrement la cellule (travail + superposition)
+        // Remet la case en hachurée (jamais remplie) plutôt que "vidée" :
+        // l'effacement doit rendre la case disponible pour la planification.
+        return { ...prev, [cle]: undefined };
       }
       const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
       const nouvelle: ValeurCellule = estCodeSuperposable(codeChoisi)
@@ -189,11 +194,15 @@ export default function PlanningGrid() {
   // d'appliquer partiellement les autres semaines), et la semaine bloquante
   // est renvoyée pour pouvoir le signaler à l'utilisateur.
   function evaluerProjectionRoulement(
-    editionsBase: Record<string, ValeurCellule>,
+    editionsBase: Record<string, ValeurCellule | undefined>,
     salarieId: string,
     lundiDebut: Date,
     roulement: Roulement
-  ): { editions: Record<string, ValeurCellule>; bloque: boolean; semaineBloqueeISO?: string } {
+  ): {
+    editions: Record<string, ValeurCellule | undefined>;
+    bloque: boolean;
+    semaineBloqueeISO?: string;
+  } {
     const finVisible = jours[jours.length - 1];
     const valeurDe = (jour: Date) => {
       const cle = `${salarieId}__${formatDateISO(jour)}`;
@@ -327,7 +336,9 @@ export default function PlanningGrid() {
       setEditions((prev) => {
         const nouvelles = { ...prev };
         for (const { salarieId, dateISO } of remplies) {
-          nouvelles[`${salarieId}__${dateISO}`] = {}; // vidée explicitement, comme "Vider la cellule"
+          // Remet la case en hachurée (jamais remplie), disponible pour la
+          // planification — retour client du 17/09.
+          nouvelles[`${salarieId}__${dateISO}`] = undefined;
         }
         return nouvelles;
       });
@@ -573,9 +584,11 @@ export default function PlanningGrid() {
                     {jours.map((jour) => {
                       const dateISO = formatDateISO(jour);
                       const cle = `${salarie.id}__${dateISO}`;
-                      // {} = cellule explicitement vidée par un utilisateur (Vider la cellule) :
-                      // distinct de undefined, qui signifie qu'aucune valeur n'a jamais existé
-                      // (ni démo, ni édition) — cf. demande de distinguer les deux visuellement.
+                      // {} = jour de repos issu d'un roulement appliqué (motif sans code ce
+                      // jour-là) : distinct de undefined (hachurée), qui signifie qu'aucun
+                      // code n'est planifié — jamais rempli, ou effacé par l'utilisateur
+                      // (Vider la cellule / suppression d'une plage), qui redevient hachurée
+                      // plutôt que "vidée" pour rester disponible à la planification.
                       const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
                       const jamaisRemplie = valeur === undefined;
                       const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;

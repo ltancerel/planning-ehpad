@@ -161,6 +161,11 @@ export réel, connecteur paie.
   _Révision du 16/09 : la première version appliquait quand même les
   semaines libres d'un salarié bloqué sur une autre — retour client : tout
   ou rien par salarié, avec notification explicite plutôt qu'un silence._
+  _Révision du 17/09 : une case effacée (Vider la cellule, ou suppression
+  d'une plage) redevient hachurée (jamais remplie) plutôt que "vidée" —
+  retour client, la distinction initiale entre les deux n'avait pas anticipé
+  le besoin d'effacement ; une case effacée doit redevenir disponible pour
+  la planification, y compris quand elle portait une donnée de démo._
 
 - [x] **10. Config — Planifier une année**
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
