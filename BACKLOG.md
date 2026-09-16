@@ -30,19 +30,19 @@ export réel, connecteur paie.
 
 ### Stories
 
-- [x] **1. Vue Planning — grille principale**
+- [x] **1. Vue Planning — grille principale** _(issue #2)_
   Grille salariés × jours, groupée par service puis ordre alphabétique, 4 semaines
   visibles, en-têtes jour/date grisés le week-end et jours fériés, saisie de code
   horaire en cellule.
   _Statut : fait, déployé sur Vercel (tag `DEMO-V0`)._
 
-- [x] **2. Sélecteur de période dédié**
+- [x] **2. Sélecteur de période dédié** _(issue #3)_
   Bouton dédié pour changer la période affichée (au lieu des flèches actuelles) +
   mémorisation de la période d'une ouverture à l'autre (stub `localStorage` pour la
   maquette).
   _Statut : fait, déployé sur `main`._
 
-- [x] **3. Superposition d'un code événementiel sur un code travail**
+- [x] **3. Superposition d'un code événementiel sur un code travail** _(issue #4)_
   Une cellule peut porter un code travail (ligne 1) et, superposé, un code
   événementiel (ligne 2) qui vient l'amender — cf. CDC section 3/ « des codes
   horaire évènementiels qui viennent... se superposer sur des codes horaires de
@@ -55,13 +55,13 @@ export réel, connecteur paie.
   informatifs (« à demander »...), erreur d'interprétation du CDC corrigée par le
   client — ce cas est abandonné, pas de story de remplacement prévue pour l'instant._
 
-- [x] **4. Sélecteur de code horaire**
+- [x] **4. Sélecteur de code horaire** _(issue #5)_
   Remplacer la saisie texte libre actuelle par un sélecteur (liste déroulante /
   recherche typeahead) avec aperçu couleur, plus proche de l'outil existant montré
   dans le CDC.
   _Statut : fait, déployé sur `main`._
 
-- [x] **5. Vue Émargement**
+- [x] **5. Vue Émargement** _(issue #6)_
   Maquette de la vue mensuelle de validation du planning par le salarié : grille
   calendrier (semaines en ligne, jours en colonne comme un calendrier classique —
   revu suite au retour client), heures réalisées extrapolées des codes horaires
@@ -71,25 +71,25 @@ export réel, connecteur paie.
   Accessible en cliquant sur le nom d'un salarié dans la grille planning.
   _Statut : fait, déployé sur `main`._
 
-- [x] **6. Config — Ajouter un utilisateur**
+- [x] **6. Config — Ajouter un utilisateur** _(issue #7)_
   Formulaire maquette (type d'utilisateur, nom, prénom, service, poste).
   _Statut : fait, déployé sur `main`. Liste + formulaire (identifiant 3 lettres,
   email, type, service, poste), écran réservé à l'administrateur._
 
-- [x] **7. Config — Ajouter un salarié**
+- [x] **7. Config — Ajouter un salarié** _(issue #8)_
   Formulaire maquette complet : matricule, nom, prénom, service, type de contrat,
   manager optionnel, roulement, présence.
   _Statut : fait, déployé sur `main`. Liste + formulaire (matricule 4 lettres,
   contrat CDD/CDI + actif/inactif, manager, présence, compte utilisateur optionnel).
   Champ Roulement présent mais désactivé (dépend de la story #9)._
 
-- [x] **8. Config — Créer un code horaire (Admin)**
+- [x] **8. Config — Créer un code horaire (Admin)** _(issue #9)_
   Maquette de l'écran de création d'un code horaire : code, couleur police/fond,
   intitulé, jusqu'à 4 plages, commentaire (cf. capture CDC image1).
   Écran réservé à l'administrateur (pas d'accès utilisateur standard).
   _Statut : fait, déployé sur `main`. À revoir si besoin après retour client._
 
-- [x] **9. Config — Créer un roulement**
+- [x] **9. Config — Créer un roulement** _(issue #10)_
   Maquette de l'écran de création d'un roulement (nombre de semaines, répartition
   des horaires dans les semaines). Chaque semaine du motif est un bloc complet
   Lundi→Dimanche (roulement aligné sur la semaine).
@@ -97,12 +97,12 @@ export réel, connecteur paie.
   réglable, grille de répartition réutilisant le vrai sélecteur de code horaire
   sans les codes événementiels)._
 
-- [x] **9bis. Assigner un roulement à un salarié**
+- [x] **9bis. Assigner un roulement à un salarié** _(issue #17)_
   Distincte de la story 9 (décision du 16/09) : le roulement est assigné à un
   salarié, avec une date de début (alignée sur le lundi de sa semaine) et une
   date de fin optionnelle. Vient compléter le champ Roulement désactivé de la
   story « Ajouter un salarié ». Par défaut, un salarié n'a aucun roulement.
-  _Statut : fait, non encore mergé sur `main`. Fiche salarié (Admin > Salariés
+  _Statut : fait, déployé sur `main`. Fiche salarié (Admin > Salariés
   > Modifier) : ligne compacte affichant le roulement en cours + bouton
   « Gérer » ouvrant un panneau dédié (roulement en cours, historique des
   affectations, formulaire d'assignation avec date de début ramenée au lundi
@@ -117,7 +117,7 @@ export réel, connecteur paie.
   attribut du salarié (donc géré dans sa fiche) et un salarié créé n'a par
   défaut aucun roulement._
 
-- [x] **9ter. Appliquer le roulement d'un salarié directement dans le planning**
+- [x] **9ter. Appliquer le roulement d'un salarié directement dans le planning** _(issue #17)_
   Sur une case hachurée (jamais planifiée) uniquement :
   - **Simple clic** : ouvre le sélecteur de code horaire habituel (saisie ou
     recherche d'un code) — reste l'action la plus courante, non bloquée. Si le
@@ -131,7 +131,7 @@ export réel, connecteur paie.
 
   Dans les deux cas, les cases déjà remplies ne sont jamais écrasées, et les
   salariés sans roulement assigné sont signalés/ignorés plutôt que bloquants.
-  _Statut : fait, non encore mergé sur `main`. Pour cette maquette, ne
+  _Statut : fait, déployé sur `main`. Pour cette maquette, ne
   fonctionne que pour les salariés qui ont un équivalent dans l'admin
   Salariés (Claire BERNARD, Inès LAURENT) via un pont temporaire entre les
   deux modèles (`CORRESPONDANCE_SALARIE_FICHE_DEMO`) — à supprimer une fois
@@ -141,7 +141,7 @@ export réel, connecteur paie.
   immédiate (action la plus courante), le raccourci roulement est un ajout
   dans le même sélecteur, pas une étape supplémentaire._
 
-- [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes**
+- [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes** _(issue #17)_
   Retour client du 16/09, pour éviter les erreurs : un roulement ne peut plus
   être appliqué (raccourci ou cliquer-glisser) sur un salarié dont au moins
   une semaine de la période contient déjà un code horaire — c'est tout ou
@@ -156,7 +156,7 @@ export réel, connecteur paie.
   rectangulaire (cliquer-glisser sur des cases déjà remplies, une ou
   plusieurs lignes/jours) supprimable via la touche Suppr/Retour arrière ou
   un bouton "Supprimer", avec confirmation avant suppression effective.
-  _Statut : fait, non encore mergé sur `main`. Fonctionnalité admin comme le
+  _Statut : fait, déployé sur `main`. Fonctionnalité admin comme le
   reste de la gestion du roulement dans le planning._
   _Révision du 16/09 : la première version appliquait quand même les
   semaines libres d'un salarié bloqué sur une autre — retour client : tout
@@ -197,7 +197,7 @@ export réel, connecteur paie.
   (retour client : "le samedi dimanche reste en blanc"). Le critère est
   désormais "case pas déjà hachurée", qu'elle porte un code ou non._
 
-- [x] **10. Config — Planifier une année**
+- [x] **10. Config — Planifier une année** _(issue #11)_
   Maquette de l'écran de création d'année (jours fériés fixes/configurables, gestion
   année bissextile).
   _Statut : fait, déployé sur `main`. Jours fériés fixes + calculés depuis Pâques
@@ -207,14 +207,14 @@ export réel, connecteur paie.
   une année déjà planifiée ne doit pas pouvoir être supprimée — voir aussi le point
   ouvert "à appliquer côté backend" ci-dessous)._
 
-- [x] **14. Consulter son profil**
+- [x] **14. Consulter son profil** _(issue #15)_
   Menu utilisateur en haut à droite (nom/avatar) sur les écrans principaux, ouvrant
   un panneau de consultation du profil : type d'utilisateur, nom, prénom, service,
   poste. Lecture seule pour cette maquette (pas d'édition — à confirmer selon la
   clarification à venir sur les droits de l'utilisateur standard).
   _Statut : fait, déployé sur `main`._
 
-- [x] **15. Config — Identité de l'EHPAD (titre + logo)**
+- [x] **15. Config — Identité de l'EHPAD (titre + logo)** _(issue #16)_
   Écran de configuration de l'EHPAD courant : titre affiché en haut à gauche
   (remplace le libellé générique « Planning ») + upload/aperçu d'un logo. Première
   brique visuelle de la segmentation multi-EHPAD (voir section dédiée ci-dessus).
@@ -222,18 +222,18 @@ export réel, connecteur paie.
   _Statut : fait, déployé sur `main`. Logo par défaut "Les Jardins de Rambam"
   (recréé en SVG), menu admin multi-sections ajouté au passage._
 
-- [ ] **16. Vue annuelle d'un salarié**
+- [ ] **16. Vue annuelle d'un salarié** _(issue #18)_
   Permettre de visualiser sur une seule page les jours de présence d'un salarié
   sur toute une année (vue synthétique, à l'opposé de la grille planning qui
   n'affiche que 4 semaines à la fois). Ajoutée le 16/09, à faire plus tard.
 
-- [ ] **17. Correction des codes horaires événementiels**
+- [ ] **17. Correction des codes horaires événementiels** _(issue #19)_
   Retour client du 16/09 : la gestion actuelle des codes événementiels
   (CAR/MAL/ABI superposables, CP autonome — cf. story #3) ne correspond pas
   au besoin réel et doit être corrigée ; les règles vont devoir se
   complexifier. Détail du besoin à préciser avant de démarrer.
 
-- [ ] **18. Correction de la vue émargement mensuelle**
+- [ ] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
   - Alignement visuel avec la (future) vue annuelle (#16) : code horaire de
     travail au-dessus du code événementiel (empilés, pas côte à côte comme
