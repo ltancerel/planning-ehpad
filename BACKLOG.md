@@ -191,6 +191,12 @@ export réel, connecteur paie.
   sur toute une année (vue synthétique, à l'opposé de la grille planning qui
   n'affiche que 4 semaines à la fois). Ajoutée le 16/09, à faire plus tard.
 
+- [ ] **17. Correction des codes horaires événementiels**
+  Retour client du 16/09 : la gestion actuelle des codes événementiels
+  (CAR/MAL/ABI superposables, CP autonome — cf. story #3) ne correspond pas
+  au besoin réel et doit être corrigée ; les règles vont devoir se
+  complexifier. Détail du besoin à préciser avant de démarrer.
+
 ## Sortie de l'Epic — à préciser avant de reprendre
 
 - **Menu Export** (retiré de l'EPIC le 15/09, issue #12 détachée) : la maquette du
