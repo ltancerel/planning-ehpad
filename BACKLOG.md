@@ -327,6 +327,17 @@ export réel, connecteur paie.
   colonne à droite de chaque ligne, alignée avec le total mensuel déjà
   présent en bas de la vue._
 
+- [ ] **19. Filtre d'affichage des salariés dans la vue Planning** _(issue #22)_
+  Retour client du 17/09 : sélecteur en haut de la vue Planning pour
+  n'afficher que certains salariés. Filtres : Tous / Présents / Non présents
+  / Contrat actif / Contrat inactif / Avec planning / Sans planning (ces deux
+  derniers recalculés dynamiquement selon la période affichée, à chaque
+  navigation gauche/droite dans le temps).
+  Point d'attention (cf. section « Points ouverts » ci-dessous) : `contratActif`
+  et `presence` vivent aujourd'hui côté `FicheSalarie`, pas `Salarie` (utilisé
+  par la grille Planning) — seuls 2 salariés de démo sont reliés entre les deux
+  via `CORRESPONDANCE_SALARIE_FICHE_DEMO`. À traiter avant/pendant cette story.
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis
