@@ -592,6 +592,9 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   `salarie_id`) — pratique standard pour ce type d'architecture (pooled
   multi-tenant + RLS sur Supabase), sans quoi la RLS devient le premier
   goulot de performance à l'usage réel._
+  _Précisé le 17/09 : projet Supabase créé en région UE (ex. Francfort),
+  pour éviter un transfert de données hors UE par défaut — cf. story RGPD,
+  issue #45._
 
 - [ ] **2. Implémenter l'authentification et les comptes** _(issue #33)_
   Les 4 fonctions Vercel (connexion par identifiant, création EHPAD,
@@ -651,6 +654,19 @@ mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
   Un déploiement de bout en bout (staging → main → PROD) et une
   restauration testée, pour confirmer que la chaîne fonctionne avant de la
   considérer opérationnelle.
+
+- [ ] **7. Documenter et mettre en œuvre les mesures RGPD** _(issue #45)_
+  Ajoutée le 17/09. Consolide en un document dédié les mesures déjà
+  couvertes par l'architecture (hébergement UE, chiffrement, RLS, mots de
+  passe hashés, journal d'audit, anonymisation STAGING) et liste les points
+  qui restent à trancher avec le client, de nature juridique/métier plutôt
+  que technique : base légale du traitement, durée de conservation
+  (aucune politique de purge définie à ce jour), répartition
+  responsable de traitement (EHPAD) / sous-traitant (éditeur) et clause
+  RGPD contractuelle associée, registre des activités de traitement,
+  nécessité d'un DPO, droits des personnes pour les salariés (pas de
+  compte applicatif, processus vraisemblablement médié par l'Administrateur
+  de l'EHPAD).
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
