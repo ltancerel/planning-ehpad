@@ -603,6 +603,12 @@ export default function PlanningGrid() {
           >
             Administration
           </Link>
+          <Link
+            href="/qualite"
+            className="rounded border border-teal-300 bg-teal-50 px-2 py-1 text-xs font-medium text-teal-900 hover:bg-teal-100"
+          >
+            Qualité
+          </Link>
           <UserMenu />
         </div>
       </header>
