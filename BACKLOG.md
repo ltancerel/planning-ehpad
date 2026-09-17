@@ -563,6 +563,90 @@ l'implémentation du backend dans un epic ultérieur.
   [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf),
   section « Sauvegarde & rafraîchissement quotidien de STAGING »._
 
+## EPIC — Implémentation MVP (backend réel, PROD uniquement) _(issue #31)_
+
+**Objectif** : faire tourner l'application maquettée contre un vrai backend
+Supabase, en production, avec le domaine Vercel par défaut (pas de nom de
+domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
+« Fondations architecturales » (#23).
+
+**Décisions actées (échanges du 17/09)** :
+- Un seul environnement pour l'instant : tout se passe directement en PROD,
+  pas de mise en place de DEV/STAGING pour ce MVP — reporté à l'EPIC
+  « Environnements DEV/STAGING/PROD & sauvegarde » (issue #38).
+- Pas de sauvegarde automatisée dans ce MVP — également reportée au même
+  EPIC suivant.
+- Périmètre fonctionnel : l'ensemble du contenu déjà maquetté et validé
+  avec le client (Planning, Émargement mensuel/annuel, Administration
+  complète, Profil utilisateur) — rien de nouveau à revalider
+  fonctionnellement, seulement à brancher sur le vrai backend.
+
+### Stories
+
+- [ ] **1. Provisionner le projet Supabase PROD** _(issue #32)_
+  Création du projet, dossier `supabase/migrations/` versionné dans le
+  dépôt, application du schéma complet (tables, RLS, triggers, fonctions
+  RPC), données de référence (catalogue `application`).
+
+- [ ] **2. Implémenter l'authentification et les comptes** _(issue #33)_
+  Les 4 fonctions Vercel (connexion par identifiant, création EHPAD,
+  création compte, réinitialisation de mot de passe) ; amorçage manuel du
+  tout premier compte Administrateur Système.
+
+- [ ] **3. Brancher les écrans Administration sur le backend** _(issue #34)_
+  Comptes/utilisateurs, salariés, codes horaires, roulements, années/jours
+  fériés, identité EHPAD, gestion des EHPAD par l'Administrateur Système,
+  profil utilisateur.
+
+- [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
+  Grille planning, application d'un roulement (RPC), effacement de plage,
+  émargement mensuel/annuel, validation.
+
+- [ ] **5. Déployer en production** _(issue #36)_
+  Projet Vercel connecté à `main`, domaine Vercel par défaut, variables
+  d'environnement vers Supabase PROD, migrations appliquées avant le
+  premier déploiement.
+
+- [ ] **6. Amorcer les données réelles** _(issue #37)_
+  Premier EHPAD, premier Administrateur, première saisie de référence
+  (services, salariés, codes horaires), vérification du parcours complet.
+
+## EPIC — Environnements DEV/STAGING/PROD & sauvegarde _(issue #38)_
+
+**Objectif** : mettre en œuvre la stratégie d'environnements et de
+sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
+stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
+mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
+17/09. EPIC d'implémentation : la conception est déjà faite.
+
+### Stories
+
+- [ ] **1. Créer le second projet Supabase (DEV/STAGING)** _(issue #39)_
+  Même schéma que PROD (migrations du dépôt), clés dédiées.
+
+- [ ] **2. Mettre en place les branches et l'environnement Preview Vercel** _(issue #40)_
+  Branche `staging`, Preview Vercel avec alias stable (possible sans nom de
+  domaine externe), variables d'environnement vers Supabase DEV/STAGING.
+
+- [ ] **3. Automatiser le déploiement PROD (GitHub Action + Environments)** _(issue #41)_
+  Migration Supabase PROD puis déploiement Vercel via deploy hook, dans
+  l'ordre ; GitHub Environments `staging`/`production` avec secrets scopés.
+
+- [ ] **4. Sécuriser le serveur externe** _(issue #42)_
+  Point resté en suspens depuis la conception : clé SSH avec passphrase,
+  mot de passe désactivé, système à jour, audit de ce qui tourne par
+  ailleurs sur la machine.
+
+- [ ] **5. Mettre en place la sauvegarde quotidienne de PROD et le rafraîchissement de STAGING** _(issue #43)_
+  Job cron : `pg_dump` PROD → anonymisation → restore DEV/STAGING →
+  réapplication des migrations en attente. Story #29 réactivée avec son
+  volet complet cette fois.
+
+- [ ] **6. Valider le cycle complet de déploiement et de restauration** _(issue #44)_
+  Un déploiement de bout en bout (staging → main → PROD) et une
+  restauration testée, pour confirmer que la chaîne fonctionne avant de la
+  considérer opérationnelle.
+
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
 - **EPIC — Administration Système (logs, statistiques d'usage & doc API)**
