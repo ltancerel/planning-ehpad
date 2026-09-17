@@ -369,6 +369,13 @@ export réel, connecteur paie.
 
 ## EPIC — Fondations architecturales (backend) _(issue #23)_
 
+**Statut : terminé (17/09)** — les 6 stories sont closes. Livrables :
+[modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV),
+[spécification de l'API](https://claude.ai/artifact/QKjB7PgsJZXJqnDpyZSLNM),
+[stratégie d'environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf),
+et `SYNTHESE_FONCTIONNELLE.md` (Partie 2, sections 1 à 5). La suite
+(implémentation réelle du backend) relève d'un epic ultérieur.
+
 **Objectif** : poser les bases architecturales de l'application avant d'attaquer
 l'implémentation réelle du backend (Supabase) : exigences de login, modélisation
 de la base de données, définition de l'API (spécification OpenAPI/Swagger), et
