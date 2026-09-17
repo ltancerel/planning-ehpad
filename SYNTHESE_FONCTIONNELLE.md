@@ -223,8 +223,7 @@ seule.
 ## Partie 2 — Fondations architecturales
 
 Cette partie documente les décisions structurantes prises en préparation du
-backend, au fur et à mesure qu'elles sont tranchées. Elle est appelée à
-s'enrichir (environnements) au fil des prochains échanges.
+backend, au fur et à mesure qu'elles sont tranchées.
 
 ### Contrainte transverse : hébergement serverless (Vercel)
 
@@ -429,6 +428,32 @@ Chaque opération, quel que soit son chemin d'accès, reste tracée dans le
 journal d'audit (cf. modélisation de la base de données) — la traçabilité
 ne dépend donc pas de la discipline de chaque écran à la déclencher
 explicitement.
+
+### 5. Environnements et déploiement
+
+Document de détail : [stratégie d'environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)
+(issues #28 et #29).
+
+Deux environnements complètement indépendants, chacun avec son propre
+projet Supabase : **DEV/STAGING** pour le développement et les tests, et
+**PROD** pour les établissements réels. Chaque environnement correspond à
+une branche du code (`staging` / `main`) et à un environnement Vercel
+(Preview / Production) — le développement se fait sur `staging`, et la
+mise en production se déclenche en alignant `main` dessus, à la demande.
+
+**Sauvegarde et rafraîchissement de STAGING** : une même opération
+quotidienne, programmée sur un serveur externe, sert deux besoins à la
+fois — elle sauvegarde la base de production, et cette même sauvegarde
+(anonymisée : les données personnelles réelles ne sortent jamais telles
+quelles de la production) vient rafraîchir l'environnement DEV/STAGING,
+pour développer et reproduire des anomalies sur des données réalistes.
+Chaque rafraîchissement réussi prouve, de fait, que la sauvegarde est
+restaurable.
+
+**Mise en production** : le code et la base de données sont mis à jour
+ensemble, sans exigence forte de continuité de service. Un seul point de
+vigilance a été retenu : la base doit toujours être mise à jour avant le
+nouveau code, jamais l'inverse.
 
 ---
 

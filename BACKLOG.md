@@ -508,7 +508,7 @@ l'implémentation du backend dans un epic ultérieur.
   [artifact MCD/MLD](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
   mis à jour._
 
-- [ ] **5. Définir la stratégie d'environnements (Vercel / Supabase)** _(issue #28)_
+- [x] **5. Définir la stratégie d'environnements (Vercel / Supabase)** _(issue #28)_
   Environnements Vercel (Production/Preview), deux projets Supabase distincts
   (dev/recette + production) avec migrations versionnées, gestion des
   secrets par environnement.
@@ -518,8 +518,24 @@ l'implémentation du backend dans un epic ultérieur.
   minimum recommandé pour le projet de production (pas pour dev/recette).
   Point-in-Time Recovery disponible en option payante (100$/mois) mais
   disproportionné pour ce déploiement — une sauvegarde quotidienne suffit._
+  _Tranché le 17/09 : deux branches longues synchronisées, `staging`
+  (développement) et `main` (ne reçoit que des merges depuis `staging`,
+  jamais de commit direct, promotion à la demande). Vercel Preview
+  (`staging`, domaine fixe assigné plutôt que l'URL par commit par défaut)
+  et Production (`main`), chacun avec ses propres variables pointant vers
+  le bon projet Supabase. Déploiement PROD : une GitHub Action déclenchée
+  par le merge sur `main` applique d'abord la migration Postgres sur le
+  projet PROD, puis déclenche explicitement le déploiement Vercel via un
+  deploy hook — ordre garanti, plutôt que de laisser l'intégration Git
+  automatique de Vercel se déclencher indépendamment du même push. Pas de
+  stratégie blue-green : aucune exigence forte de zéro interruption, et
+  Vercel offre déjà une bascule quasi atomique du code applicatif._
+  _Tranché le 17/09 : la story 6 (sauvegarde manuelle) est fusionnée ici —
+  voir ci-dessous, un seul job quotidien sert les deux besoins._
+  _Statut : fait — stratégie détaillée dans l'
+  [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)._
 
-- [ ] **6. Sauvegarde manuelle programmée (solution de démarrage)** _(issue #29)_
+- [x] **6. Sauvegarde manuelle programmée (solution de démarrage)** _(issue #29)_
   Retour client du 17/09 : en attendant un éventuel passage au plan Pro,
   sauvegarde régulière programmée (`pg_dump` + cron) sur un serveur externe
   déjà disponible côté client, via la chaîne de connexion PostgreSQL directe
@@ -527,6 +543,18 @@ l'implémentation du backend dans un epic ultérieur.
   fréquence, rétention, sécurisation des identifiants, et une procédure de
   restauration testée. Solution de démarrage, non exclusive d'un passage
   ultérieur aux sauvegardes gérées de la story 5 si le besoin grandit.
+  _Tranché le 17/09 : fusionnée avec la stratégie d'environnements (story 5)
+  — le même job quotidien sur le serveur externe sert à la fois de
+  sauvegarde PROD et de source du rafraîchissement de l'environnement
+  DEV/STAGING (restore + anonymisation des données personnelles + 
+  réapplication des migrations en attente sur `staging`). Chaque exécution
+  réussie du refresh STAGING prouve donc, de fait, que la sauvegarde est
+  restaurable — pas besoin d'un exercice de restauration séparé. Point
+  laissé en suspens à la demande du client : la sécurisation du serveur
+  externe lui-même (accès SSH), à traiter séparément._
+  _Statut : fait — détail dans l'
+  [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf),
+  section « Sauvegarde & rafraîchissement quotidien de STAGING »._
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
