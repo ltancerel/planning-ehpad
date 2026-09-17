@@ -656,18 +656,27 @@ mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
   restauration testée, pour confirmer que la chaîne fonctionne avant de la
   considérer opérationnelle.
 
-- [ ] **7. Documenter et mettre en œuvre les mesures RGPD** _(issue #45)_
-  Ajoutée le 17/09. Consolide en un document dédié les mesures déjà
-  couvertes par l'architecture (hébergement UE — ✅ tranché, chiffrement,
-  RLS, mots de passe hashés, journal d'audit, anonymisation STAGING) et
-  liste les points qui restent à trancher avec le client, de nature
-  juridique/métier plutôt que technique : base légale du traitement, durée
-  de conservation (aucune politique de purge définie à ce jour),
-  répartition responsable de traitement (EHPAD) / sous-traitant (éditeur)
-  et clause RGPD contractuelle associée, registre des activités de
-  traitement, nécessité d'un DPO, droits des personnes pour les salariés
-  (pas de compte applicatif, processus vraisemblablement médié par
-  l'Administrateur de l'EHPAD).
+- [ ] **7. Mettre en place la politique RGPD de l'éditeur** _(issue #45)_
+  Ajoutée le 17/09. Recentrée le 17/09 : la relation EHPAD ↔ salariés (dont
+  sa base légale) relève de la responsabilité de l'EHPAD, responsable de
+  traitement — hors périmètre. Notre rôle, en tant que sous-traitant, est
+  de fournir la policy et les garanties sur lesquelles l'EHPAD s'appuie
+  pour justifier sa propre conformité :
+  - Modèle de **clause de sous-traitance RGPD (Art. 28)**, signée par
+    chaque EHPAD à l'onboarding (objet/durée/finalité du traitement,
+    obligations du sous-traitant, liste des sous-traitants ultérieurs
+    Supabase/Vercel, point de contact RGPD).
+  - Hébergement UE (✅ tranché), sécurité Art. 32 (chiffrement, RLS, mots
+    de passe hashés, audit) et anonymisation STAGING — déjà couverts par
+    l'architecture, à documenter comme preuves de conformité.
+  - Procédure de notification de violation de données (72h CNIL).
+  - Politique de conservation/purge des données que nous portons
+    techniquement (aucune définie à ce jour) et registre des activités de
+    traitement côté éditeur.
+  Hors périmètre, laissé à la charge de l'EHPAD : sa propre base légale,
+  son registre, l'information de ses salariés et l'exercice de leurs
+  droits (nous fournissons les moyens techniques, pas la démarche), et la
+  nécessité d'un DPO côté EHPAD.
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
