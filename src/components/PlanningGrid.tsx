@@ -35,6 +35,7 @@ import {
   formatAnneeMois,
 } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
+import AppSwitcher from "@/components/AppSwitcher";
 import { useEhpad } from "@/context/EhpadProvider";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
 
@@ -520,6 +521,7 @@ export default function PlanningGrid() {
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
       <header className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-2">
         <div className="flex items-center gap-2">
+          <AppSwitcher applicationActive="planning" />
           {identite.logo ? (
             // eslint-disable-next-line @next/next/no-img-element -- logo dynamique (data URL uploadé), incompatible avec next/image
             <img src={identite.logo} alt="" className="h-7 w-7 rounded object-contain" />
@@ -602,12 +604,6 @@ export default function PlanningGrid() {
             className="ml-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
           >
             Administration
-          </Link>
-          <Link
-            href="/qualite"
-            className="rounded border border-teal-300 bg-teal-50 px-2 py-1 text-xs font-medium text-teal-900 hover:bg-teal-100"
-          >
-            Qualité
           </Link>
           <UserMenu />
         </div>
