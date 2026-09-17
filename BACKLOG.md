@@ -587,6 +587,11 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   Création du projet, dossier `supabase/migrations/` versionné dans le
   dépôt, application du schéma complet (tables, RLS, triggers, fonctions
   RPC), données de référence (catalogue `application`).
+  _Précisé le 17/09 : indexer toutes les colonnes utilisées dans les
+  policies RLS (`ehpad_id` partout, FK de scoping indirect comme
+  `salarie_id`) — pratique standard pour ce type d'architecture (pooled
+  multi-tenant + RLS sur Supabase), sans quoi la RLS devient le premier
+  goulot de performance à l'usage réel._
 
 - [ ] **2. Implémenter l'authentification et les comptes** _(issue #33)_
   Les 4 fonctions Vercel (connexion par identifiant, création EHPAD,
