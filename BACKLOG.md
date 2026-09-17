@@ -592,7 +592,7 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   `salarie_id`) — pratique standard pour ce type d'architecture (pooled
   multi-tenant + RLS sur Supabase), sans quoi la RLS devient le premier
   goulot de performance à l'usage réel._
-  _Précisé le 17/09 : projet Supabase créé en région UE (ex. Francfort),
+  _Tranché le 17/09 : projet Supabase créé en région UE (ex. Francfort),
   pour éviter un transfert de données hors UE par défaut — cf. story RGPD,
   issue #45._
 
@@ -631,6 +631,7 @@ mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
 
 - [ ] **1. Créer le second projet Supabase (DEV/STAGING)** _(issue #39)_
   Même schéma que PROD (migrations du dépôt), clés dédiées.
+  _Tranché le 17/09 : projet créé en région UE, comme PROD._
 
 - [ ] **2. Mettre en place les branches et l'environnement Preview Vercel** _(issue #40)_
   Branche `staging`, Preview Vercel avec alias stable (possible sans nom de
@@ -657,16 +658,16 @@ mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
 
 - [ ] **7. Documenter et mettre en œuvre les mesures RGPD** _(issue #45)_
   Ajoutée le 17/09. Consolide en un document dédié les mesures déjà
-  couvertes par l'architecture (hébergement UE, chiffrement, RLS, mots de
-  passe hashés, journal d'audit, anonymisation STAGING) et liste les points
-  qui restent à trancher avec le client, de nature juridique/métier plutôt
-  que technique : base légale du traitement, durée de conservation
-  (aucune politique de purge définie à ce jour), répartition
-  responsable de traitement (EHPAD) / sous-traitant (éditeur) et clause
-  RGPD contractuelle associée, registre des activités de traitement,
-  nécessité d'un DPO, droits des personnes pour les salariés (pas de
-  compte applicatif, processus vraisemblablement médié par l'Administrateur
-  de l'EHPAD).
+  couvertes par l'architecture (hébergement UE — ✅ tranché, chiffrement,
+  RLS, mots de passe hashés, journal d'audit, anonymisation STAGING) et
+  liste les points qui restent à trancher avec le client, de nature
+  juridique/métier plutôt que technique : base légale du traitement, durée
+  de conservation (aucune politique de purge définie à ce jour),
+  répartition responsable de traitement (EHPAD) / sous-traitant (éditeur)
+  et clause RGPD contractuelle associée, registre des activités de
+  traitement, nécessité d'un DPO, droits des personnes pour les salariés
+  (pas de compte applicatif, processus vraisemblablement médié par
+  l'Administrateur de l'EHPAD).
 
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
