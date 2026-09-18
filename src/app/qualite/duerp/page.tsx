@@ -7,6 +7,7 @@ import {
   type NiveauCriticite,
 } from "@/lib/qualite-mock-data";
 import { CriticiteBadge, OrganeBadge } from "@/components/qualite/Badges";
+import RiskMatrixChart from "@/components/qualite/RiskMatrixChart";
 
 const LEGENDE: { niveau: NiveauCriticite; classe: string }[] = [
   { niveau: "faible", classe: "bg-emerald-400" },
@@ -46,7 +47,14 @@ export default function DuerpPage() {
         ))}
       </div>
 
-      <div className="mt-4 space-y-8">
+      <h2 className="mt-6 mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+        Synthèse
+      </h2>
+      <div className="rounded border border-zinc-200 bg-white p-4">
+        <RiskMatrixChart />
+      </div>
+
+      <div className="mt-8 space-y-8">
         {UNITES_TRAVAIL.map((ut) => {
           const risques = RISQUES_DEMO.filter((r) => r.uniteTravailId === ut.id);
           if (risques.length === 0) {

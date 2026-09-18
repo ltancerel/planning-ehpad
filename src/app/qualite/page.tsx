@@ -5,7 +5,6 @@ import {
   niveauCriticite,
 } from "@/lib/qualite-mock-data";
 import ActionPlanTable from "@/components/qualite/ActionPlanTable";
-import RiskMatrixChart from "@/components/qualite/RiskMatrixChart";
 
 function KpiTile({ valeur, label, accent }: { valeur: number; label: string; accent: string }) {
   return (
@@ -44,13 +43,6 @@ export default function QualiteTableauDeBord() {
         />
         <KpiTile valeur={actionsAFaire} label="Actions non terminées" accent="text-blue-700" />
         <KpiTile valeur={actionsEnRetard} label="Actions en retard" accent="text-orange-600" />
-      </div>
-
-      <h2 className="mt-8 mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
-        Synthèse DUERP
-      </h2>
-      <div className="rounded border border-zinc-200 bg-white p-4">
-        <RiskMatrixChart />
       </div>
 
       <h2 className="mt-8 mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
