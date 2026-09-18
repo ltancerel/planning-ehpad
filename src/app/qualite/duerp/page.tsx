@@ -1,9 +1,12 @@
 import {
   UNITES_TRAVAIL,
   RISQUES_DEMO,
+  CATEGORIES_RISQUE,
   categorie,
+  niveauCriticite,
   LIBELLES_CRITICITE,
   DESCRIPTIONS_CRITICITE,
+  type Risque,
   type NiveauCriticite,
 } from "@/lib/qualite-mock-data";
 import { CriticiteBadge, OrganeBadge } from "@/components/qualite/Badges";
@@ -14,6 +17,21 @@ const LEGENDE: { niveau: NiveauCriticite; classe: string }[] = [
   { niveau: "moyen", classe: "bg-amber-400" },
   { niveau: "eleve", classe: "bg-red-400" },
 ];
+
+function compterParCategorie(risques: Risque[]): { slug: string; nom: string; icone: string; count: number }[] {
+  return CATEGORIES_RISQUE.map((cat) => ({
+    slug: cat.slug,
+    nom: cat.nom,
+    icone: cat.icone,
+    count: risques.filter((r) => r.categorie === cat.slug).length,
+  })).filter((c) => c.count > 0);
+}
+
+function compterParNiveau(risques: Risque[]): Record<NiveauCriticite, number> {
+  const compte: Record<NiveauCriticite, number> = { faible: 0, moyen: 0, eleve: 0 };
+  for (const r of risques) compte[niveauCriticite(r.residuel)]++;
+  return compte;
+}
 
 export default function DuerpPage() {
   return (
@@ -39,7 +57,7 @@ export default function DuerpPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-4 text-xs text-zinc-500">
-        <span className="font-medium text-zinc-600">Criticité :</span>
+        <span className="font-medium text-zinc-600">Criticité (résiduelle) :</span>
         {LEGENDE.map(({ niveau, classe }) => (
           <span key={niveau} className="inline-flex items-center gap-1" title={DESCRIPTIONS_CRITICITE[niveau]}>
             <span className={`h-2.5 w-2.5 rounded-sm ${classe}`} /> {LIBELLES_CRITICITE[niveau]}
@@ -54,33 +72,78 @@ export default function DuerpPage() {
         <RiskMatrixChart />
       </div>
 
-      <div className="mt-8 space-y-8">
+      <h2 className="mt-8 mb-2 text-sm font-semibold uppercase tracking-wide text-zinc-500">
+        Risques par unité de travail
+      </h2>
+      <p className="mb-3 text-xs text-zinc-400">
+        Cliquez sur une unité pour afficher le détail de ses risques.
+      </p>
+      <div className="space-y-2">
         {UNITES_TRAVAIL.map((ut) => {
           const risques = RISQUES_DEMO.filter((r) => r.uniteTravailId === ut.id);
+
           if (risques.length === 0) {
             return (
-              <section key={ut.id}>
-                <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-800">
-                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: ut.couleur }} />
+              <div key={ut.id} className="flex items-center gap-3 rounded border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2.5">
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full opacity-40" style={{ backgroundColor: ut.couleur }} />
+                <span className="text-sm font-medium text-zinc-500">
                   {ut.numero}. {ut.nom}
-                </h2>
-                <p className="rounded border border-dashed border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-400">
-                  Aucun risque encore détaillé pour cette unité dans le DUERP (document en cours
-                  d&apos;élaboration).
-                </p>
-              </section>
+                </span>
+                <span className="text-xs text-zinc-400">
+                  — aucun risque encore détaillé (document en cours d&apos;élaboration)
+                </span>
+              </div>
             );
           }
+
+          const parCategorie = compterParCategorie(risques);
+          const parNiveau = compterParNiveau(risques);
+
           return (
-            <section key={ut.id}>
-              <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-800">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: ut.couleur }} />
-                {ut.numero}. {ut.nom}
-                <span className="font-normal text-zinc-400">
+            <details key={ut.id} className="group rounded border border-zinc-200 bg-white">
+              <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1.5 px-3 py-2.5 [&::-webkit-details-marker]:hidden">
+                <span className="text-zinc-400 transition-transform group-open:rotate-90">▶</span>
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: ut.couleur }} />
+                <span className="text-sm font-semibold text-zinc-800">
+                  {ut.numero}. {ut.nom}
+                </span>
+                <span className="text-xs text-zinc-400">
                   ({risques.length} risque{risques.length > 1 ? "s" : ""})
                 </span>
-              </h2>
-              <div className="overflow-x-auto rounded border border-zinc-200">
+
+                <span className="mx-1 hidden h-4 w-px bg-zinc-200 sm:block" />
+
+                <span className="flex flex-wrap items-center gap-2">
+                  {parCategorie.map((c) => (
+                    <span key={c.slug} className="inline-flex items-center gap-0.5" title={c.nom}>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- pictogramme DUERP statique */}
+                      <img src={c.icone} alt="" className="h-4 w-4 object-contain" />
+                      <span className="text-[10px] font-medium text-zinc-500">×{c.count}</span>
+                    </span>
+                  ))}
+                </span>
+
+                <span className="mx-1 hidden h-4 w-px bg-zinc-200 sm:block" />
+
+                <span className="flex items-center gap-2.5 text-xs">
+                  <span className="inline-flex items-center gap-1 text-red-700" title="Risques élevés (résiduel)">
+                    <span className="h-2 w-2 rounded-sm bg-red-400" />
+                    {parNiveau.eleve}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-amber-700" title="Risques moyens (résiduel)">
+                    <span className="h-2 w-2 rounded-sm bg-amber-400" />
+                    {parNiveau.moyen}
+                  </span>
+                  <span className="inline-flex items-center gap-1 text-emerald-700" title="Risques faibles (résiduel)">
+                    <span className="h-2 w-2 rounded-sm bg-emerald-400" />
+                    {parNiveau.faible}
+                  </span>
+                </span>
+
+                <span className="ml-auto" />
+              </summary>
+
+              <div className="overflow-x-auto border-t border-zinc-200">
                 <table className="w-full min-w-[980px] text-sm">
                   <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
                     <tr>
@@ -138,7 +201,7 @@ export default function DuerpPage() {
                   </tbody>
                 </table>
               </div>
-            </section>
+            </details>
           );
         })}
       </div>
