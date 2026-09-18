@@ -59,22 +59,22 @@ export default function RiskMatrixChart() {
   const compteResiduel = useMemo(() => compterParNiveau("residuel"), []);
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
       <div>
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <h3 className="text-xs font-semibold text-zinc-700">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h3 className="text-sm font-semibold text-zinc-700">
             Matrice G × F — {vue === "residuel" ? "résiduel" : "brut"}
           </h3>
-          <div className="flex shrink-0 rounded border border-zinc-300 text-[11px]">
+          <div className="flex shrink-0 rounded border border-zinc-300 text-xs">
             <button
               onClick={() => setVue("residuel")}
-              className={`px-1.5 py-0.5 ${vue === "residuel" ? "bg-zinc-800 text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
+              className={`px-2 py-1 ${vue === "residuel" ? "bg-zinc-800 text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
             >
               Résiduel
             </button>
             <button
               onClick={() => setVue("brut")}
-              className={`px-1.5 py-0.5 ${vue === "brut" ? "bg-zinc-800 text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
+              className={`px-2 py-1 ${vue === "brut" ? "bg-zinc-800 text-white" : "bg-white text-zinc-600 hover:bg-zinc-50"}`}
             >
               Brut
             </button>
@@ -82,11 +82,11 @@ export default function RiskMatrixChart() {
         </div>
 
         <div className="flex">
-          <div className="mr-1 flex flex-col items-center justify-center">
-            <span className="-rotate-90 whitespace-nowrap text-[10px] font-medium text-zinc-500">Gravité</span>
+          <div className="mr-2 flex flex-col items-center justify-center">
+            <span className="-rotate-90 whitespace-nowrap text-xs font-medium text-zinc-500">Gravité</span>
           </div>
           <div className="flex-1">
-            <div className="grid grid-cols-4 gap-1">
+            <div className="grid grid-cols-4 gap-2">
               {NIVEAUX.map((g) =>
                 FREQUENCES.map((f) => {
                   const cle = `${g}-${f}`;
@@ -95,12 +95,12 @@ export default function RiskMatrixChart() {
                   return (
                     <div
                       key={cle}
-                      className={`flex min-h-[52px] flex-col items-center justify-center gap-0.5 rounded border p-1 ${STYLES_CELLULE[niveau]}`}
+                      className={`flex min-h-[92px] flex-col items-center justify-center gap-1 rounded border p-2 ${STYLES_CELLULE[niveau]}`}
                       title={`Gravité ${g} × Fréquence ${f} = ${g * f} (${LIBELLES_CRITICITE[niveau]})`}
                     >
-                      <span className="text-[9px] font-semibold text-zinc-400">{g * f}</span>
+                      <span className="text-[10px] font-semibold text-zinc-400">{g * f}</span>
                       {risques.length === 0 ? null : risques.length <= SEUIL_ICONES ? (
-                        <div className="flex flex-wrap items-center justify-center gap-0.5">
+                        <div className="flex flex-wrap items-center justify-center gap-1">
                           {risques.map((r) => (
                             // eslint-disable-next-line @next/next/no-img-element -- pictogrammes DUERP, images statiques du dossier public
                             <img
@@ -108,7 +108,7 @@ export default function RiskMatrixChart() {
                               src={categorie(r.categorie).icone}
                               alt={categorie(r.categorie).nom}
                               title={`${r.intitule} — ${uniteNom(r.uniteTravailId)}`}
-                              className="h-3.5 w-3.5 object-contain"
+                              className="h-5 w-5 object-contain"
                             />
                           ))}
                         </div>
@@ -118,7 +118,7 @@ export default function RiskMatrixChart() {
                           title={risques.map((r) => r.intitule).join(", ")}
                         >
                           {risques.map((r) => (
-                            <span key={r.id} className="text-[10px] font-bold leading-none">
+                            <span key={r.id} className="text-xs font-bold leading-none">
                               ×
                             </span>
                           ))}
@@ -129,12 +129,12 @@ export default function RiskMatrixChart() {
                 })
               )}
             </div>
-            <div className="mt-0.5 grid grid-cols-4 gap-1 text-center text-[9px] text-zinc-500">
+            <div className="mt-1 grid grid-cols-4 gap-2 text-center text-[10px] text-zinc-500">
               {FREQUENCES.map((f) => (
                 <span key={f}>F{f}</span>
               ))}
             </div>
-            <p className="mt-0.5 text-center text-[10px] font-medium text-zinc-500">Fréquence d&apos;apparition</p>
+            <p className="mt-1 text-center text-xs font-medium text-zinc-500">Fréquence d&apos;apparition</p>
           </div>
         </div>
       </div>
