@@ -2,12 +2,28 @@ import {
   ACTIONS_DEMO,
   RISQUES_DEMO,
   CRITERES_HAS,
+  categorie,
   type ActionQualite,
 } from "@/lib/qualite-mock-data";
-import { StatutBadge } from "./Badges";
+import { StatutBadge, OrganeBadge } from "./Badges";
 
 function origineLabel(action: ActionQualite): { texte: string; badge: string; badgeClass: string } {
   if (action.origine === "duerp") {
+    if (action.origineId.startsWith("cat:")) {
+      const slug = action.origineId.slice("cat:".length) as Parameters<typeof categorie>[0];
+      return {
+        texte: `Catégorie DUERP : ${categorie(slug).nom}`,
+        badge: "DUERP",
+        badgeClass: "bg-amber-100 text-amber-800",
+      };
+    }
+    if (action.origineId === "global") {
+      return {
+        texte: "Plan d'action global",
+        badge: "DUERP",
+        badgeClass: "bg-amber-100 text-amber-800",
+      };
+    }
     const risque = RISQUES_DEMO.find((r) => r.id === action.origineId);
     return {
       texte: risque?.intitule ?? "Risque DUERP",
@@ -25,6 +41,7 @@ function origineLabel(action: ActionQualite): { texte: string; badge: string; ba
 
 function estEnRetard(action: ActionQualite): boolean {
   if (action.statut === "fait") return false;
+  if (action.echeanceLabel === "À définir") return false;
   return new Date(action.echeance) < new Date("2026-09-17");
 }
 
@@ -33,11 +50,12 @@ export default function ActionPlanTable({ actions = ACTIONS_DEMO }: { actions?: 
 
   return (
     <div className="overflow-x-auto rounded border border-zinc-200">
-      <table className="w-full min-w-[720px] text-sm">
+      <table className="w-full min-w-[820px] text-sm">
         <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
           <tr>
             <th className="px-3 py-2">Origine</th>
             <th className="px-3 py-2">Action</th>
+            <th className="px-3 py-2">Organe de décision</th>
             <th className="px-3 py-2">Responsable</th>
             <th className="px-3 py-2">Échéance</th>
             <th className="px-3 py-2">Statut</th>
@@ -58,9 +76,12 @@ export default function ActionPlanTable({ actions = ACTIONS_DEMO }: { actions?: 
                   <div className="font-medium text-zinc-800">{action.intitule}</div>
                   <div className="text-xs text-zinc-500">{origine.texte}</div>
                 </td>
+                <td className="px-3 py-2">
+                  <OrganeBadge organe={action.organeDecision} />
+                </td>
                 <td className="px-3 py-2 text-zinc-700">{action.responsable}</td>
                 <td className={`px-3 py-2 ${retard ? "font-semibold text-red-600" : "text-zinc-700"}`}>
-                  {new Date(action.echeance).toLocaleDateString("fr-FR")}
+                  {action.echeanceLabel ?? new Date(action.echeance).toLocaleDateString("fr-FR")}
                   {retard && <span className="ml-1 text-[10px] uppercase">en retard</span>}
                 </td>
                 <td className="px-3 py-2">

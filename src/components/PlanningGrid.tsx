@@ -524,14 +524,14 @@ export default function PlanningGrid() {
           <AppSwitcher applicationActive="planning" />
           {identite.logo ? (
             // eslint-disable-next-line @next/next/no-img-element -- logo dynamique (data URL uploadé), incompatible avec next/image
-            <img src={identite.logo} alt="" className="h-7 w-7 rounded object-contain" />
+            <img src={identite.logo} alt={identite.nom} className="h-9 w-auto object-contain" />
           ) : (
             <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
               {identite.nom.charAt(0)}
             </span>
           )}
           <div className="leading-tight">
-            <h1 className="font-semibold text-zinc-800">{identite.nom}</h1>
+            {!identite.logo && <h1 className="font-semibold text-zinc-800">{identite.nom}</h1>}
             <p className="text-[10px] text-zinc-400">Planning</p>
           </div>
         </div>
