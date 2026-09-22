@@ -256,6 +256,17 @@ export const ROULEMENTS_DEMO: Roulement[] = [
     nbSemaines: 1,
     motif: [["SEC", "SEC", "SEC", "SEC", "SEC", "", ""]],
   },
+  {
+    id: "r3",
+    nom: "Administratif (4 semaines)",
+    nbSemaines: 4,
+    motif: [
+      ["SEC", "SEC", "SEC", "SEC", "SEC", "", ""],
+      ["SEC", "SEC", "SEC", "SEC", "", "", ""],
+      ["OK", "OK", "OK", "OK", "OK", "", ""],
+      ["OK", "OK", "OK", "OK", "", "", ""],
+    ],
+  },
 ];
 
 // Affectation d'un roulement à un salarié sur une période donnée (cf. story
@@ -276,6 +287,7 @@ export const AFFECTATIONS_ROULEMENT_DEMO: Record<string, AffectationRoulement[]>
     { id: "aff1", roulementId: "r2", dateDebut: "2025-01-06", dateFin: "2025-05-25" },
     { id: "aff2", roulementId: "r1", dateDebut: "2025-06-02" },
   ],
+  fs4: [{ id: "aff3", roulementId: "r3", dateDebut: "2025-06-02" }],
 };
 
 export function affectationsRecentesDabord(affectations: AffectationRoulement[]): AffectationRoulement[] {

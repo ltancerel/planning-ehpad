@@ -140,6 +140,27 @@ export réel, connecteur paie.
   le sélecteur de code — retour client : la saisie d'un code doit rester
   immédiate (action la plus courante), le raccourci roulement est un ajout
   dans le même sélecteur, pas une étape supplémentaire._
+  _Révision du 22/09 : pour un roulement sur plusieurs semaines, ajout d'un
+  sélecteur « Démarrer à la semaine : 1 / 2 / 3 / 4 » (dans le raccourci du
+  sélecteur de code, et dans le panneau de confirmation cliquer-glisser) —
+  retour client : pouvoir reprendre un roulement en cours de cycle (ex.
+  roulement sur 4 semaines, démarrer à la semaine 3 n'applique que les
+  semaines 3 et 4 du motif). Dans le cas cliquer-glisser, le sélecteur est
+  borné par le roulement le plus long parmi les salariés sélectionnés ; un
+  salarié dont le roulement est plus court que la semaine de départ choisie
+  est listé à part et ignoré, plutôt que d'appliquer silencieusement sa
+  dernière semaine. Démo enrichie d'un 3ᵉ roulement sur 4 semaines
+  (« Administratif (4 semaines) », assigné à MARTIN Julie) pour illustrer le
+  cas d'usage à l'écran._
+  _Révision du 22/09 (suite) : le sélecteur prenait trop de place affiché
+  d'emblée dès qu'un roulement porte sur ≥ 2 semaines — retour client. Le
+  raccourci reste désormais un bouton compact « Appliquer le roulement »
+  par défaut (comme avant) ; pour un roulement multi-semaines, un premier
+  clic dessus révèle le sélecteur de semaine de départ (au lieu d'appliquer
+  directement), et un second clic sur « Appliquer » confirme. Même
+  principe dans le panneau cliquer-glisser : le bouton « Appliquer le
+  roulement de chacun » révèle d'abord le sélecteur, puis confirme au clic
+  suivant._
 
 - [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes** _(issue #17)_
   Retour client du 16/09, pour éviter les erreurs : un roulement ne peut plus
@@ -357,6 +378,14 @@ export réel, connecteur paie.
   développée en l'état (contenu du menu ? formats ? périmètre des données
   exportées ?). À clarifier avec le client avant de la réintégrer dans un prochain
   Epic.
+  - _Précisions client du 22/09_ (toujours partielles — formats et reste du
+    périmètre non tranchés, la story reste WAIVED) : l'export doit permettre
+    d'**imprimer ou exporter le planning sur une plage de dates choisie** (date
+    à date, pas uniquement la période actuellement affichée à l'écran), pour un
+    usage typique par un **responsable** qui veut le planning de ses salariés en
+    CDI. Le type de contrat n'est donc pas figé sur CDI : l'export doit proposer
+    une **sélection des types de contrat à inclure** (au moins CDI/CDD), CDI
+    seul n'étant qu'un cas d'usage parmi d'autres.
 - **Blocage visuel du planning passé (WAIVED)** — issue #13, sortie de l'EPIC et
   titre GitHub mis à jour le 17/09. Affichage grisé/verrouillé des cellules passées
   dans la grille (visuel uniquement, sans logique de verrouillage réelle). Mise de
@@ -367,7 +396,330 @@ export réel, connecteur paie.
   pour écran mobile (le CDC exige un affichage web *et* mobile). Mise de côté sans
   raison de spécification précisée ; à reprendre si besoin dans un prochain Epic.
 
+## EPIC — Fondations architecturales (backend) _(issue #23)_
+
+**Statut : terminé (17/09)** — les 6 stories sont closes. Livrables :
+[modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV),
+[spécification de l'API](https://claude.ai/artifact/QKjB7PgsJZXJqnDpyZSLNM),
+[stratégie d'environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf),
+et `SYNTHESE_FONCTIONNELLE.md` (Partie 2, sections 1 à 5). La suite
+(implémentation réelle du backend) relève d'un epic ultérieur.
+
+**Objectif** : poser les bases architecturales de l'application avant d'attaquer
+l'implémentation réelle du backend (Supabase) : exigences de login, modélisation
+de la base de données, définition de l'API (spécification OpenAPI/Swagger), et
+prise en compte de l'ajout à terme d'une seconde application (plan d'action
+qualité) partageant les mêmes comptes utilisateurs. Ajoutée le 17/09.
+
+**Nature de cet Epic** : contrairement à l'EPIC #1 (Maquette graphique v0) qui a
+produit des écrans, celui-ci produit des **livrables de conception**
+(spécifications, schémas, décisions documentées) qui serviront de base à
+l'implémentation du backend dans un epic ultérieur.
+
+**Décisions déjà actées (échanges du 17/09)** :
+- Trois profils de compte : *Administrateur Système* (supervision globale, dont
+  visualisation des logs), *Administrateur* (métier — directeur EHPAD ou
+  adjoint, commun aux applications), *Utilisateur* (accès indépendant par
+  application : aucune, une seule, ou les deux). Le salarié n'a pas de compte.
+- Réinitialisation de mot de passe : l'administrateur fixe directement un
+  nouveau mot de passe (flux principal, sans email) ; un flux libre-service par
+  email nécessiterait un fournisseur SMTP externe (le service email intégré de
+  Supabase n'est pas dimensionné pour la production).
+- Architecture multi-application : un socle commun (comptes, EHPAD,
+  authentification) découplé du métier Planning.
+- Environnements : deux projets Supabase distincts (dev/recette + production)
+  plutôt que le branching payant, cohérent avec l'objectif de minimisation des
+  coûts ; environnements Vercel Production/Preview standards.
+
+### Stories
+
+- [x] **1. Spécifier l'authentification et la gestion des comptes** _(issue #24)_
+  Types de comptes et droits, réinitialisation de mot de passe, session
+  mono/multi, règles de complexité du mot de passe. Résout les points ouverts
+  "nombre de types d'utilisateur et droits", "salariés = utilisateurs ou
+  non", "login mono-session", "complexité du mot de passe".
+  _Tranché le 17/09 : pas de restriction mono-session (multi-session
+  autorisé), mais déconnexion automatique après 15 minutes d'inactivité,
+  quel que soit le type de compte._
+  _Tranché le 17/09 : mot de passe — longueur minimale 8 caractères, au
+  moins un caractère spécial, et un indicateur de robustesse (jauge de
+  complexité) qui doit passer au vert avant validation, pour écarter les
+  mots de passe qui respectent les règles de format mais restent
+  trivialement faibles (ex. `12345678!`)._
+  _Tranché le 17/09 : réinitialisation de mot de passe — flux principal
+  sans email (l'administrateur fixe directement le mot de passe). Flux
+  libre-service « mot de passe oublié » par email activé via le service
+  SMTP intégré de Supabase (pas de fournisseur externe pour l'instant, vu
+  la taille très réduite du déploiement), en connaissance de sa limite de
+  2 emails/heure par projet (tous utilisateurs confondus) et de l'absence
+  de garantie de délivrabilité — acceptable car ce flux reste un confort
+  secondaire non bloquant, le flux admin restant toujours disponible en
+  repli. Bascule vers un fournisseur externe (ex. Brevo, gratuit jusqu'à
+  300 emails/jour) possible plus tard par simple configuration, sans
+  changement de code, si le besoin grandit._
+  _Tous les points de cette story sont désormais tranchés._
+  _Statut : fait — document de spécification rédigé (Synthèse fonctionnelle,
+  Partie 2 § 1)._
+
+- [x] **2. Modéliser la base de données** _(issue #25)_
+  Unification des deux représentations actuelles du salarié, entité EHPAD et
+  segmentation multi-établissement (`ehpad_id` + Row Level Security),
+  traçabilité des cellules de planning + log d'audit, intégrité des règles
+  métier côté serveur, notion de contrat à préciser. Résout les points
+  ouverts "deux représentations du salarié", "traçabilité des cellules",
+  "intégrité des données à valider côté backend", "notion de contrat".
+  _Tranché le 17/09, à l'issue d'une revue de conception détaillée du
+  MCD/MLD : Administrateur Système extrait en table séparée (au lieu d'un
+  `ehpad_id` nullable sur `compte`) ; ajout de `ehpad_application` pour
+  plafonner les applications souscrites par un établissement ; ajout d'une
+  table `contrat` historisant les contrats successifs d'un salarié (un seul
+  actif à la fois, garanti par index unique partiel) ; cohérence
+  catégorie/code horaire garantie par trigger PostgreSQL plutôt que par le
+  seul code applicatif (l'API Supabase étant directement accessible) ;
+  conservation de `log_audit` comme table (préféré à des logs à plat, pour
+  la requêtabilité et l'absence de filesystem persistant sur Vercel) ; les
+  deux colonnes "auteur" (`journee_historique`, `log_audit`) référencent
+  `auth.users.id`, partagé par `compte` et `administrateur_systeme`._
+  _Statut : fait — modèle documenté dans l'
+  [artifact MCD/MLD](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV) et
+  dans la Synthèse fonctionnelle (Partie 2 § 2)._
+
+- [x] **3. Définir l'API backend (spécification OpenAPI/Swagger)** _(issue #26)_
+  Endpoints couvrant l'ensemble des écrans maquettés, conventions communes
+  (erreurs, pagination, authentification, versionnement), anticipation du
+  futur connecteur paie. Dépend des stories 1 et 2.
+  _Tranché le 17/09 : l'essentiel de l'API n'est pas écrit à la main — elle
+  est exposée directement par PostgREST (Supabase), CRUD standard sur le
+  schéma (documenté par domaine plutôt que par mécanisme, pour rester
+  cohérent) plus des fonctions Postgres en RPC pour la logique métier qui
+  dépasse un CRUD simple (`appliquer_roulement`, `generer_annee_planifiee`),
+  toutes deux sur la même base URL/authentification que le CRUD. Seules 4
+  opérations, qui ont besoin de la clé serveur `service_role`, sont des
+  fonctions Vercel séparées : connexion par identifiant (résolution
+  `identifiant → email` côté serveur, Supabase Auth n'authentifiant
+  nativement que par email), création d'un EHPAD, création d'un compte ou
+  d'un Administrateur Système, réinitialisation de mot de passe — dans tous
+  les cas parce que l'opération crée/modifie un utilisateur Supabase Auth ou
+  lirait une donnée à ne jamais exposer à un rôle client. Traçabilité
+  généralisée : un trigger générique alimente `log_audit` pour toute table
+  CRUD auditée, `journee` gardant son propre trigger dédié vers
+  `journee_historique` ; toute fonction RPC suit la même règle sous-jacente
+  (le trigger suffit si elle écrit une table déjà auditée, sinon elle
+  loggue elle-même). Documentation de l'API : écran dédié réservé à
+  l'Administrateur Système plutôt qu'une route publique (rejoint l'EPIC
+  #30). Petits compléments au modèle de données (issue #25, déjà close) :
+  colonnes d'horodatage unifiées sous le nom `horodatage`, `DELETE`
+  exceptionnel sur `contrat` réservé à l'Administrateur Système, trigger
+  d'unicité de `identifiant` entre `compte` et `administrateur_systeme`._
+  _Statut : fait — spécification détaillée dans l'
+  [artifact API](https://claude.ai/artifact/QKjB7PgsJZXJqnDpyZSLNM), à
+  résumer dans la Synthèse fonctionnelle (Partie 2 § 4)._
+
+- [x] **4. Concevoir l'architecture multi-application** _(issue #27)_
+  Socle commun (comptes, EHPAD, authentification) découplé du métier
+  Planning, pour permettre le branchement d'une future application (ex. plan
+  d'action qualité) partageant les mêmes comptes. Droits par application,
+  point d'entrée/portail de navigation entre applications. Résout le point
+  ouvert "multi-EHPAD : qui peut créer un nouvel EHPAD".
+  _Tranché le 17/09 : seul l'Administrateur Système peut créer/gérer un
+  EHPAD, depuis un écran dédié — liste des EHPAD existants, création en une
+  seule opération tout-ou-rien (nom, logo, applications souscrites, premier
+  compte Administrateur avec mot de passe fixé directement), et gestion
+  ultérieure (modification des applications souscrites, désactivation sans
+  suppression des données). Portail de navigation entre applications :
+  entrée directe si une seule application accessible, sélecteur simple
+  sinon. Petit complément au modèle de données (issue #25, déjà close) :
+  ajout d'un champ `ehpad.actif`, avec désactivation en cascade de tous les
+  comptes de l'EHPAD via trigger PostgreSQL._
+  _Tranché le 17/09 : le logo d'un EHPAD est stocké directement en base
+  (colonne `ehpad.logo_base64`, image PNG encodée en base64) plutôt que via
+  Supabase Storage — une dépendance de moins à sécuriser/sauvegarder
+  séparément, volume négligeable à cette échelle (un logo par
+  établissement, rarement modifié), cohérence transactionnelle avec le
+  reste de la fiche EHPAD. En contrepartie : upload normalisé en PNG et
+  redimensionné côté client avant encodage, colonne exclue par défaut des
+  requêtes de liste._
+  _Statut : fait — spécification rédigée dans la Synthèse fonctionnelle
+  (Partie 2 § 3) et dans l'
+  [artifact MCD/MLD](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  mis à jour._
+
+- [x] **5. Définir la stratégie d'environnements (Vercel / Supabase)** _(issue #28)_
+  Environnements Vercel (Production/Preview), deux projets Supabase distincts
+  (dev/recette + production) avec migrations versionnées, gestion des
+  secrets par environnement.
+  _Précisé le 17/09 : les sauvegardes automatiques gérées ne sont incluses
+  qu'à partir du plan Supabase Pro (25$/mois, sauvegardes quotidiennes,
+  rétention 7 jours) — gratuites nulle part. Le plan Pro devient donc le
+  minimum recommandé pour le projet de production (pas pour dev/recette).
+  Point-in-Time Recovery disponible en option payante (100$/mois) mais
+  disproportionné pour ce déploiement — une sauvegarde quotidienne suffit._
+  _Tranché le 17/09 : deux branches longues synchronisées, `staging`
+  (développement) et `main` (ne reçoit que des merges depuis `staging`,
+  jamais de commit direct, promotion à la demande). Vercel Preview
+  (`staging`, domaine fixe assigné plutôt que l'URL par commit par défaut)
+  et Production (`main`), chacun avec ses propres variables pointant vers
+  le bon projet Supabase. Déploiement PROD : une GitHub Action déclenchée
+  par le merge sur `main` applique d'abord la migration Postgres sur le
+  projet PROD, puis déclenche explicitement le déploiement Vercel via un
+  deploy hook — ordre garanti, plutôt que de laisser l'intégration Git
+  automatique de Vercel se déclencher indépendamment du même push. Pas de
+  stratégie blue-green : aucune exigence forte de zéro interruption, et
+  Vercel offre déjà une bascule quasi atomique du code applicatif._
+  _Tranché le 17/09 : la story 6 (sauvegarde manuelle) est fusionnée ici —
+  voir ci-dessous, un seul job quotidien sert les deux besoins._
+  _Statut : fait — stratégie détaillée dans l'
+  [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)._
+
+- [x] **6. Sauvegarde manuelle programmée (solution de démarrage)** _(issue #29)_
+  Retour client du 17/09 : en attendant un éventuel passage au plan Pro,
+  sauvegarde régulière programmée (`pg_dump` + cron) sur un serveur externe
+  déjà disponible côté client, via la chaîne de connexion PostgreSQL directe
+  exposée par Supabase (disponible même sur le plan gratuit). Couvre
+  fréquence, rétention, sécurisation des identifiants, et une procédure de
+  restauration testée. Solution de démarrage, non exclusive d'un passage
+  ultérieur aux sauvegardes gérées de la story 5 si le besoin grandit.
+  _Tranché le 17/09 : fusionnée avec la stratégie d'environnements (story 5)
+  — le même job quotidien sur le serveur externe sert à la fois de
+  sauvegarde PROD et de source du rafraîchissement de l'environnement
+  DEV/STAGING (restore + anonymisation des données personnelles + 
+  réapplication des migrations en attente sur `staging`). Chaque exécution
+  réussie du refresh STAGING prouve donc, de fait, que la sauvegarde est
+  restaurable — pas besoin d'un exercice de restauration séparé. Point
+  laissé en suspens à la demande du client : la sécurisation du serveur
+  externe lui-même (accès SSH), à traiter séparément._
+  _Statut : fait — détail dans l'
+  [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf),
+  section « Sauvegarde & rafraîchissement quotidien de STAGING »._
+
+## EPIC — Implémentation MVP (backend réel, PROD uniquement) _(issue #31)_
+
+**Objectif** : faire tourner l'application maquettée contre un vrai backend
+Supabase, en production, avec le domaine Vercel par défaut (pas de nom de
+domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
+« Fondations architecturales » (#23).
+
+**Décisions actées (échanges du 17/09)** :
+- Un seul environnement pour l'instant : tout se passe directement en PROD,
+  pas de mise en place de DEV/STAGING pour ce MVP — reporté à l'EPIC
+  « Environnements DEV/STAGING/PROD & sauvegarde » (issue #38).
+- Pas de sauvegarde automatisée dans ce MVP — également reportée au même
+  EPIC suivant.
+- Périmètre fonctionnel : l'ensemble du contenu déjà maquetté et validé
+  avec le client (Planning, Émargement mensuel/annuel, Administration
+  complète, Profil utilisateur) — rien de nouveau à revalider
+  fonctionnellement, seulement à brancher sur le vrai backend.
+
+### Stories
+
+- [ ] **1. Provisionner le projet Supabase PROD** _(issue #32)_
+  Création du projet, dossier `supabase/migrations/` versionné dans le
+  dépôt, application du schéma complet (tables, RLS, triggers, fonctions
+  RPC), données de référence (catalogue `application`).
+  _Précisé le 17/09 : indexer toutes les colonnes utilisées dans les
+  policies RLS (`ehpad_id` partout, FK de scoping indirect comme
+  `salarie_id`) — pratique standard pour ce type d'architecture (pooled
+  multi-tenant + RLS sur Supabase), sans quoi la RLS devient le premier
+  goulot de performance à l'usage réel._
+  _Tranché le 17/09 : projet Supabase créé en région UE (ex. Francfort),
+  pour éviter un transfert de données hors UE par défaut — cf. story RGPD,
+  issue #45._
+
+- [ ] **2. Implémenter l'authentification et les comptes** _(issue #33)_
+  Les 4 fonctions Vercel (connexion par identifiant, création EHPAD,
+  création compte, réinitialisation de mot de passe) ; amorçage manuel du
+  tout premier compte Administrateur Système.
+
+- [ ] **3. Brancher les écrans Administration sur le backend** _(issue #34)_
+  Comptes/utilisateurs, salariés, codes horaires, roulements, années/jours
+  fériés, identité EHPAD, gestion des EHPAD par l'Administrateur Système,
+  profil utilisateur.
+
+- [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
+  Grille planning, application d'un roulement (RPC), effacement de plage,
+  émargement mensuel/annuel, validation.
+
+- [ ] **5. Déployer en production** _(issue #36)_
+  Projet Vercel connecté à `main`, domaine Vercel par défaut, variables
+  d'environnement vers Supabase PROD, migrations appliquées avant le
+  premier déploiement.
+
+- [ ] **6. Amorcer les données réelles** _(issue #37)_
+  Premier EHPAD, premier Administrateur, première saisie de référence
+  (services, salariés, codes horaires), vérification du parcours complet.
+
+## EPIC — Environnements DEV/STAGING/PROD & sauvegarde _(issue #38)_
+
+**Objectif** : mettre en œuvre la stratégie d'environnements et de
+sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
+stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
+mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
+17/09. EPIC d'implémentation : la conception est déjà faite.
+
+### Stories
+
+- [ ] **1. Créer le second projet Supabase (DEV/STAGING)** _(issue #39)_
+  Même schéma que PROD (migrations du dépôt), clés dédiées.
+  _Tranché le 17/09 : projet créé en région UE, comme PROD._
+
+- [ ] **2. Mettre en place les branches et l'environnement Preview Vercel** _(issue #40)_
+  Branche `staging`, Preview Vercel avec alias stable (possible sans nom de
+  domaine externe), variables d'environnement vers Supabase DEV/STAGING.
+
+- [ ] **3. Automatiser le déploiement PROD (GitHub Action + Environments)** _(issue #41)_
+  Migration Supabase PROD puis déploiement Vercel via deploy hook, dans
+  l'ordre ; GitHub Environments `staging`/`production` avec secrets scopés.
+
+- [ ] **4. Sécuriser le serveur externe** _(issue #42)_
+  Point resté en suspens depuis la conception : clé SSH avec passphrase,
+  mot de passe désactivé, système à jour, audit de ce qui tourne par
+  ailleurs sur la machine.
+
+- [ ] **5. Mettre en place la sauvegarde quotidienne de PROD et le rafraîchissement de STAGING** _(issue #43)_
+  Job cron : `pg_dump` PROD → anonymisation → restore DEV/STAGING →
+  réapplication des migrations en attente. Story #29 réactivée avec son
+  volet complet cette fois.
+
+- [ ] **6. Valider le cycle complet de déploiement et de restauration** _(issue #44)_
+  Un déploiement de bout en bout (staging → main → PROD) et une
+  restauration testée, pour confirmer que la chaîne fonctionne avant de la
+  considérer opérationnelle.
+
+- [ ] **7. Mettre en place la politique RGPD de l'éditeur** _(issue #45)_
+  Ajoutée le 17/09. Recentrée le 17/09 : la relation EHPAD ↔ salariés (dont
+  sa base légale) relève de la responsabilité de l'EHPAD, responsable de
+  traitement — hors périmètre. Notre rôle, en tant que sous-traitant, est
+  de fournir la policy et les garanties sur lesquelles l'EHPAD s'appuie
+  pour justifier sa propre conformité :
+  - Modèle de **clause de sous-traitance RGPD (Art. 28)**, signée par
+    chaque EHPAD à l'onboarding (objet/durée/finalité du traitement,
+    obligations du sous-traitant, liste des sous-traitants ultérieurs
+    Supabase/Vercel, point de contact RGPD).
+  - Hébergement UE (✅ tranché), sécurité Art. 32 (chiffrement, RLS, mots
+    de passe hashés, audit) et anonymisation STAGING — déjà couverts par
+    l'architecture, à documenter comme preuves de conformité.
+  - Procédure de notification de violation de données (72h CNIL).
+  - Politique de conservation/purge des données que nous portons
+    techniquement (aucune définie à ce jour) et registre des activités de
+    traitement côté éditeur.
+  Hors périmètre, laissé à la charge de l'EHPAD : sa propre base légale,
+  son registre, l'information de ses salariés et l'exercice de leurs
+  droits (nous fournissons les moyens techniques, pas la démarche), et la
+  nécessité d'un DPO côté EHPAD.
+
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
+
+- **EPIC — Administration Système (logs, statistiques d'usage & doc API)**
+  _(issue #30)_ — ajouté le 17/09, non prioritaire. Outiller le compte
+  Administrateur Système (défini dans l'EPIC #23) avec des écrans de
+  supervision technique transverse à tous les EHPAD : visualisation des
+  logs (journal d'audit `log_audit`, cf. issue #25, et logs applicatifs),
+  statistiques d'utilisation de l'application (indicateurs à définir avec
+  le client), et consultation de la documentation de l'API (type
+  Swagger/Redoc, cf. issue #26 — décidé le 17/09 plutôt qu'une route
+  publique, faute de consommateur tiers de cette API). À détailler en
+  stories et prioriser après l'EPIC « Fondations architecturales » (#23) et
+  son implémentation backend.
 
 - **Mettre en place une suite de tests automatisés rejouables (Playwright)**
   _(issue #21)_ — ajouté le 17/09, décision du client. Pendant la maquette,
@@ -390,40 +742,38 @@ export réel, connecteur paie.
 
 ## Points ouverts (hors périmètre maquette graphique, à trancher avant le backend)
 
+_Les points ci-dessous sont désormais pris en charge par l'EPIC « Fondations
+architecturales (backend) » (issue #23) ci-dessus — conservés ici pour mémoire
+jusqu'à leur résolution effective._
+
 - Nombre de types d'utilisateur (2 vs 3) et droits exacts de l'utilisateur standard
-- Salariés = utilisateurs de l'app ou simples lignes de planning ?
-- Login mono-session : pertinent ?
-- Notion de contrat à préciser
-- Complexité du mot de passe à définir
-- Multi-EHPAD : qui peut créer un nouvel EHPAD ? Un rôle super-admin distinct de
-  l'Administrateur actuel (qui serait alors scopé à son EHPAD), ou création manuelle
-  hors application pour l'instant ?
-- **Deux représentations distinctes du salarié dans la maquette** (relevé le
-  16/09 en construisant la story 9bis) : la vue Planning utilise une entité
-  `Salarie` (simple, sert de support à la démo de plein de salariés) tandis que
-  l'écran Admin « Ajouter un salarié » utilise une entité `FicheSalarie` plus
-  complète, non reliée par identifiant à la première. L'affectation de
-  roulement (historique, roulement en cours) vit donc côté `FicheSalarie`
-  (fiche salarié). Un pont temporaire (`CORRESPONDANCE_SALARIE_FICHE_DEMO`,
-  ajouté pour la story 9ter) relie les deux id pour les 2 salariés qui
-  existent des deux côtés (Claire BERNARD, Inès LAURENT), afin que le
-  planning puisse retrouver leur roulement actuel — à supprimer au profit
-  d'un seul modèle Salarié lors du passage au vrai backend, qui couvrira
-  alors tous les salariés sans pont temporaire.
-- **Intégrité des données à valider côté backend, pas seulement côté front**
-  (retour client du 16/09, suite à la suppression d'une année dans la maquette) :
-  toute règle du type "on ne peut pas supprimer X" doit être appliquée côté serveur
-  (contrainte DB / policy Supabase / vérification API), le front ne pouvant être
-  qu'un confort UX — contournable via appel direct à l'API, DevTools, etc. À
-  reprendre explicitement dans les specs backend pour chaque règle de suppression
-  déjà mockée côté front (années, et sans doute plus tard salariés/utilisateurs
-  avec historique).
-- **Traçabilité des cellules du planning** (précisé par le client le 17/09) :
-  le modèle de données backend devra historiser chaque modification d'une
-  cellule de planning, pour pouvoir récupérer via l'API l'ensemble des
-  valeurs successivement prises par une cellule (sans que cet historique soit
-  utilisé côté front pour l'instant). Toutes ces opérations (création,
-  modification, effacement, application d'un roulement...) devront aussi être
-  journalisées côté backend (log d'audit), au-delà du seul historique de
-  valeurs. À intégrer dans le schéma de la table planning/journée lors de la
-  conception du backend.
+  — _cf. story « Spécifier l'authentification et la gestion des comptes »,
+  issue #24._
+- Salariés = utilisateurs de l'app ou simples lignes de planning ? — _cf. issue #24._
+- ~~Login mono-session : pertinent ?~~ → **tranché le 17/09** : multi-session
+  autorisé, déconnexion automatique après 15 min d'inactivité — _cf. issue #24._
+- ~~Notion de contrat à préciser~~ → **tranché le 17/09** : table `contrat`
+  dédiée, historisant les contrats successifs d'un salarié, un seul actif à
+  la fois — _cf. issue #25._
+- ~~Complexité du mot de passe à définir~~ → **tranché le 17/09** : 8
+  caractères min., 1 caractère spécial min., indicateur de robustesse au
+  vert obligatoire — _cf. issue #24._
+- ~~Multi-EHPAD : qui peut créer un nouvel EHPAD ?~~ → **tranché le 17/09** :
+  l'Administrateur Système, depuis un écran dédié de création/gestion des
+  EHPAD — _cf. issue #27._
+- ~~**Deux représentations distinctes du salarié dans la maquette**~~ (relevé
+  le 16/09 en construisant la story 9bis) → **tranché le 17/09** : un modèle
+  `salarie` unique dans le schéma backend (table `salarie`, cf. issue #25) ;
+  le pont temporaire `CORRESPONDANCE_SALARIE_FICHE_DEMO` reste un artefact de
+  la maquette, à abandonner lors du passage au vrai backend.
+- ~~**Intégrité des données à valider côté backend, pas seulement côté
+  front**~~ (retour client du 16/09) → **tranché le 17/09** : les règles qui
+  ne peuvent pas s'exprimer par une simple contrainte sur une table (ex. « un
+  seul contrat actif par salarié », cohérence catégorie/code horaire) sont
+  garanties en base par index/contraintes/triggers PostgreSQL, et non
+  seulement côté applicatif — l'API PostgREST de Supabase étant directement
+  accessible, le code applicatif seul ne suffit pas. — _cf. issue #25._
+- ~~**Traçabilité des cellules du planning**~~ (précisé par le client le
+  17/09) → **tranché le 17/09** : table `journee_historique` (append-only,
+  valeurs successives d'une cellule) + `log_audit` (journal générique des
+  opérations), auteur référencé via `auth.users.id`. — _cf. issue #25._

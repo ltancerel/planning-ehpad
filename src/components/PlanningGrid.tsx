@@ -98,6 +98,13 @@ export default function PlanningGrid() {
   const [positionConfirmation, setPositionConfirmation] = useState<{ top: number; left: number } | null>(
     null
   );
+  // Semaine du motif du roulement à partir de laquelle démarrer l'application
+  // groupée (retour client du 22/09) — 1-indexée, remise à 1 à chaque nouvelle
+  // sélection. Le sélecteur ne prend de la place à l'écran qu'après un premier
+  // clic sur "Appliquer le roulement de chacun" (retour client du 22/09 :
+  // trop encombrant affiché d'emblée).
+  const [semaineDepartMulti, setSemaineDepartMulti] = useState(1);
+  const [demarrageMultiOuvert, setDemarrageMultiOuvert] = useState(false);
   // Sélection rectangulaire (glisser sur des cases déjà remplies) pour effacer
   // des codes horaires sur une ou plusieurs lignes/jours — fonctionnalité admin.
   const [enTrainDeSelectionnerEffacement, setEnTrainDeSelectionnerEffacement] = useState(false);
@@ -251,6 +258,8 @@ export default function PlanningGrid() {
   function demarrerSelection(salarieId: string, dateISO: string) {
     setEnTrainDeGlisser(true);
     setSelectionEnCours({ dateISO, salarieIds: [salarieId] });
+    setSemaineDepartMulti(1);
+    setDemarrageMultiOuvert(false);
   }
 
   function etendreSelection(salarieId: string, dateISO: string) {
@@ -264,6 +273,7 @@ export default function PlanningGrid() {
   function annulerSelection() {
     setSelectionEnCours(null);
     setPositionConfirmation(null);
+    setDemarrageMultiOuvert(false);
   }
 
   // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, sur
@@ -276,23 +286,32 @@ export default function PlanningGrid() {
   // Tout ou rien : si une seule de ces semaines contient déjà un code
   // horaire, rien n'est appliqué du tout, et la semaine bloquante est
   // renvoyée pour pouvoir le signaler à l'utilisateur.
+  //
+  // semaineDepart (1-indexée, retour client du 22/09) : permet de ne pas
+  // repartir systématiquement de la semaine 1 du motif. Ex. un roulement sur
+  // 4 semaines avec semaineDepart=3 applique uniquement les semaines 3 et 4
+  // du motif, sur les 2 semaines calendaires à partir du lundi choisi.
   function evaluerProjectionRoulement(
     editionsBase: Record<string, ValeurCellule | undefined>,
     salarieId: string,
     lundiDebut: Date,
-    roulement: Roulement
+    roulement: Roulement,
+    semaineDepart: number = 1
   ): {
     editions: Record<string, ValeurCellule | undefined>;
     bloque: boolean;
     semaineBloqueeISO?: string;
   } {
+    const indexDepart = Math.min(Math.max(semaineDepart - 1, 0), roulement.nbSemaines - 1);
+    const nbSemainesAAppliquer = roulement.nbSemaines - indexDepart;
+
     const valeurDe = (jour: Date) => {
       const cle = `${salarieId}__${formatDateISO(jour)}`;
       return cle in editionsBase ? editionsBase[cle] : PLANNING_DEMO[cle];
     };
 
     const semaines: Date[][] = [];
-    for (let semaine = 0; semaine < roulement.nbSemaines; semaine++) {
+    for (let semaine = 0; semaine < nbSemainesAAppliquer; semaine++) {
       const lundiSemaine = new Date(lundiDebut);
       lundiSemaine.setDate(lundiSemaine.getDate() + semaine * 7);
       semaines.push(
@@ -311,7 +330,8 @@ export default function PlanningGrid() {
     }
 
     let nouvelles = editionsBase;
-    semaines.forEach((joursDeLaSemaine, semaineIndex) => {
+    semaines.forEach((joursDeLaSemaine, i) => {
+      const semaineIndex = indexDepart + i;
       for (const jour of joursDeLaSemaine) {
         const jourIndex = (jour.getDay() + 6) % 7; // 0 = lundi
         const code = roulement.motif[semaineIndex][jourIndex];
@@ -331,8 +351,11 @@ export default function PlanningGrid() {
       let nouvelles = prev;
       for (const salarieId of selectionEnCours.salarieIds) {
         const roulement = roulementActuelDuSalarie(salarieId);
-        if (!roulement) continue;
-        nouvelles = evaluerProjectionRoulement(nouvelles, salarieId, lundi, roulement).editions;
+        // Roulement plus court que la semaine de départ choisie : ignoré,
+        // plutôt que de retomber silencieusement sur sa dernière semaine
+        // (cohérent avec l'aperçu affiché avant validation).
+        if (!roulement || roulement.nbSemaines < semaineDepartMulti) continue;
+        nouvelles = evaluerProjectionRoulement(nouvelles, salarieId, lundi, roulement, semaineDepartMulti).editions;
       }
       return nouvelles;
     });
@@ -340,13 +363,13 @@ export default function PlanningGrid() {
     annulerSelection();
   }
 
-  function appliquerRoulementDepuisEdition() {
+  function appliquerRoulementDepuisEdition(semaineDepart: number) {
     if (!cellEnEdition) return;
     const [salarieId, dateISO] = cellEnEdition.split("__");
     const roulement = roulementActuelDuSalarie(salarieId);
     if (!roulement) return;
     const lundi = lundiDeLaSemaine(parseDateISO(dateISO));
-    const resultat = evaluerProjectionRoulement(editions, salarieId, lundi, roulement);
+    const resultat = evaluerProjectionRoulement(editions, salarieId, lundi, roulement, semaineDepart);
     if (resultat.bloque) {
       alert(
         `Impossible d'appliquer le roulement : la semaine du ${formatJourMois(
@@ -829,7 +852,11 @@ export default function PlanningGrid() {
             aUneValeur={editionAUneValeur}
             actionRoulement={
               roulementPourEdition
-                ? { nomRoulement: roulementPourEdition.nom, onAppliquer: appliquerRoulementDepuisEdition }
+                ? {
+                    nomRoulement: roulementPourEdition.nom,
+                    nbSemaines: roulementPourEdition.nbSemaines,
+                    onAppliquer: appliquerRoulementDepuisEdition,
+                  }
                 : undefined
             }
             onChoisir={(code) => choisirCode(cellEnEdition, code)}
@@ -853,19 +880,49 @@ export default function PlanningGrid() {
             </p>
             {(() => {
               const lundi = lundiDeLaSemaine(parseDateISO(selectionEnCours.dateISO));
+              const avecRoulement = selectionEnCours.salarieIds
+                .map((id) => ({ salarie: SALARIES.find((s) => s.id === id)!, roulement: roulementActuelDuSalarie(id) }))
+                .filter((e): e is { salarie: Salarie; roulement: Roulement } => Boolean(e.roulement));
+              const maxSemaines = Math.max(1, ...avecRoulement.map((e) => e.roulement.nbSemaines));
+              const depart = Math.min(semaineDepartMulti, maxSemaines);
+
               const evaluation = selectionEnCours.salarieIds.map((id) => {
                 const salarie = SALARIES.find((s) => s.id === id)!;
                 const roulement = roulementActuelDuSalarie(id);
-                const resultat = roulement
-                  ? evaluerProjectionRoulement(editions, id, lundi, roulement)
-                  : undefined;
-                return { salarie, roulement, bloque: resultat?.bloque ?? false };
+                if (!roulement) return { salarie, roulement, bloque: false, tropCourt: false };
+                if (roulement.nbSemaines < depart) {
+                  return { salarie, roulement, bloque: false, tropCourt: true };
+                }
+                const resultat = evaluerProjectionRoulement(editions, id, lundi, roulement, depart);
+                return { salarie, roulement, bloque: resultat.bloque, tropCourt: false };
               });
-              const applicables = evaluation.filter((e) => e.roulement && !e.bloque);
+              const applicables = evaluation.filter((e) => e.roulement && !e.bloque && !e.tropCourt);
               const bloques = evaluation.filter((e) => e.roulement && e.bloque);
+              const tropCourts = evaluation.filter((e) => e.tropCourt);
               const sansRoulement = evaluation.filter((e) => !e.roulement);
               return (
                 <>
+                  {demarrageMultiOuvert && maxSemaines > 1 && (
+                    <div className="mb-2 flex items-center gap-1.5">
+                      <span className="text-[11px] text-zinc-600">Démarrer à la semaine :</span>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: maxSemaines }, (_, i) => i + 1).map((semaine) => (
+                          <button
+                            key={semaine}
+                            type="button"
+                            onClick={() => setSemaineDepartMulti(semaine)}
+                            className={`h-5 w-5 rounded text-[11px] font-medium ${
+                              semaine === depart
+                                ? "bg-blue-600 text-white"
+                                : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200"
+                            }`}
+                          >
+                            {semaine}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   {applicables.length > 0 && (
                     <ul className="mb-2 space-y-0.5 text-zinc-600">
                       {applicables.map(({ salarie, roulement }) => (
@@ -882,6 +939,12 @@ export default function PlanningGrid() {
                       {bloques.map(({ salarie }) => `${salarie.nom} ${salarie.prenom}`).join(", ")}
                     </p>
                   )}
+                  {tropCourts.length > 0 && (
+                    <p className="mb-2 text-[11px] text-red-600">
+                      Roulement plus court que la semaine {depart} choisie (ignorés) :{" "}
+                      {tropCourts.map(({ salarie }) => `${salarie.nom} ${salarie.prenom}`).join(", ")}
+                    </p>
+                  )}
                   {sansRoulement.length > 0 && (
                     <p className="mb-2 text-[11px] text-amber-600">
                       Sans roulement assigné (ignorés) :{" "}
@@ -896,11 +959,17 @@ export default function PlanningGrid() {
                       Annuler
                     </button>
                     <button
-                      onClick={appliquerSelection}
+                      onClick={() => {
+                        if (!demarrageMultiOuvert && maxSemaines > 1) {
+                          setDemarrageMultiOuvert(true);
+                          return;
+                        }
+                        appliquerSelection();
+                      }}
                       disabled={applicables.length === 0}
                       className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
                     >
-                      Appliquer le roulement de chacun
+                      {depart === 1 ? "Appliquer le roulement de chacun" : `Appliquer à partir de la semaine ${depart}`}
                     </button>
                   </div>
                 </>
