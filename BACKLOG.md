@@ -357,6 +357,14 @@ export réel, connecteur paie.
   développée en l'état (contenu du menu ? formats ? périmètre des données
   exportées ?). À clarifier avec le client avant de la réintégrer dans un prochain
   Epic.
+  - _Précisions client du 22/09_ (toujours partielles — formats et reste du
+    périmètre non tranchés, la story reste WAIVED) : l'export doit permettre
+    d'**imprimer ou exporter le planning sur une plage de dates choisie** (date
+    à date, pas uniquement la période actuellement affichée à l'écran), pour un
+    usage typique par un **responsable** qui veut le planning de ses salariés en
+    CDI. Le type de contrat n'est donc pas figé sur CDI : l'export doit proposer
+    une **sélection des types de contrat à inclure** (au moins CDI/CDD), CDI
+    seul n'étant qu'un cas d'usage parmi d'autres.
 - **Blocage visuel du planning passé (WAIVED)** — issue #13, sortie de l'EPIC et
   titre GitHub mis à jour le 17/09. Affichage grisé/verrouillé des cellules passées
   dans la grille (visuel uniquement, sans logique de verrouillage réelle). Mise de

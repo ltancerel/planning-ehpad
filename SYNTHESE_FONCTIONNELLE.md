@@ -464,8 +464,12 @@ nouveau code, jamais l'inverse.
 Ces besoins ont été identifiés mais nécessitent d'être précisés avant
 développement :
 
-- **Menu d'export** depuis la vue Planning (contenu, formats et périmètre
-  des données exportées à définir).
+- **Menu d'export** depuis la vue Planning (formats et reste du périmètre
+  encore à définir). Précision client du 22/09 : permettre d'imprimer ou
+  d'exporter le planning sur une **plage de dates choisie** (pas uniquement
+  la période affichée à l'écran), avec une **sélection des types de
+  contrat** à inclure (ex. CDI seul, pour un responsable qui veut le
+  planning de ses salariés en CDI).
 - **Verrouillage visuel des jours passés** dans la grille Planning.
 - **Adaptation de la grille Planning aux écrans mobiles.**
 - **Plusieurs établissements indépendants** : au-delà de l'écran d'identité
