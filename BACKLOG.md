@@ -140,6 +140,18 @@ export réel, connecteur paie.
   le sélecteur de code — retour client : la saisie d'un code doit rester
   immédiate (action la plus courante), le raccourci roulement est un ajout
   dans le même sélecteur, pas une étape supplémentaire._
+  _Révision du 22/09 : pour un roulement sur plusieurs semaines, ajout d'un
+  sélecteur « Démarrer à la semaine : 1 / 2 / 3 / 4 » (dans le raccourci du
+  sélecteur de code, et dans le panneau de confirmation cliquer-glisser) —
+  retour client : pouvoir reprendre un roulement en cours de cycle (ex.
+  roulement sur 4 semaines, démarrer à la semaine 3 n'applique que les
+  semaines 3 et 4 du motif). Dans le cas cliquer-glisser, le sélecteur est
+  borné par le roulement le plus long parmi les salariés sélectionnés ; un
+  salarié dont le roulement est plus court que la semaine de départ choisie
+  est listé à part et ignoré, plutôt que d'appliquer silencieusement sa
+  dernière semaine. Démo enrichie d'un 3ᵉ roulement sur 4 semaines
+  (« Administratif (4 semaines) », assigné à MARTIN Julie) pour illustrer le
+  cas d'usage à l'écran._
 
 - [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes** _(issue #17)_
   Retour client du 16/09, pour éviter les erreurs : un roulement ne peut plus

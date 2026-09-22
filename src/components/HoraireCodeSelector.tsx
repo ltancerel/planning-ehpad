@@ -19,8 +19,12 @@ type HoraireCodeSelectorProps = {
   masquerEvenementiels?: boolean;
   /** Raccourci proposé sur une case jamais remplie dont le salarié a un
    * roulement actuel : l'appliquer directement, sans bloquer la saisie
-   * manuelle d'un code qui reste l'action la plus courante. */
-  actionRoulement?: { nomRoulement: string; onAppliquer: () => void };
+   * manuelle d'un code qui reste l'action la plus courante. Si le roulement
+   * porte sur plusieurs semaines, un sélecteur permet de choisir la semaine
+   * du motif à partir de laquelle démarrer (retour client du 22/09) — utile
+   * pour reprendre un roulement en cours de cycle, ex. démarrer à la semaine
+   * 3 d'un motif sur 4 semaines. */
+  actionRoulement?: { nomRoulement: string; nbSemaines: number; onAppliquer: (semaineDepart: number) => void };
   onChoisir: (code: string | null) => void;
   /** Un évènement "complement" (à la volée) demande une plage horaire avant
    * d'être posé — cf. retour client du 17/09. */
@@ -47,6 +51,7 @@ export default function HoraireCodeSelector({
   const [codeComplementEnSaisie, setCodeComplementEnSaisie] = useState<string | null>(null);
   const [plageDebut, setPlageDebut] = useState("");
   const [plageFin, setPlageFin] = useState("");
+  const [semaineDepartRoulement, setSemaineDepartRoulement] = useState(1);
 
   // La position d'ancrage (sous la case cliquée) peut pousser le popover hors
   // de l'écran pour une case proche du bord droit/bas — le bouton "Ajouter"
@@ -220,14 +225,49 @@ export default function HoraireCodeSelector({
         placeholder="Rechercher un code ou un libellé…"
         className="border-b border-zinc-200 px-2 py-1.5 text-sm outline-none"
       />
-      {actionRoulement && (
+      {actionRoulement && actionRoulement.nbSemaines <= 1 && (
         <button
           type="button"
-          onClick={actionRoulement.onAppliquer}
+          onClick={() => actionRoulement.onAppliquer(1)}
           className="border-b border-zinc-100 bg-blue-50 px-2 py-1.5 text-left text-xs font-medium text-blue-700 hover:bg-blue-100"
         >
           Appliquer le roulement « {actionRoulement.nomRoulement} »
         </button>
+      )}
+      {actionRoulement && actionRoulement.nbSemaines > 1 && (
+        <div className="border-b border-zinc-100 bg-blue-50 px-2 py-1.5">
+          <p className="text-xs font-medium text-blue-700">
+            Appliquer le roulement « {actionRoulement.nomRoulement} »
+          </p>
+          <div className="mt-1.5 flex items-center gap-1.5">
+            <span className="text-[11px] text-blue-700">Démarrer à la semaine :</span>
+            <div className="flex gap-0.5">
+              {Array.from({ length: actionRoulement.nbSemaines }, (_, i) => i + 1).map((semaine) => (
+                <button
+                  key={semaine}
+                  type="button"
+                  onClick={() => setSemaineDepartRoulement(semaine)}
+                  className={`h-5 w-5 rounded text-[11px] font-medium ${
+                    semaine === semaineDepartRoulement
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-blue-700 hover:bg-blue-100"
+                  }`}
+                >
+                  {semaine}
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => actionRoulement.onAppliquer(semaineDepartRoulement)}
+            className="mt-1.5 rounded bg-blue-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-blue-700"
+          >
+            {semaineDepartRoulement === 1
+              ? "Appliquer"
+              : `Appliquer à partir de la semaine ${semaineDepartRoulement}`}
+          </button>
+        </div>
       )}
       <ul className="flex-1 overflow-auto py-1">
         {resultats.map((horaire, index) => {

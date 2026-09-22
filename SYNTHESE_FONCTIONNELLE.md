@@ -74,12 +74,22 @@ Grille principale de gestion du planning des salariés.
 - Un salarié peut se voir assigner un **roulement** : un motif d'horaires se
   répétant sur une ou plusieurs semaines complètes.
 - Sur une case jamais planifiée, si le salarié a un roulement en cours, un
-  raccourci permet de l'appliquer directement, de la semaine cliquée jusqu'à
-  la fin de la période affichée.
+  raccourci permet de l'appliquer directement, sur les semaines du motif à
+  partir de la semaine cliquée.
+- Si le roulement porte sur plusieurs semaines, un sélecteur permet de
+  choisir la semaine du motif à partir de laquelle démarrer (ex. un
+  roulement sur 4 semaines : démarrer à la semaine 3 n'applique que les
+  semaines 3 et 4 du motif, sur les 2 semaines calendaires suivant la case
+  cliquée) — utile pour reprendre un roulement en cours de cycle, sans
+  repartir systématiquement de sa première semaine (retour client du
+  22/09).
 - Il est également possible de sélectionner plusieurs salariés à la fois
   (sur un même jour) pour appliquer en une seule action le roulement en
-  cours de chacun ; un récapitulatif indique qui sera planifié, qui est déjà
-  planifié (donc ignoré) et qui n'a pas de roulement assigné.
+  cours de chacun, avec le même sélecteur de semaine de départ (borné par
+  le roulement le plus long parmi les salariés sélectionnés) ; un
+  récapitulatif indique qui sera planifié, qui est déjà planifié (donc
+  ignoré), qui n'a pas de roulement assigné, et qui a un roulement plus
+  court que la semaine de départ choisie (donc également ignoré).
 - Un roulement ne vient jamais écraser une case déjà remplie : si au moins
   une semaine de la période concernée contient déjà un code, l'application
   du roulement est bloquée pour ce salarié et la semaine en cause est
