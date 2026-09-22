@@ -385,6 +385,29 @@ export réel, connecteur paie.
   que le rendu des cases (édition locale prioritaire sur la démo) ; testé en
   navigant au-delà de la fin des données de démo (30/09/2026) pour confirmer
   le recalcul dynamique._
+  _Refonte du 22/09, retour client : le sélecteur à choix unique ne
+  permettait pas de croiser plusieurs critères (ex. impossible de filtrer
+  Contrat actif ET Présent en même temps). Remplacé par un filtre avancé
+  multi-critères, inspiré du panneau de filtres d'HelloWork :_
+  _- Bouton « Filtres » ouvrant une fenêtre à sections **Contrat** /
+  **Présence** / **Manager** (nouveau, Sans manager / Maîtresse de maison /
+  IDEC) / **Service** (nouveau) / **Planning (période affichée)**, chacune à
+  cases à cocher. Valeurs d'un même critère combinées en OU, critères entre
+  eux combinés en ET — répond explicitement au besoin client "filtrer les
+  contrats actifs/inactifs ET/OU les salariés présents/non présents"._
+  _- Filtres actifs affichés sous forme de jetons retirables individuellement
+  sous la barre d'en-tête (comme les filtres appliqués d'HelloWork), avec un
+  lien « Réinitialiser » dès que plusieurs sont actifs ; le bouton « Filtres »
+  porte un badge du nombre de critères actifs, et un compteur "N salarié(s)
+  affiché(s)" est visible en bas du panneau._
+  _- Un salarié sans fiche (ex. lignes "Besoin") est exclu dès qu'un critère
+  dépendant de la fiche (Contrat/Présence/Manager) est actif, mais reste
+  filtrable par Service (disponible directement sur sa ligne, sans fiche) —
+  affiné par rapport à l'ancien comportement qui excluait ces lignes dès
+  qu'un filtre quelconque était actif._
+  _- Nouveau composant dédié `FiltreSalariesAvance.tsx` (bouton + panneau +
+  jetons), `FiltreSalarie`/`FILTRES_SALARIE` remplacés par le type
+  `FiltresAvances` (un `Set` de valeurs par critère)._
 
 ## Sortie de l'Epic — WAIVED
 

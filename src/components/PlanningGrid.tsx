@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   SALARIES,
   SERVICES_ORDRE,
+  MANAGERS,
   JOURS_FERIES_2026,
   PLANNING_DEMO,
   ROULEMENTS_DEMO,
@@ -16,6 +17,12 @@ import {
   type Roulement,
   type Salarie,
 } from "@/lib/mock-data";
+import {
+  FiltreSalariesBouton,
+  FiltresActifsChips,
+  filtresVides,
+  type FiltresAvances,
+} from "@/components/FiltreSalariesAvance";
 import {
   HORAIRE_CODES_PAR_CODE,
   estCodeSuperposable,
@@ -37,30 +44,6 @@ import {
 import UserMenu from "@/components/UserMenu";
 import { useEhpad } from "@/context/EhpadProvider";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
-
-// Filtre d'affichage des salariés (retour client du 17/09, story #19) :
-// "avec_planning"/"sans_planning" sont recalculés à chaque navigation dans
-// le temps (dépendent de la période affichée), les autres dépendent de la
-// fiche salarié (contrat/présence). Un salarié sans fiche (ex. lignes
-// "Besoin") n'est exclu que par les filtres autres que "tous".
-type FiltreSalarie =
-  | "tous"
-  | "presents"
-  | "non_presents"
-  | "contrat_actif"
-  | "contrat_inactif"
-  | "avec_planning"
-  | "sans_planning";
-
-const FILTRES_SALARIE: { valeur: FiltreSalarie; libelle: string }[] = [
-  { valeur: "tous", libelle: "Tous" },
-  { valeur: "presents", libelle: "Présents" },
-  { valeur: "non_presents", libelle: "Non présents" },
-  { valeur: "contrat_actif", libelle: "Contrat actif" },
-  { valeur: "contrat_inactif", libelle: "Contrat inactif" },
-  { valeur: "avec_planning", libelle: "Avec planning" },
-  { valeur: "sans_planning", libelle: "Sans planning" },
-];
 
 const NB_SEMAINES = 4;
 const NB_JOURS = NB_SEMAINES * 7;
@@ -87,7 +70,7 @@ export default function PlanningGrid() {
   const [cellEnEdition, setCellEnEdition] = useState<string | null>(null);
   const [positionEdition, setPositionEdition] = useState<PositionSelecteur | null>(null);
   const [selecteurOuvert, setSelecteurOuvert] = useState(false);
-  const [filtreSalarie, setFiltreSalarie] = useState<FiltreSalarie>("tous");
+  const [filtres, setFiltres] = useState<FiltresAvances>(filtresVides);
   // Sélection multi-salariés par glisser sur des cases hachurées (jamais remplies)
   // pour appliquer en une fois le roulement actuel de chaque salarié sélectionné.
   const [enTrainDeGlisser, setEnTrainDeGlisser] = useState(false);
@@ -149,30 +132,43 @@ export default function PlanningGrid() {
     });
   }
 
-  function salarieCorrespondAuFiltre(salarie: Salarie): boolean {
-    if (filtreSalarie === "tous") return true;
-    // Sans fiche (ex. lignes "Besoin", pas de vrais salariés) : exclu de
-    // tout filtre autre que "Tous".
-    const fiche = ficheDuSalarie(salarie.id);
-    if (!fiche) return false;
-    switch (filtreSalarie) {
-      case "presents":
-        return fiche.contratActif && fiche.presence === "Présent";
-      case "non_presents":
-        return fiche.contratActif && fiche.presence === "Absent";
-      case "contrat_actif":
-        return fiche.contratActif;
-      case "contrat_inactif":
-        return !fiche.contratActif;
-      case "avec_planning":
-        return fiche.contratActif && fiche.presence === "Présent" && salarieAUnPlanningSurPeriode(salarie.id);
-      case "sans_planning":
-        return fiche.contratActif && fiche.presence === "Présent" && !salarieAUnPlanningSurPeriode(salarie.id);
+  // Filtre avancé (retour client du 22/09) : chaque critère (contrat,
+  // présence, manager, service, planning) est indépendant et se combine en
+  // ET avec les autres ; plusieurs valeurs cochées dans un même critère se
+  // combinent en OU. Un salarié sans fiche (ex. lignes "Besoin") n'a ni
+  // contrat, ni présence, ni manager : il est exclu dès qu'un de ces
+  // critères est actif, mais reste filtrable par service (disponible
+  // directement sur la ligne du planning, sans fiche).
+  function salarieCorrespondAuxFiltres(salarie: Salarie): boolean {
+    if (filtres.service.size > 0 && !filtres.service.has(salarie.service)) return false;
+
+    const besoinDeFiche = filtres.contrat.size > 0 || filtres.presence.size > 0 || filtres.manager.size > 0;
+    const fiche = besoinDeFiche ? ficheDuSalarie(salarie.id) : undefined;
+    if (besoinDeFiche && !fiche) return false;
+
+    if (fiche) {
+      if (filtres.contrat.size > 0 && !filtres.contrat.has(fiche.contratActif ? "actif" : "inactif")) {
+        return false;
+      }
+      if (
+        filtres.presence.size > 0 &&
+        !filtres.presence.has(fiche.presence === "Présent" ? "present" : "absent")
+      ) {
+        return false;
+      }
+      if (filtres.manager.size > 0 && !filtres.manager.has(fiche.manager)) return false;
     }
+
+    if (filtres.planning.size > 0) {
+      const etat = salarieAUnPlanningSurPeriode(salarie.id) ? "avec" : "sans";
+      if (!filtres.planning.has(etat)) return false;
+    }
+
+    return true;
   }
 
   const groupes = useMemo(() => {
-    const salariesFiltres = SALARIES.filter(salarieCorrespondAuFiltre);
+    const salariesFiltres = SALARIES.filter(salarieCorrespondAuxFiltres);
     const parService = new Map<string, typeof SALARIES>();
     for (const salarie of salariesFiltres) {
       const liste = parService.get(salarie.service) ?? [];
@@ -183,10 +179,10 @@ export default function PlanningGrid() {
       service,
       salaries: parService.get(service)!,
     }));
-    // salarieCorrespondAuFiltre est recréée à chaque rendu mais lit filtreSalarie/
+    // salarieCorrespondAuxFiltres est recréée à chaque rendu mais lit filtres/
     // jours/editions au moment de l'appel : les lister explicitement suffit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtreSalarie, jours, editions]);
+  }, [filtres, jours, editions]);
 
   // Ordre à plat des lignes salarié tel qu'affiché (groupé par service) et
   // index par jour affiché : nécessaires pour calculer le rectangle d'une
@@ -535,93 +531,89 @@ export default function PlanningGrid() {
 
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
-      <header className="flex shrink-0 items-center justify-between border-b border-zinc-200 px-4 py-2">
-        <div className="flex items-center gap-2">
-          {identite.logo ? (
-            // eslint-disable-next-line @next/next/no-img-element -- logo dynamique (data URL uploadé), incompatible avec next/image
-            <img src={identite.logo} alt="" className="h-7 w-7 rounded object-contain" />
-          ) : (
-            <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
-              {identite.nom.charAt(0)}
-            </span>
-          )}
-          <div className="leading-tight">
-            <h1 className="font-semibold text-zinc-800">{identite.nom}</h1>
-            <p className="text-[10px] text-zinc-400">Planning</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="flex items-center gap-1 text-xs text-zinc-600">
-            Afficher :
-            <select
-              value={filtreSalarie}
-              onChange={(e) => setFiltreSalarie(e.target.value as FiltreSalarie)}
-              className="rounded border border-zinc-300 px-1.5 py-1 text-xs font-medium hover:bg-zinc-50"
-            >
-              {FILTRES_SALARIE.map((f) => (
-                <option key={f.valeur} value={f.valeur}>
-                  {f.libelle}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            onClick={() => changerPeriode(-1)}
-            className="ml-2 rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
-            aria-label="Période précédente"
-            title="Période précédente"
-          >
-            ←
-          </button>
-          <div className="relative">
-            <button
-              onClick={() => setSelecteurOuvert((v) => !v)}
-              className="rounded border border-zinc-300 px-2 py-1 text-xs font-medium hover:bg-zinc-50"
-            >
-              {formatJourMois(premierJour)} – {formatJourMois(dernierJour)} {dernierJour.getFullYear()} ▾
-            </button>
-            {selecteurOuvert && (
-              <>
-                <div className="fixed inset-0 z-30" onClick={() => setSelecteurOuvert(false)} />
-                <div className="absolute left-0 top-full z-40 mt-1 rounded border border-zinc-200 bg-white p-3 shadow-lg">
-                  <label className="mb-1 block text-xs font-medium text-zinc-600">
-                    Choisir une date de début de période
-                  </label>
-                  <input
-                    type="date"
-                    defaultValue={formatDateISO(debutPeriode)}
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        setDebutPeriode(lundiDeLaSemaine(parseDateISO(e.target.value)));
-                        setSelecteurOuvert(false);
-                      }
-                    }}
-                    className="rounded border border-zinc-300 px-2 py-1 text-sm"
-                  />
-                  <p className="mt-2 max-w-[16rem] text-xs text-zinc-500">
-                    La période affichée ({NB_SEMAINES} semaines) est mémorisée d&apos;une ouverture à
-                    l&apos;autre.
-                  </p>
-                </div>
-              </>
+      <header className="flex shrink-0 flex-col border-b border-zinc-200">
+        <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center gap-2">
+            {identite.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element -- logo dynamique (data URL uploadé), incompatible avec next/image
+              <img src={identite.logo} alt="" className="h-7 w-7 rounded object-contain" />
+            ) : (
+              <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
+                {identite.nom.charAt(0)}
+              </span>
             )}
+            <div className="leading-tight">
+              <h1 className="font-semibold text-zinc-800">{identite.nom}</h1>
+              <p className="text-[10px] text-zinc-400">Planning</p>
+            </div>
           </div>
-          <button
-            onClick={() => changerPeriode(1)}
-            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
-            aria-label="Période suivante"
-            title="Période suivante"
-          >
-            →
-          </button>
-          <Link
-            href="/admin/horaires"
-            className="ml-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
-          >
-            Administration
-          </Link>
-          <UserMenu />
+          <div className="flex items-center gap-2">
+            <FiltreSalariesBouton
+              filtres={filtres}
+              onChange={setFiltres}
+              services={SERVICES_ORDRE}
+              managers={MANAGERS}
+              nbResultats={salariesOrdonnes.length}
+            />
+            <button
+              onClick={() => changerPeriode(-1)}
+              className="ml-2 rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+              aria-label="Période précédente"
+              title="Période précédente"
+            >
+              ←
+            </button>
+            <div className="relative">
+              <button
+                onClick={() => setSelecteurOuvert((v) => !v)}
+                className="rounded border border-zinc-300 px-2 py-1 text-xs font-medium hover:bg-zinc-50"
+              >
+                {formatJourMois(premierJour)} – {formatJourMois(dernierJour)} {dernierJour.getFullYear()} ▾
+              </button>
+              {selecteurOuvert && (
+                <>
+                  <div className="fixed inset-0 z-30" onClick={() => setSelecteurOuvert(false)} />
+                  <div className="absolute left-0 top-full z-40 mt-1 rounded border border-zinc-200 bg-white p-3 shadow-lg">
+                    <label className="mb-1 block text-xs font-medium text-zinc-600">
+                      Choisir une date de début de période
+                    </label>
+                    <input
+                      type="date"
+                      defaultValue={formatDateISO(debutPeriode)}
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          setDebutPeriode(lundiDeLaSemaine(parseDateISO(e.target.value)));
+                          setSelecteurOuvert(false);
+                        }
+                      }}
+                      className="rounded border border-zinc-300 px-2 py-1 text-sm"
+                    />
+                    <p className="mt-2 max-w-[16rem] text-xs text-zinc-500">
+                      La période affichée ({NB_SEMAINES} semaines) est mémorisée d&apos;une ouverture à
+                      l&apos;autre.
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+            <button
+              onClick={() => changerPeriode(1)}
+              className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
+              aria-label="Période suivante"
+              title="Période suivante"
+            >
+              →
+            </button>
+            <Link
+              href="/admin/horaires"
+              className="ml-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+            >
+              Administration
+            </Link>
+            <UserMenu />
+          </div>
         </div>
+        <FiltresActifsChips filtres={filtres} onChange={setFiltres} />
       </header>
 
       <div className="flex-1 overflow-auto">
