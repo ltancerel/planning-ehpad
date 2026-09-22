@@ -157,10 +157,15 @@ export réel, connecteur paie.
   raccourci reste désormais un bouton compact « Appliquer le roulement »
   par défaut (comme avant) ; pour un roulement multi-semaines, un premier
   clic dessus révèle le sélecteur de semaine de départ (au lieu d'appliquer
-  directement), et un second clic sur « Appliquer » confirme. Même
-  principe dans le panneau cliquer-glisser : le bouton « Appliquer le
-  roulement de chacun » révèle d'abord le sélecteur, puis confirme au clic
-  suivant._
+  directement), et un second clic sur « Appliquer » confirme._
+  _Révision du 22/09 (suite, retrait) : le sélecteur de semaine de départ
+  est finalement retiré du panneau cliquer-glisser multi-salariés — retour
+  client : proposer un choix commun est confusant quand les salariés
+  sélectionnés n'ont pas des roulements de la même longueur. Le
+  cliquer-glisser applique donc de nouveau systématiquement depuis la
+  semaine 1 du motif de chacun ; le sélecteur reste disponible uniquement
+  sur le raccourci mono-salarié (simple clic), où il n'y a pas
+  d'ambiguïté._
 
 - [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes** _(issue #17)_
   Retour client du 16/09, pour éviter les erreurs : un roulement ne peut plus

@@ -87,12 +87,12 @@ Grille principale de gestion du planning des salariés.
   d'emblée (retours client du 22/09).
 - Il est également possible de sélectionner plusieurs salariés à la fois
   (sur un même jour) pour appliquer en une seule action le roulement en
-  cours de chacun, avec le même principe de sélecteur de semaine de départ
-  révélé au second clic (borné par le roulement le plus long parmi les
-  salariés sélectionnés) ; un récapitulatif indique qui sera planifié, qui
-  est déjà planifié (donc ignoré), qui n'a pas de roulement assigné, et qui
-  a un roulement plus court que la semaine de départ choisie (donc
-  également ignoré).
+  cours de chacun ; un récapitulatif indique qui sera planifié, qui est déjà
+  planifié (donc ignoré) et qui n'a pas de roulement assigné. Dans ce cas,
+  le sélecteur de semaine de départ n'est volontairement pas proposé
+  (toujours la semaine 1 du motif de chacun) : les salariés sélectionnés
+  peuvent avoir des roulements de longueurs différentes, un même choix de
+  semaine de départ serait ambigu d'un salarié à l'autre.
 - Un roulement ne vient jamais écraser une case déjà remplie : si au moins
   une semaine de la période concernée contient déjà un code, l'application
   du roulement est bloquée pour ce salarié et la semaine en cause est
