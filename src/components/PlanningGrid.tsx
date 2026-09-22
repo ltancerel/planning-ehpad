@@ -222,19 +222,21 @@ export default function PlanningGrid() {
       }
       const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
       const nouvelle: ValeurCellule = estCodeSuperposable(codeChoisi)
-        ? { ...actuelle, evenementiel: codeChoisi, evenementielPlage: undefined }
+        ? { ...actuelle, evenementiel: codeChoisi, evenementielPlages: undefined }
         : { travail: codeChoisi }; // code travail/informatif/particulier : remplace tout
       return { ...prev, [cle]: nouvelle };
     });
     fermerEdition();
   }
 
-  // Évènement "complement" (à la volée) : la plage horaire vient d'être
-  // saisie au moment de positionner l'évènement — cf. retour client du 17/09.
-  function choisirCodeComplement(cle: string, codeChoisi: string, plage: Plage) {
+  // Évènement "complement" (à la volée) : la ou les plages horaires
+  // viennent d'être saisies au moment de positionner l'évènement — cf.
+  // retour client du 17/09 (une plage), étendu le 22/09 (plusieurs plages
+  // possibles le même jour, ex. arrivée anticipée + départ tardif).
+  function choisirCodeComplement(cle: string, codeChoisi: string, plages: Plage[]) {
     setEditions((prev) => {
       const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
-      const nouvelle: ValeurCellule = { ...actuelle, evenementiel: codeChoisi, evenementielPlage: plage };
+      const nouvelle: ValeurCellule = { ...actuelle, evenementiel: codeChoisi, evenementielPlages: plages };
       return { ...prev, [cle]: nouvelle };
     });
     fermerEdition();
@@ -852,7 +854,7 @@ export default function PlanningGrid() {
                 : undefined
             }
             onChoisir={(code) => choisirCode(cellEnEdition, code)}
-            onChoisirComplement={(code, plage) => choisirCodeComplement(cellEnEdition, code, plage)}
+            onChoisirComplement={(code, plages) => choisirCodeComplement(cellEnEdition, code, plages)}
             plagesTravail={plagesTravailEdition}
             onFermer={fermerEdition}
           />

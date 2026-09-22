@@ -58,11 +58,14 @@ Grille principale de gestion du planning des salariés.
       nombre d'heures résultant est indiqué à côté.
     - **Complément à la volée** (ex. Absence temporaire, Heures
       supplémentaires) : au moment de poser le code, l'utilisateur saisit
-      une plage horaire libre. La partie de cette plage qui chevauche le
-      code de travail est déduite des heures du jour, la partie en dehors
-      est ajoutée. L'écart (+ ou − nombre d'heures) est affiché
-      explicitement. Pour éviter toute ambiguïté, la plage saisie doit être
-      **entièrement incluse** dans une plage du code de travail, ou
+      une ou plusieurs plages horaires libres (une plage par défaut, avec
+      un lien « + Ajouter une plage » pour en saisir d'autres — ex. une
+      arrivée anticipée et un départ tardif le même jour). Pour chaque
+      plage, la partie qui chevauche le code de travail est déduite des
+      heures du jour, la partie en dehors est ajoutée ; l'écart total (+ ou
+      − nombre d'heures, somme de toutes les plages) est affiché
+      explicitement. Pour éviter toute ambiguïté, chaque plage saisie doit
+      être **entièrement incluse** dans une plage du code de travail, ou
       **entièrement en dehors** : un chevauchement partiel est refusé.
   - Certains codes (ex. Congés, Congé sans solde) s'utilisent seuls et
     remplacent la case entière plutôt que de se superposer.

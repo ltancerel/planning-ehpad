@@ -489,7 +489,7 @@ const EXEMPLES_EMARGEMENT: { date: string; valeur: ValeurCellule }[] = [
     valeur: {
       travail: EXEMPLE_TRAVAIL,
       evenementiel: "ABT",
-      evenementielPlage: { debut: "07:00", fin: "09:00" }, // absence temporaire (heures en moins)
+      evenementielPlages: [{ debut: "07:00", fin: "09:00" }], // absence temporaire (heures en moins)
     },
   },
   {
@@ -497,7 +497,12 @@ const EXEMPLES_EMARGEMENT: { date: string; valeur: ValeurCellule }[] = [
     valeur: {
       travail: EXEMPLE_TRAVAIL,
       evenementiel: "HSP",
-      evenementielPlage: { debut: "19:00", fin: "21:00" }, // heures supplémentaires (heures en plus)
+      // Heures supplémentaires sur 2 plages le même jour (retour client du
+      // 22/09 : un complément à la volée peut porter plusieurs plages).
+      evenementielPlages: [
+        { debut: "06:00", fin: "07:00" },
+        { debut: "19:00", fin: "21:00" },
+      ],
     },
   },
 ];

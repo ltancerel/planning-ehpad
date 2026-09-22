@@ -26,9 +26,12 @@ type HoraireCodeSelectorProps = {
    * 3 d'un motif sur 4 semaines. */
   actionRoulement?: { nomRoulement: string; nbSemaines: number; onAppliquer: (semaineDepart: number) => void };
   onChoisir: (code: string | null) => void;
-  /** Un évènement "complement" (à la volée) demande une plage horaire avant
-   * d'être posé — cf. retour client du 17/09. */
-  onChoisirComplement?: (code: string, plage: Plage) => void;
+  /** Un évènement "complement" (à la volée) demande une ou plusieurs plages
+   * horaires avant d'être posé — cf. retour client du 17/09, étendu le
+   * 22/09 (plusieurs plages possibles le même jour, ex. arrivée anticipée
+   * et départ tardif). Une plage par défaut, avec possibilité d'en ajouter
+   * d'autres depuis le même formulaire. */
+  onChoisirComplement?: (code: string, plages: Plage[]) => void;
   /** Plages du code de travail de la case en cours d'édition, pour valider
    * que la plage saisie ne le chevauche pas partiellement (retour client
    * du 17/09 : ex. code 8h-18h, refuser un évènement 16h-20h). */
@@ -49,8 +52,9 @@ export default function HoraireCodeSelector({
   const [recherche, setRecherche] = useState("");
   const [indexSurligne, setIndexSurligne] = useState(0);
   const [codeComplementEnSaisie, setCodeComplementEnSaisie] = useState<string | null>(null);
-  const [plageDebut, setPlageDebut] = useState("");
-  const [plageFin, setPlageFin] = useState("");
+  // Une plage par défaut ; "+ Ajouter une plage" en insère d'autres (retour
+  // client du 22/09).
+  const [plages, setPlages] = useState<Plage[]>([{ debut: "", fin: "" }]);
   const [semaineDepartRoulement, setSemaineDepartRoulement] = useState(1);
   // Le sélecteur de semaine de départ ne prend de la place à l'écran qu'une
   // fois le bouton « Appliquer le roulement » cliqué une première fois
@@ -78,7 +82,7 @@ export default function HoraireCodeSelector({
       Math.max(marge, window.innerHeight - el.offsetHeight - marge)
     );
     setPositionAffichee({ top, left });
-  }, [position.top, position.left, position.width, codeComplementEnSaisie]);
+  }, [position.top, position.left, position.width, codeComplementEnSaisie, plages.length]);
 
   const codesDisponibles = useMemo(
     () =>
@@ -132,21 +136,36 @@ export default function HoraireCodeSelector({
     onChoisir(code);
   }
 
-  const plageComplete = Boolean(plageDebut.trim() && plageFin.trim());
   // Un chevauchement partiel avéré est refusé (retour client du 17/09), mais
   // une saisie mal formatée (texte libre non reconnu) n'est jamais bloquante
   // — elle sera simplement sans effet sur le décompte d'heures plutôt que
   // d'empêcher l'ajout.
-  const plageValide = plageComplete
-    ? plageComplementValide({ debut: plageDebut, fin: plageFin }, plagesTravail ?? [])
-    : true;
+  const toutesPlagesCompletes = plages.every((p) => p.debut.trim() && p.fin.trim());
+  const toutesPlagesValides = plages.every(
+    (p) => !(p.debut.trim() && p.fin.trim()) || plageComplementValide(p, plagesTravail ?? [])
+  );
+
+  function mettreAJourPlage(index: number, champ: "debut" | "fin", valeur: string) {
+    setPlages((prev) => prev.map((p, i) => (i === index ? { ...p, [champ]: valeur } : p)));
+  }
+
+  function ajouterPlage() {
+    setPlages((prev) => [...prev, { debut: "", fin: "" }]);
+  }
+
+  function retirerPlage(index: number) {
+    setPlages((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function fermerComplement() {
+    setCodeComplementEnSaisie(null);
+    setPlages([{ debut: "", fin: "" }]);
+  }
 
   function validerComplement() {
-    if (!codeComplementEnSaisie || !onChoisirComplement || !plageComplete || !plageValide) return;
-    onChoisirComplement(codeComplementEnSaisie, { debut: plageDebut, fin: plageFin });
-    setCodeComplementEnSaisie(null);
-    setPlageDebut("");
-    setPlageFin("");
+    if (!codeComplementEnSaisie || !onChoisirComplement || !toutesPlagesCompletes || !toutesPlagesValides) return;
+    onChoisirComplement(codeComplementEnSaisie, plages);
+    fermerComplement();
   }
 
   if (codeComplementEnSaisie) {
@@ -158,35 +177,66 @@ export default function HoraireCodeSelector({
         style={{ top: positionAffichee.top, left: positionAffichee.left, width: Math.max(position.width, 240) }}
       >
         <p className="mb-2 text-xs font-medium text-zinc-700">
-          Plage horaire pour «&nbsp;{horaire?.intitule ?? codeComplementEnSaisie}&nbsp;»
+          Plage{plages.length > 1 ? "s" : ""} horaire{plages.length > 1 ? "s" : ""} pour «&nbsp;
+          {horaire?.intitule ?? codeComplementEnSaisie}&nbsp;»
         </p>
-        <div className="mb-2 flex items-center gap-2">
-          <input
-            autoFocus
-            type="text"
-            inputMode="numeric"
-            maxLength={5}
-            placeholder="08:00"
-            value={plageDebut}
-            onChange={(e) => setPlageDebut(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && validerComplement()}
-            className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm"
-          />
-          <span className="text-zinc-400">→</span>
-          <input
-            type="text"
-            inputMode="numeric"
-            maxLength={5}
-            placeholder="10:00"
-            value={plageFin}
-            onChange={(e) => setPlageFin(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && validerComplement()}
-            className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm"
-          />
+        <div className="mb-1.5 flex flex-col gap-1.5">
+          {plages.map((plage, index) => {
+            const plageInvalide =
+              Boolean(plage.debut.trim() && plage.fin.trim()) &&
+              !plageComplementValide(plage, plagesTravail ?? []);
+            return (
+              <div key={index} className="flex items-center gap-2">
+                <input
+                  autoFocus={index === 0}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={5}
+                  placeholder="08:00"
+                  value={plage.debut}
+                  onChange={(e) => mettreAJourPlage(index, "debut", e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && validerComplement()}
+                  className={`w-20 rounded border px-2 py-1 text-sm ${
+                    plageInvalide ? "border-red-400" : "border-zinc-300"
+                  }`}
+                />
+                <span className="text-zinc-400">→</span>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={5}
+                  placeholder="10:00"
+                  value={plage.fin}
+                  onChange={(e) => mettreAJourPlage(index, "fin", e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && validerComplement()}
+                  className={`w-20 rounded border px-2 py-1 text-sm ${
+                    plageInvalide ? "border-red-400" : "border-zinc-300"
+                  }`}
+                />
+                {plages.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => retirerPlage(index)}
+                    aria-label="Retirer cette plage"
+                    className="ml-auto text-zinc-400 hover:text-red-600"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
-        {plageComplete && !plageValide ? (
+        <button
+          type="button"
+          onClick={ajouterPlage}
+          className="mb-2 self-start text-[11px] font-medium text-blue-600 hover:text-blue-700"
+        >
+          + Ajouter une plage
+        </button>
+        {!toutesPlagesValides ? (
           <p className="mb-2 text-[11px] font-medium text-red-600">
-            Cette plage chevauche partiellement le code de travail : choisissez une plage entièrement
+            Une plage chevauche partiellement le code de travail : choisissez une plage entièrement
             incluse dedans (heures en moins) ou entièrement en dehors (heures en plus).
           </p>
         ) : (
@@ -197,7 +247,7 @@ export default function HoraireCodeSelector({
         <div className="flex justify-end gap-2">
           <button
             type="button"
-            onClick={() => setCodeComplementEnSaisie(null)}
+            onClick={fermerComplement}
             className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
           >
             Annuler
@@ -205,7 +255,7 @@ export default function HoraireCodeSelector({
           <button
             type="button"
             onClick={validerComplement}
-            disabled={!plageComplete || !plageValide}
+            disabled={!toutesPlagesCompletes || !toutesPlagesValides}
             className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Ajouter

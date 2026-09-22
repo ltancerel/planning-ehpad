@@ -317,6 +317,17 @@ export réel, connecteur paie.
   explicite). Une saisie mal formée (texte libre non reconnu) n'est en
   revanche jamais bloquante — retour client du 17/09 : elle est acceptée
   telle quelle et reste simplement sans effet sur le décompte d'heures._
+  _Ajout du 22/09 (retour client) : un évènement "complément à la volée"
+  peut désormais porter **plusieurs plages** sur le même jour (ex. une
+  arrivée anticipée le matin et un départ tardif le soir). Le mini-formulaire
+  garde son visuel actuel pour une seule plage (retour client : ne pas trop
+  changer le visuel) et propose un lien « + Ajouter une plage » qui insère
+  une ligne supplémentaire (bouton « ✕ » pour la retirer, dès qu'il y en a
+  plus d'une) ; une plage reste la valeur par défaut. Le delta affiché
+  (planning et émargement mensuel) est désormais la somme des deltas de
+  chaque plage, chacune validée indépendamment (incluse/exclue du code de
+  travail). `ValeurCellule.evenementielPlage` (une plage) devient
+  `evenementielPlages` (tableau)._
 
 - [x] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :

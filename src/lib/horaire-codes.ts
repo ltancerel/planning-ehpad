@@ -78,6 +78,14 @@ export function deltaComplementHeures(plageEvenement: Plage, plagesTravail: Plag
   return horsTravail - chevauchementTotal;
 }
 
+// Un évènement "complement" peut désormais porter plusieurs plages (ex. une
+// arrivée anticipée le matin ET un départ tardif le soir sur le même jour) —
+// le delta total est la somme des deltas de chaque plage, chacune évaluée
+// indépendamment par rapport au code de travail.
+export function deltaComplementHeuresMulti(plagesEvenement: Plage[], plagesTravail: Plage[]): number {
+  return plagesEvenement.reduce((total, plage) => total + deltaComplementHeures(plage, plagesTravail), 0);
+}
+
 // Une plage "complement" doit être, pour chaque plage de travail, soit
 // entièrement incluse dedans (heures en moins), soit entièrement en dehors
 // (heures en plus) — un chevauchement partiel serait ambigu pour
@@ -245,9 +253,11 @@ export function heuresDuCode(code: string): number {
 export type ValeurCellule = {
   travail?: string;
   evenementiel?: string;
-  // Uniquement pour un évènement de type "complement" : la plage horaire
-  // saisie au moment de le positionner sur le planning.
-  evenementielPlage?: Plage;
+  // Uniquement pour un évènement de type "complement" : la ou les plages
+  // horaires saisies au moment de le positionner sur le planning (retour
+  // client du 22/09 : plusieurs plages possibles, ex. une arrivée anticipée
+  // et un départ tardif le même jour).
+  evenementielPlages?: Plage[];
 };
 
 export function estCodeSuperposable(code: string): boolean {
@@ -263,11 +273,11 @@ export function estCodeComplement(code: string): boolean {
 // cellule, ou undefined si non applicable — pour l'afficher explicitement
 // (+/-) dans l'émargement mensuel, cf. retour client du 17/09.
 export function deltaEvenementielCellule(valeur: ValeurCellule): number | undefined {
-  if (!valeur.evenementiel || !valeur.evenementielPlage) return undefined;
+  if (!valeur.evenementiel || !valeur.evenementielPlages?.length) return undefined;
   const horaireEvenementiel = HORAIRE_CODES_PAR_CODE[valeur.evenementiel.toUpperCase()];
   if (horaireEvenementiel?.typeEvenement !== "complement") return undefined;
   const plagesTravail = valeur.travail ? (HORAIRE_CODES_PAR_CODE[valeur.travail.toUpperCase()]?.plages ?? []) : [];
-  return deltaComplementHeures(valeur.evenementielPlage, plagesTravail);
+  return deltaComplementHeuresMulti(valeur.evenementielPlages, plagesTravail);
 }
 
 export function heuresReellesCellule(valeur: ValeurCellule): number {

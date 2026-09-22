@@ -198,9 +198,9 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                             >
                               <div className="text-[10px] font-bold">{horaireEvenementiel.code}</div>
                               <div className="text-[9px]">{horaireEvenementiel.intitule}</div>
-                              {estComplement && valeur.evenementielPlage && (
+                              {estComplement && valeur.evenementielPlages && valeur.evenementielPlages.length > 0 && (
                                 <div className="text-[9px] font-semibold">
-                                  {valeur.evenementielPlage.debut}–{valeur.evenementielPlage.fin} (
+                                  {valeur.evenementielPlages.map((p) => `${p.debut}–${p.fin}`).join(", ")} (
                                   {delta !== undefined && delta >= 0 ? "+" : ""}
                                   {delta}h)
                                 </div>
