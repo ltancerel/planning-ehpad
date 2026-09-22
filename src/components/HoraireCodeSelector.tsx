@@ -52,6 +52,10 @@ export default function HoraireCodeSelector({
   const [plageDebut, setPlageDebut] = useState("");
   const [plageFin, setPlageFin] = useState("");
   const [semaineDepartRoulement, setSemaineDepartRoulement] = useState(1);
+  // Le sélecteur de semaine de départ ne prend de la place à l'écran qu'une
+  // fois le bouton « Appliquer le roulement » cliqué une première fois
+  // (retour client du 22/09 : trop encombrant affiché d'emblée).
+  const [demarrageRoulementOuvert, setDemarrageRoulementOuvert] = useState(false);
 
   // La position d'ancrage (sous la case cliquée) peut pousser le popover hors
   // de l'écran pour une case proche du bord droit/bas — le bouton "Ajouter"
@@ -225,21 +229,24 @@ export default function HoraireCodeSelector({
         placeholder="Rechercher un code ou un libellé…"
         className="border-b border-zinc-200 px-2 py-1.5 text-sm outline-none"
       />
-      {actionRoulement && actionRoulement.nbSemaines <= 1 && (
+      {actionRoulement && !demarrageRoulementOuvert && (
         <button
           type="button"
-          onClick={() => actionRoulement.onAppliquer(1)}
+          onClick={() => {
+            if (actionRoulement.nbSemaines > 1) {
+              setDemarrageRoulementOuvert(true);
+            } else {
+              actionRoulement.onAppliquer(1);
+            }
+          }}
           className="border-b border-zinc-100 bg-blue-50 px-2 py-1.5 text-left text-xs font-medium text-blue-700 hover:bg-blue-100"
         >
           Appliquer le roulement « {actionRoulement.nomRoulement} »
         </button>
       )}
-      {actionRoulement && actionRoulement.nbSemaines > 1 && (
+      {actionRoulement && demarrageRoulementOuvert && (
         <div className="border-b border-zinc-100 bg-blue-50 px-2 py-1.5">
-          <p className="text-xs font-medium text-blue-700">
-            Appliquer le roulement « {actionRoulement.nomRoulement} »
-          </p>
-          <div className="mt-1.5 flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5">
             <span className="text-[11px] text-blue-700">Démarrer à la semaine :</span>
             <div className="flex gap-0.5">
               {Array.from({ length: actionRoulement.nbSemaines }, (_, i) => i + 1).map((semaine) => (

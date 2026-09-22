@@ -100,8 +100,11 @@ export default function PlanningGrid() {
   );
   // Semaine du motif du roulement à partir de laquelle démarrer l'application
   // groupée (retour client du 22/09) — 1-indexée, remise à 1 à chaque nouvelle
-  // sélection.
+  // sélection. Le sélecteur ne prend de la place à l'écran qu'après un premier
+  // clic sur "Appliquer le roulement de chacun" (retour client du 22/09 :
+  // trop encombrant affiché d'emblée).
   const [semaineDepartMulti, setSemaineDepartMulti] = useState(1);
+  const [demarrageMultiOuvert, setDemarrageMultiOuvert] = useState(false);
   // Sélection rectangulaire (glisser sur des cases déjà remplies) pour effacer
   // des codes horaires sur une ou plusieurs lignes/jours — fonctionnalité admin.
   const [enTrainDeSelectionnerEffacement, setEnTrainDeSelectionnerEffacement] = useState(false);
@@ -256,6 +259,7 @@ export default function PlanningGrid() {
     setEnTrainDeGlisser(true);
     setSelectionEnCours({ dateISO, salarieIds: [salarieId] });
     setSemaineDepartMulti(1);
+    setDemarrageMultiOuvert(false);
   }
 
   function etendreSelection(salarieId: string, dateISO: string) {
@@ -269,6 +273,7 @@ export default function PlanningGrid() {
   function annulerSelection() {
     setSelectionEnCours(null);
     setPositionConfirmation(null);
+    setDemarrageMultiOuvert(false);
   }
 
   // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, sur
@@ -897,7 +902,7 @@ export default function PlanningGrid() {
               const sansRoulement = evaluation.filter((e) => !e.roulement);
               return (
                 <>
-                  {maxSemaines > 1 && (
+                  {demarrageMultiOuvert && maxSemaines > 1 && (
                     <div className="mb-2 flex items-center gap-1.5">
                       <span className="text-[11px] text-zinc-600">Démarrer à la semaine :</span>
                       <div className="flex gap-0.5">
@@ -954,7 +959,13 @@ export default function PlanningGrid() {
                       Annuler
                     </button>
                     <button
-                      onClick={appliquerSelection}
+                      onClick={() => {
+                        if (!demarrageMultiOuvert && maxSemaines > 1) {
+                          setDemarrageMultiOuvert(true);
+                          return;
+                        }
+                        appliquerSelection();
+                      }}
                       disabled={applicables.length === 0}
                       className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
                     >

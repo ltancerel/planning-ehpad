@@ -152,6 +152,15 @@ export réel, connecteur paie.
   dernière semaine. Démo enrichie d'un 3ᵉ roulement sur 4 semaines
   (« Administratif (4 semaines) », assigné à MARTIN Julie) pour illustrer le
   cas d'usage à l'écran._
+  _Révision du 22/09 (suite) : le sélecteur prenait trop de place affiché
+  d'emblée dès qu'un roulement porte sur ≥ 2 semaines — retour client. Le
+  raccourci reste désormais un bouton compact « Appliquer le roulement »
+  par défaut (comme avant) ; pour un roulement multi-semaines, un premier
+  clic dessus révèle le sélecteur de semaine de départ (au lieu d'appliquer
+  directement), et un second clic sur « Appliquer » confirme. Même
+  principe dans le panneau cliquer-glisser : le bouton « Appliquer le
+  roulement de chacun » révèle d'abord le sélecteur, puis confirme au clic
+  suivant._
 
 - [x] **9quater. Blocage semaine déjà planifiée + effacement d'une plage de codes** _(issue #17)_
   Retour client du 16/09, pour éviter les erreurs : un roulement ne peut plus
