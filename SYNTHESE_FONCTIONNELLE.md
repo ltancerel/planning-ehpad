@@ -30,15 +30,28 @@ Grille principale de gestion du planning des salariés.
   La dernière période consultée est mémorisée d'une visite à l'autre.
 - **Repères visuels** : les week-ends et jours fériés sont grisés dans les
   en-têtes de colonnes.
-- **Filtre d'affichage des salariés** : un sélecteur en haut de l'écran
-  permet de n'afficher que certains salariés :
-  - *Tous*
-  - *Présents* (contrat actif et indiqué comme présent)
-  - *Non présents* (contrat actif mais indiqué comme absent)
-  - *Contrat actif* / *Contrat inactif*
-  - *Avec planning* / *Sans planning* — ces deux derniers filtres sont
-    recalculés automatiquement selon la période affichée : un salarié peut
+- **Filtre d'affichage des salariés** (retour client du 22/09) : un bouton
+  « Filtres » en haut de l'écran ouvre une fenêtre à critères combinables,
+  inspirée du filtre de recherche d'offres d'HelloWork, pour répondre au
+  besoin de croiser plusieurs critères à la fois (ex. Contrat actif **et**
+  Présent, ou Contrat actif **et** (Présent **ou** Non présent)) :
+  - **Contrat** : Actif / Inactif.
+  - **Présence** : Présent / Non présent.
+  - **Manager** : Sans manager / Maîtresse de maison / IDEC.
+  - **Service**.
+  - **Planning (période affichée)** : Avec planning / Sans planning —
+    recalculé automatiquement selon la période affichée, un salarié peut
     apparaître ou disparaître selon la période consultée.
+  - Les valeurs cochées dans un même critère se combinent en OU (ex. Présent
+    ou Non présent affiche tout le monde sur ce critère) ; les critères
+    entre eux se combinent en ET. Un compteur en bas de la fenêtre indique
+    en direct le nombre de salariés affichés.
+  - Les filtres actifs s'affichent sous forme de jetons retirables
+    individuellement sous la barre d'en-tête, avec un lien « Réinitialiser »
+    dès que plusieurs sont actifs.
+  - Utilisable aussi bien par un utilisateur restreint à son service que par
+    l'administrateur, qui voit tous les salariés par défaut et peut vouloir
+    se concentrer sur un sous-ensemble.
 
 #### Saisie d'un code horaire
 
