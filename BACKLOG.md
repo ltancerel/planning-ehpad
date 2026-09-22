@@ -80,8 +80,12 @@ export réel, connecteur paie.
   Formulaire maquette complet : matricule, nom, prénom, service, type de contrat,
   manager optionnel, roulement, présence.
   _Statut : fait, déployé sur `main`. Liste + formulaire (matricule 4 lettres,
-  contrat CDD/CDI + actif/inactif, manager, présence, compte utilisateur optionnel).
+  contrat CDD/CDI + actif/inactif, manager, présence).
   Champ Roulement présent mais désactivé (dépend de la story #9)._
+  _Révision du 22/09 : retrait de la case « Créer un compte utilisateur » du
+  formulaire — le salarié n'a pas de compte (cf. Synthèse fonctionnelle), et la
+  création d'un compte utilisateur ne se fait désormais que depuis le panel
+  Administration → Utilisateurs (story #6)._
 
 - [x] **8. Config — Créer un code horaire (Admin)** _(issue #9)_
   Maquette de l'écran de création d'un code horaire : code, couleur police/fond,

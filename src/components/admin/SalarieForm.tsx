@@ -41,8 +41,6 @@ export default function SalarieForm({
   const [contratActif, setContratActif] = useState(valeurInitiale?.contratActif ?? true);
   const [manager, setManager] = useState<Manager>(valeurInitiale?.manager ?? "Aucun");
   const [presence, setPresence] = useState<FicheSalarie["presence"]>(valeurInitiale?.presence ?? "Présent");
-  const [compteUtilisateur, setCompteUtilisateur] = useState(valeurInitiale?.compteUtilisateur ?? false);
-  const [email, setEmail] = useState(valeurInitiale?.email ?? "");
   const [erreur, setErreur] = useState<string | null>(null);
   const [panneauRoulementOuvert, setPanneauRoulementOuvert] = useState(false);
   const dateReferenceISO = formatDateISO(new Date());
@@ -69,11 +67,6 @@ export default function SalarieForm({
       setErreur("Le nom et le prénom sont obligatoires.");
       return;
     }
-    if (compteUtilisateur && !/^\S+@\S+\.\S+$/.test(email.trim())) {
-      setErreur("Un email valide est requis pour créer un compte utilisateur.");
-      return;
-    }
-
     setErreur(null);
     onValider({
       matricule,
@@ -84,8 +77,6 @@ export default function SalarieForm({
       contratActif,
       manager,
       presence,
-      compteUtilisateur,
-      email: compteUtilisateur ? email.trim() : undefined,
     });
   }
 
@@ -224,32 +215,6 @@ export default function SalarieForm({
             <option value="Présent">Présent</option>
             <option value="Absent">Absent</option>
           </select>
-        </div>
-
-        <div className="rounded border border-zinc-200 p-3">
-          <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-700">
-            <input
-              type="checkbox"
-              checked={compteUtilisateur}
-              onChange={(e) => setCompteUtilisateur(e.target.checked)}
-            />
-            Créer un compte utilisateur pour ce salarié
-          </label>
-          {compteUtilisateur && (
-            <div className="mt-2">
-              <label className="mb-1 block text-xs font-medium text-zinc-700">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-                placeholder="prenom.nom@ehpad.fr"
-              />
-              <p className="mt-1 text-[11px] text-zinc-400">
-                Un email sera envoyé au salarié pour consulter son planning.
-              </p>
-            </div>
-          )}
         </div>
 
         {erreur && <p className="text-xs font-medium text-red-600">{erreur}</p>}

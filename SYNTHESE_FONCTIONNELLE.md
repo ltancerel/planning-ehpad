@@ -209,8 +209,10 @@ d'impression).
 - Liste des salariés, avec création et modification de leur fiche.
 - Une fiche salarié comporte : matricule, nom, prénom, service, type de
   contrat (CDD/CDI) et son caractère actif ou non, responsable hiérarchique
-  optionnel, statut de présence, et éventuellement un compte utilisateur
-  associé.
+  optionnel, statut de présence. Aucune création de compte utilisateur
+  depuis cet écran : le salarié n'a pas de compte (cf. décision ci-dessous),
+  et la création d'un compte se fait exclusivement depuis l'écran
+  Utilisateurs.
 - Le roulement en cours du salarié est affiché de façon compacte sur sa
   fiche, avec accès à un panneau dédié permettant de consulter l'historique
   des roulements assignés et d'en assigner un nouveau (avec une date de
