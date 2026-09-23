@@ -56,6 +56,7 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
     const dateISO = formatDateISO(jour);
     const valeur = PLANNING_DEMO[`${salarie.id}__${dateISO}`];
     const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
+    const horaireInformatif = valeur?.informatif ? HORAIRE_CODES_PAR_CODE[valeur.informatif] : undefined;
     const horaireEvenementiel = valeur?.evenementiel ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel] : undefined;
     const heuresBase = valeur?.travail ? heuresDuCode(valeur.travail) : 0;
     const heures = valeur ? heuresReellesCellule(valeur) : 0;
@@ -65,7 +66,7 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
     // Type "special" : traité séparément (affichage plein, pas de barré).
     const travailBarre = horaireEvenementiel?.typeEvenement === "normal";
     const delta = valeur ? deltaEvenementielCellule(valeur) : undefined;
-    return { valeur, horaireTravail, horaireEvenementiel, heuresBase, heures, travailBarre, delta };
+    return { valeur, horaireTravail, horaireInformatif, horaireEvenementiel, heuresBase, heures, travailBarre, delta };
   }
 
   const totalHeures = joursDuMois.reduce((total, jour) => total + valeurDuJour(jour).heures, 0);
@@ -122,8 +123,16 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                 <tr key={index}>
                   {semaine.map((jour) => {
                     const dansLeMois = jour.getMonth() === dateMois.getMonth();
-                    const { valeur, horaireTravail, horaireEvenementiel, heuresBase, heures, travailBarre, delta } =
-                      valeurDuJour(jour);
+                    const {
+                      valeur,
+                      horaireTravail,
+                      horaireInformatif,
+                      horaireEvenementiel,
+                      heuresBase,
+                      heures,
+                      travailBarre,
+                      delta,
+                    } = valeurDuJour(jour);
                     const grise = estJourGrise(jour);
                     const plagesTravail = formatPlages(horaireTravail?.plages);
                     const estPartiel = horaireEvenementiel?.typeEvenement === "partiel";
@@ -216,6 +225,22 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                                   {delta}h)
                                 </div>
                               )}
+                            </div>
+                          )}
+
+                          {/* Code informatif — jamais d'heures propres. En dessous du
+                              travail s'il y en a un, en plein sinon (cf. règle de
+                              composition de cellule du 23/09). */}
+                          {valeur?.informatif && horaireInformatif && (
+                            <div
+                              className="rounded px-1 py-0.5 leading-tight"
+                              style={{
+                                backgroundColor: horaireInformatif.couleurFond,
+                                color: horaireInformatif.couleurTexte,
+                              }}
+                            >
+                              <div className="text-[10px] font-bold">{horaireInformatif.code}</div>
+                              <div className="text-[9px]">{horaireInformatif.intitule}</div>
                             </div>
                           )}
                         </div>

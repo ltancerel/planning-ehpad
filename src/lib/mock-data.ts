@@ -492,6 +492,10 @@ const EXEMPLES_EMARGEMENT: { date: string; valeur: ValeurCellule }[] = [
       ],
     },
   },
+  // Code informatif : jamais d'heures propres. En dessous du travail s'il y
+  // en a un (24/09), en pleine case sinon (25/09) — cf. retour client du 23/09.
+  { date: "2026-09-24", valeur: { travail: EXEMPLE_TRAVAIL, informatif: "ABS" } },
+  { date: "2026-09-25", valeur: { informatif: "." } },
 ];
 for (const salarie of SALARIES.filter((s) => s.service !== SERVICE_BESOINS)) {
   for (const { date, valeur } of EXEMPLES_EMARGEMENT) {
