@@ -53,14 +53,6 @@ export default function AdminNav() {
           );
         })}
       </ul>
-      <div className="mt-3 border-t border-zinc-200 pt-2">
-        <Link
-          href="/admin-systeme"
-          className="block rounded px-2 py-1.5 text-xs font-medium text-[#0F3A35] hover:bg-[#A7D97A]/15"
-        >
-          Console Administrateur Système →
-        </Link>
-      </div>
     </nav>
   );
 }
