@@ -543,6 +543,20 @@ export réel, connecteur paie.
   demandent, la sélection multiple ne fait pas exception. L'effacement (bouton
   ou touche Suppr/Retour arrière) est désormais immédiat._
 
+- [x] **22. Nouvel attribut Équipe sur le salarié, filtrable** _(issue #22)_
+  Retour client du 23/09, 3e d'une liste de 6 évolutions. Nouvel attribut
+  sur la fiche salarié : Équipe A / Équipe B / Équipe C / Équipe D, à ajouter
+  au filtre de la vue Planning.
+  _Statut : fait. Ajouté sur `FicheSalarie` (comme `manager`, pas sur
+  `Salarie` : un salarié sans fiche, ex. les lignes "Besoin", n'a donc pas
+  d'équipe et est exclu dès que ce critère est actif — même comportement que
+  Contrat/Présence/Manager déjà établi en story #19). Nouveau type `Equipe`
+  et constante `EQUIPES` dans `mock-data.ts`, section "Équipe" ajoutée au
+  panneau de filtres avancé (à côté de Manager), champ Équipe dans le
+  formulaire Admin > Salariés (à côté de Manager) et nouvelle colonne dans
+  la liste. Données de démo réparties sur les 4 équipes pour couvrir chaque
+  valeur du filtre._
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis

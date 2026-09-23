@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { AffectationRoulement, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
-import { SERVICES_ORDRE, MANAGERS, affectationActuelle } from "@/lib/mock-data";
+import type { AffectationRoulement, Equipe, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
+import { SERVICES_ORDRE, MANAGERS, EQUIPES, affectationActuelle } from "@/lib/mock-data";
 import { formatDateISO, formatJourMois, parseDateISO } from "@/lib/dates";
 import RoulementSalariePanel from "@/components/admin/RoulementSalariePanel";
 
@@ -40,6 +40,7 @@ export default function SalarieForm({
   );
   const [contratActif, setContratActif] = useState(valeurInitiale?.contratActif ?? true);
   const [manager, setManager] = useState<Manager>(valeurInitiale?.manager ?? "Aucun");
+  const [equipe, setEquipe] = useState<Equipe>(valeurInitiale?.equipe ?? EQUIPES[0]);
   const [presence, setPresence] = useState<FicheSalarie["presence"]>(valeurInitiale?.presence ?? "Présent");
   const [erreur, setErreur] = useState<string | null>(null);
   const [panneauRoulementOuvert, setPanneauRoulementOuvert] = useState(false);
@@ -76,6 +77,7 @@ export default function SalarieForm({
       typeContrat,
       contratActif,
       manager,
+      equipe,
       presence,
     });
   }
@@ -162,19 +164,35 @@ export default function SalarieForm({
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-700">Manager</label>
-          <select
-            value={manager}
-            onChange={(e) => setManager(e.target.value as Manager)}
-            className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-          >
-            {MANAGERS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </select>
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-zinc-700">Manager</label>
+            <select
+              value={manager}
+              onChange={(e) => setManager(e.target.value as Manager)}
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+            >
+              {MANAGERS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-zinc-700">Équipe</label>
+            <select
+              value={equipe}
+              onChange={(e) => setEquipe(e.target.value as Equipe)}
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+            >
+              {EQUIPES.map((eq) => (
+                <option key={eq} value={eq}>
+                  {eq}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div className="rounded border border-zinc-200 p-3">

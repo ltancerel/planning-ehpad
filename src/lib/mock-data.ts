@@ -75,6 +75,9 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
 export type Manager = "Aucun" | "Maîtresse de maison" | "IDEC";
 export const MANAGERS: Manager[] = ["Aucun", "Maîtresse de maison", "IDEC"];
 
+export type Equipe = "Équipe A" | "Équipe B" | "Équipe C" | "Équipe D";
+export const EQUIPES: Equipe[] = ["Équipe A", "Équipe B", "Équipe C", "Équipe D"];
+
 export type FicheSalarie = {
   id: string;
   matricule: string; // 4 lettres majuscules
@@ -84,6 +87,7 @@ export type FicheSalarie = {
   typeContrat: "CDD" | "CDI";
   contratActif: boolean;
   manager: Manager;
+  equipe: Equipe;
   presence: "Présent" | "Absent";
 };
 
@@ -99,6 +103,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Aucun",
+    equipe: "Équipe A",
     presence: "Présent",
   },
   {
@@ -110,6 +115,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    equipe: "Équipe B",
     presence: "Présent",
   },
   {
@@ -121,6 +127,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Aucun",
+    equipe: "Équipe C",
     presence: "Présent",
   },
   {
@@ -132,6 +139,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Aucun",
+    equipe: "Équipe D",
     presence: "Présent",
   },
   {
@@ -143,6 +151,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Aucun",
+    equipe: "Équipe A",
     presence: "Absent",
   },
   {
@@ -154,6 +163,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    equipe: "Équipe B",
     presence: "Présent",
   },
   {
@@ -165,6 +175,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    equipe: "Équipe C",
     presence: "Présent",
   },
   {
@@ -176,6 +187,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: false,
     manager: "IDEC",
+    equipe: "Équipe D",
     presence: "Absent",
   },
   {
@@ -187,6 +199,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    equipe: "Équipe A",
     presence: "Présent",
   },
   {
@@ -198,6 +211,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    equipe: "Équipe B",
     presence: "Absent",
   },
   {
@@ -209,6 +223,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Maîtresse de maison",
+    equipe: "Équipe C",
     presence: "Présent",
   },
   {
@@ -220,6 +235,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: false,
     manager: "Maîtresse de maison",
+    equipe: "Équipe D",
     presence: "Absent",
   },
 ];

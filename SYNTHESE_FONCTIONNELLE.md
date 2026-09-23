@@ -38,6 +38,7 @@ Grille principale de gestion du planning des salariés.
   - **Contrat** : Actif / Inactif.
   - **Présence** : Présent / Non présent.
   - **Manager** : Sans manager / Maîtresse de maison / IDEC.
+  - **Équipe** (ajouté le 23/09) : Équipe A / Équipe B / Équipe C / Équipe D.
   - **Service**.
   - **Planning (période affichée)** : Avec planning / Sans planning —
     recalculé automatiquement selon la période affichée, un salarié peut
@@ -270,7 +271,8 @@ d'impression).
 - Liste des salariés, avec création et modification de leur fiche.
 - Une fiche salarié comporte : matricule, nom, prénom, service, type de
   contrat (CDD/CDI) et son caractère actif ou non, responsable hiérarchique
-  optionnel, statut de présence. Aucune création de compte utilisateur
+  optionnel, équipe (Équipe A/B/C/D — ajouté le 23/09, filtrable depuis la
+  vue Planning), statut de présence. Aucune création de compte utilisateur
   depuis cet écran : le salarié n'a pas de compte (cf. décision ci-dessous),
   et la création d'un compte se fait exclusivement depuis l'écran
   Utilisateurs.
@@ -283,7 +285,23 @@ d'impression).
 
 - Liste des utilisateurs de l'application, avec création et modification.
 - Une fiche utilisateur comporte : identifiant, nom, prénom, email, type
-  d'utilisateur (Administrateur / Utilisateur), service, poste.
+  d'utilisateur (Administrateur / Manager / Utilisateur — cf. § Rôles et
+  droits d'accès ci-dessous), service, poste.
+
+**Rôles et droits d'accès** (ajouté le 23/09, retour client) — trois profils
+de compte, avec des droits strictement croissants :
+
+| Rôle | Consulter le planning | Modifier le planning | Sélection multiple, effacement, roulement groupé | Menu Administration |
+|---|---|---|---|---|
+| Utilisateur | Oui | Non | Non | Non |
+| Manager | Oui | Oui (poser/effacer un code sur une case) | Non | Non |
+| Administrateur | Oui | Oui | Oui | Oui |
+
+Le lien « Administration » n'est affiché que pour l'Administrateur. Cette
+distinction est purement applicative dans la maquette (`UTILISATEUR_CONNECTE`
+est un compte fixe, sans authentification réelle) ; son équivalent en base de
+données (policies RLS conditionnées par `compte.type_compte`) est documenté
+dans le [modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV).
 
 #### Années et jours fériés
 
