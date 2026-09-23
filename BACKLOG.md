@@ -529,8 +529,7 @@ export réel, connecteur paie.
   une option du même menu plutôt que déclenché par un mécanisme de glisser
   séparé — visible uniquement quand la sélection ne porte que sur un seul
   jour (limite déjà en place, inchangée)._
-  _- **Effacer** : comportement inchangé (confirmation, remet les cases
-  sélectionnées à l'état "jamais remplie")._
+  _- **Effacer** : remet les cases sélectionnées à l'état "jamais remplie"._
   _Vérifié : glisser depuis une case vide vers une case remplie (auparavant
   impossible) ouvre bien le menu unifié ; sélection hétérogène (une case
   vide + une remplie) masque la section Événementiel ; sélection homogène
@@ -538,6 +537,11 @@ export réel, connecteur paie.
   bien sur toutes les cases sélectionnées ; le roulement groupé mono-jour et
   l'effacement restent fonctionnels ; le clic simple sur une case (édition
   normale) n'est pas affecté._
+  _Retrait du 23/09 (retour client) : la boîte de dialogue de confirmation de
+  l'effacement multiple est retirée — ni l'effacement d'une seule case
+  (bouton "Vider la cellule") ni le remplacement par un code travail n'en
+  demandent, la sélection multiple ne fait pas exception. L'effacement (bouton
+  ou touche Suppr/Retour arrière) est désormais immédiat._
 
 ## Sortie de l'Epic — WAIVED
 

@@ -430,6 +430,9 @@ export default function PlanningGrid() {
     annulerSelection();
   }
 
+  // Pas de confirmation : ni l'effacement d'une seule case (bouton "Vider la
+  // cellule") ni le remplacement par un code travail n'en demandent, la
+  // sélection multiple ne fait pas exception (retour client du 23/09).
   function effacerSelection() {
     const cellules = celluleEnSelection();
     // Toute case pas déjà hachurée compte : un jour de repos "vidé" par un
@@ -441,14 +444,7 @@ export default function PlanningGrid() {
       const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
       return valeur !== undefined;
     });
-    if (remplies.length === 0) {
-      annulerSelection();
-      return;
-    }
-    const confirme = confirm(
-      `Effacer ${remplies.length} case${remplies.length > 1 ? "s" : ""} (codes horaires et jours de repos) ?`
-    );
-    if (confirme) {
+    if (remplies.length > 0) {
       setEditions((prev) => {
         const nouvelles = { ...prev };
         for (const { salarieId, dateISO } of remplies) {
