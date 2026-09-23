@@ -1,7 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { ETABLISSEMENTS_DEMO, LOGS_DEMO, calculerKpis, logsRecents, nomEtablissement } from "@/lib/admin-systeme-mock-data";
+import {
+  ETABLISSEMENTS_DEMO,
+  LOGS_DEMO,
+  calculerKpis,
+  formatHorodatageUTC,
+  logsRecents,
+  nomEtablissement,
+} from "@/lib/admin-systeme-mock-data";
 
 function StatTile({ label, valeur, sousTexte }: { label: string; valeur: string; sousTexte?: string }) {
   return (
@@ -67,10 +74,10 @@ export default function AdminSystemeDashboardPage() {
           <table className="w-full text-left text-sm">
             <thead className="bg-zinc-50 text-xs text-zinc-500">
               <tr>
-                <th className="px-3 py-2 font-medium">Date/heure</th>
+                <th className="px-3 py-2 font-medium">Horodatage (UTC)</th>
                 <th className="px-3 py-2 font-medium">Niveau</th>
                 <th className="px-3 py-2 font-medium">Établissement</th>
-                <th className="px-3 py-2 font-medium">Source</th>
+                <th className="px-3 py-2 font-medium">Utilisateur</th>
                 <th className="px-3 py-2 font-medium">Message</th>
               </tr>
             </thead>
@@ -78,12 +85,7 @@ export default function AdminSystemeDashboardPage() {
               {derniersLogs.map((log) => (
                 <tr key={log.id}>
                   <td className="px-3 py-1.5 whitespace-nowrap text-xs text-zinc-500">
-                    {new Date(log.dateHeureISO).toLocaleString("fr-FR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatHorodatageUTC(log.horodatageUTC)}
                   </td>
                   <td className="px-3 py-1.5">
                     <span className={`rounded px-1.5 py-0.5 text-[11px] font-medium ${STYLE_NIVEAU[log.niveau]}`}>
@@ -93,7 +95,7 @@ export default function AdminSystemeDashboardPage() {
                   <td className="px-3 py-1.5 text-xs text-zinc-600">
                     {nomEtablissement(ETABLISSEMENTS_DEMO, log.etablissementId)}
                   </td>
-                  <td className="px-3 py-1.5 text-xs text-zinc-600">{log.source}</td>
+                  <td className="px-3 py-1.5 text-xs text-zinc-600">{log.utilisateurNom}</td>
                   <td className="px-3 py-1.5 text-xs text-zinc-700">{log.message}</td>
                 </tr>
               ))}
