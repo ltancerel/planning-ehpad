@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { AffectationRoulement, Equipe, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
-import { SERVICES_ORDRE, MANAGERS, EQUIPES, affectationActuelle } from "@/lib/mock-data";
+import type { AffectationRoulement, GroupeRoulement, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
+import { SERVICES_ORDRE, MANAGERS, GROUPES_ROULEMENT, affectationActuelle } from "@/lib/mock-data";
 import { formatDateISO, formatJourMois, parseDateISO } from "@/lib/dates";
 import RoulementSalariePanel from "@/components/admin/RoulementSalariePanel";
 
@@ -40,7 +40,9 @@ export default function SalarieForm({
   );
   const [contratActif, setContratActif] = useState(valeurInitiale?.contratActif ?? true);
   const [manager, setManager] = useState<Manager>(valeurInitiale?.manager ?? "Aucun");
-  const [equipe, setEquipe] = useState<Equipe>(valeurInitiale?.equipe ?? EQUIPES[0]);
+  const [groupeRoulement, setGroupeRoulement] = useState<GroupeRoulement>(
+    valeurInitiale?.groupeRoulement ?? GROUPES_ROULEMENT[0]
+  );
   const [presence, setPresence] = useState<FicheSalarie["presence"]>(valeurInitiale?.presence ?? "Présent");
   const [erreur, setErreur] = useState<string | null>(null);
   const [panneauRoulementOuvert, setPanneauRoulementOuvert] = useState(false);
@@ -77,7 +79,7 @@ export default function SalarieForm({
       typeContrat,
       contratActif,
       manager,
-      equipe,
+      groupeRoulement,
       presence,
     });
   }
@@ -180,13 +182,13 @@ export default function SalarieForm({
             </select>
           </div>
           <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-zinc-700">Équipe</label>
+            <label className="mb-1 block text-xs font-medium text-zinc-700">Alignement roulement</label>
             <select
-              value={equipe}
-              onChange={(e) => setEquipe(e.target.value as Equipe)}
+              value={groupeRoulement}
+              onChange={(e) => setGroupeRoulement(e.target.value as GroupeRoulement)}
               className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
             >
-              {EQUIPES.map((eq) => (
+              {GROUPES_ROULEMENT.map((eq) => (
                 <option key={eq} value={eq}>
                   {eq}
                 </option>

@@ -19,7 +19,7 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
           <th className="px-3 py-2">Service</th>
           <th className="px-3 py-2">Contrat</th>
           <th className="px-3 py-2">Manager</th>
-          <th className="px-3 py-2">Équipe</th>
+          <th className="px-3 py-2">Alignement roulement</th>
           <th className="px-3 py-2">Présence</th>
           <th className="px-3 py-2" />
         </tr>
@@ -48,7 +48,7 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
               </span>
             </td>
             <td className="px-3 py-2 text-zinc-600">{salarie.manager}</td>
-            <td className="px-3 py-2 text-zinc-600">{salarie.equipe}</td>
+            <td className="px-3 py-2 text-zinc-600">{salarie.groupeRoulement}</td>
             <td className="px-3 py-2">
               <span
                 className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${

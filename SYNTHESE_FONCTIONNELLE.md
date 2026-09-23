@@ -38,7 +38,11 @@ Grille principale de gestion du planning des salariés.
   - **Contrat** : Actif / Inactif.
   - **Présence** : Présent / Non présent.
   - **Manager** : Sans manager / Maîtresse de maison / IDEC.
-  - **Équipe** (ajouté le 23/09) : Équipe A / Équipe B / Équipe C / Équipe D.
+  - **Alignement roulement** (ajouté le 23/09, renommé depuis "Équipe" le
+    même jour pour plus de réalisme) : Roulement A / Roulement B /
+    Roulement C / Roulement D — libellé volontairement distinct du roulement
+    horaire (motif d'horaires assigné, cf. § Roulements) pour éviter toute
+    ambiguïté, bien que les valeurs partagent le même mot.
   - **Service**.
   - **Planning (période affichée)** : Avec planning / Sans planning —
     recalculé automatiquement selon la période affichée, un salarié peut
@@ -271,8 +275,9 @@ d'impression).
 - Liste des salariés, avec création et modification de leur fiche.
 - Une fiche salarié comporte : matricule, nom, prénom, service, type de
   contrat (CDD/CDI) et son caractère actif ou non, responsable hiérarchique
-  optionnel, équipe (Équipe A/B/C/D — ajouté le 23/09, filtrable depuis la
-  vue Planning), statut de présence. Aucune création de compte utilisateur
+  optionnel, alignement roulement (Roulement A/B/C/D — ajouté le 23/09,
+  filtrable depuis la vue Planning), statut de présence. Aucune création
+  de compte utilisateur
   depuis cet écran : le salarié n'a pas de compte (cf. décision ci-dessous),
   et la création d'un compte se fait exclusivement depuis l'écran
   Utilisateurs.

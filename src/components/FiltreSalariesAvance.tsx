@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Equipe, Manager } from "@/lib/mock-data";
+import type { GroupeRoulement, Manager } from "@/lib/mock-data";
 
 // Filtre avancé de la vue Planning (retour client du 22/09) : remplace
 // l'ancien sélecteur à choix unique (Tous / Présents / Contrat actif / ...)
@@ -18,7 +18,7 @@ export type FiltresAvances = {
   contrat: Set<Contrat>;
   presence: Set<Presence>;
   manager: Set<Manager>;
-  equipe: Set<Equipe>;
+  groupeRoulement: Set<GroupeRoulement>;
   service: Set<string>;
   planning: Set<EtatPlanning>;
 };
@@ -28,7 +28,7 @@ export function filtresVides(): FiltresAvances {
     contrat: new Set(),
     presence: new Set(),
     manager: new Set(),
-    equipe: new Set(),
+    groupeRoulement: new Set(),
     service: new Set(),
     planning: new Set(),
   };
@@ -39,7 +39,7 @@ export function nbFiltresActifs(filtres: FiltresAvances): number {
     filtres.contrat.size +
     filtres.presence.size +
     filtres.manager.size +
-    filtres.equipe.size +
+    filtres.groupeRoulement.size +
     filtres.service.size +
     filtres.planning.size
   );
@@ -86,11 +86,11 @@ function pucesActives(
       retirer: () => onChange({ ...filtres, manager: avecValeurBasculee(filtres.manager, v) }),
     });
   }
-  for (const v of filtres.equipe) {
+  for (const v of filtres.groupeRoulement) {
     puces.push({
-      cle: `equipe-${v}`,
+      cle: `groupeRoulement-${v}`,
       libelle: v,
-      retirer: () => onChange({ ...filtres, equipe: avecValeurBasculee(filtres.equipe, v) }),
+      retirer: () => onChange({ ...filtres, groupeRoulement: avecValeurBasculee(filtres.groupeRoulement, v) }),
     });
   }
   for (const v of filtres.service) {
@@ -161,14 +161,14 @@ export function FiltreSalariesBouton({
   onChange,
   services,
   managers,
-  equipes,
+  groupesRoulement,
   nbResultats,
 }: {
   filtres: FiltresAvances;
   onChange: (f: FiltresAvances) => void;
   services: string[];
   managers: Manager[];
-  equipes: Equipe[];
+  groupesRoulement: GroupeRoulement[];
   nbResultats: number;
 }) {
   const [ouvert, setOuvert] = useState(false);
@@ -231,11 +231,11 @@ export function FiltreSalariesBouton({
               onToggle={(v) => onChange({ ...filtres, manager: avecValeurBasculee(filtres.manager, v) })}
             />
             <SectionCaseACocher
-              titre="Équipe"
-              options={equipes}
+              titre="Alignement roulement"
+              options={groupesRoulement}
               libelle={(v) => v}
-              selection={filtres.equipe}
-              onToggle={(v) => onChange({ ...filtres, equipe: avecValeurBasculee(filtres.equipe, v) })}
+              selection={filtres.groupeRoulement}
+              onToggle={(v) => onChange({ ...filtres, groupeRoulement: avecValeurBasculee(filtres.groupeRoulement, v) })}
             />
             <SectionCaseACocher
               titre="Service"

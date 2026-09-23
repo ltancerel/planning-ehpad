@@ -543,19 +543,36 @@ export réel, connecteur paie.
   demandent, la sélection multiple ne fait pas exception. L'effacement (bouton
   ou touche Suppr/Retour arrière) est désormais immédiat._
 
-- [x] **22. Nouvel attribut Équipe sur le salarié, filtrable** _(issue #22)_
+- [x] **22. Nouvel attribut Alignement roulement sur le salarié, filtrable** _(issue #22)_
   Retour client du 23/09, 3e d'une liste de 6 évolutions. Nouvel attribut
   sur la fiche salarié : Équipe A / Équipe B / Équipe C / Équipe D, à ajouter
   au filtre de la vue Planning.
   _Statut : fait. Ajouté sur `FicheSalarie` (comme `manager`, pas sur
   `Salarie` : un salarié sans fiche, ex. les lignes "Besoin", n'a donc pas
-  d'équipe et est exclu dès que ce critère est actif — même comportement que
-  Contrat/Présence/Manager déjà établi en story #19). Nouveau type `Equipe`
-  et constante `EQUIPES` dans `mock-data.ts`, section "Équipe" ajoutée au
-  panneau de filtres avancé (à côté de Manager), champ Équipe dans le
-  formulaire Admin > Salariés (à côté de Manager) et nouvelle colonne dans
-  la liste. Données de démo réparties sur les 4 équipes pour couvrir chaque
-  valeur du filtre._
+  cet attribut et est exclu dès que ce critère est actif — même comportement
+  que Contrat/Présence/Manager déjà établi en story #19). Nouveau type
+  `GroupeRoulement` et constante `GROUPES_ROULEMENT` dans `mock-data.ts`,
+  section ajoutée au panneau de filtres avancé (à côté de Manager), champ
+  dans le formulaire Admin > Salariés (à côté de Manager) et nouvelle
+  colonne dans la liste. Données de démo réparties sur les 4 valeurs pour
+  couvrir chaque option du filtre._
+  _Renommage du 23/09 (retour client, même jour) : "Équipe A/B/C/D" →
+  "Roulement A/B/C/D", plus réaliste. Attention signalée au client : le
+  champ « Roulement » existait déjà sur la fiche salarié pour le motif
+  d'horaires récurrent assigné (type `Roulement`, table `roulement` en
+  base) — un même mot pour deux notions différentes sur le même écran.
+  Décision : les valeurs restent "Roulement A/B/C/D" mais le libellé du
+  champ (formulaire, colonne de liste, section du filtre) est "Alignement
+  roulement", distinct du libellé "Roulement" du motif d'horaires, pour lever
+  l'ambiguïté visuelle tout en gardant le vocabulaire "Roulement" demandé.
+  Identifiants TypeScript (`GroupeRoulement`/`GROUPES_ROULEMENT`) gardés
+  distincts du type `Roulement` existant, seule façon d'éviter une collision
+  de nom à la compilation._
+  _[Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  mis à jour en conséquence (domaine B) : nouvelle colonne
+  `salarie.alignement_roulement`, sans FK ni lien avec le domaine D
+  (Roulements) — simple étiquette à 4 valeurs. Note dédiée ajoutée
+  documentant la collision de nom acceptée._
 
 ## Sortie de l'Epic — WAIVED
 
