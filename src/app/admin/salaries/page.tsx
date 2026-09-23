@@ -46,11 +46,7 @@ export default function SalariesAdminPage() {
     } else {
       const nouveau: FicheSalarie = { ...donnees, id: `fs${prochainId++}` };
       setSalaries((prev) => [...prev, nouveau]);
-      setMessageConfirmation(
-        donnees.compteUtilisateur
-          ? `Salarié créé — un email de consultation a été "envoyé" à ${donnees.email}.`
-          : `Salarié ${donnees.prenom} ${donnees.nom} créé.`
-      );
+      setMessageConfirmation(`Salarié ${donnees.prenom} ${donnees.nom} créé.`);
     }
     fermerPanneau();
     setTimeout(() => setMessageConfirmation(null), 4000);

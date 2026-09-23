@@ -75,8 +75,6 @@ export type FicheSalarie = {
   contratActif: boolean;
   manager: Manager;
   presence: "Présent" | "Absent";
-  compteUtilisateur: boolean;
-  email?: string;
 };
 
 // Fiches salariés de démo (noms fictifs, cf. décision de ne jamais utiliser de
@@ -92,8 +90,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "Aucun",
     presence: "Présent",
-    compteUtilisateur: true,
-    email: "claire.bernard@example.fr",
   },
   {
     id: "fs2",
@@ -105,7 +101,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "IDEC",
     presence: "Présent",
-    compteUtilisateur: false,
   },
   {
     id: "fs3",
@@ -117,7 +112,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "Aucun",
     presence: "Présent",
-    compteUtilisateur: false,
   },
   {
     id: "fs4",
@@ -129,7 +123,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "Aucun",
     presence: "Présent",
-    compteUtilisateur: false,
   },
   {
     id: "fs5",
@@ -141,7 +134,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "Aucun",
     presence: "Absent",
-    compteUtilisateur: false,
   },
   {
     id: "fs6",
@@ -153,7 +145,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "IDEC",
     presence: "Présent",
-    compteUtilisateur: false,
   },
   {
     id: "fs7",
@@ -165,7 +156,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "IDEC",
     presence: "Présent",
-    compteUtilisateur: false,
   },
   {
     id: "fs8",
@@ -177,7 +167,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: false,
     manager: "IDEC",
     presence: "Absent",
-    compteUtilisateur: false,
   },
   {
     id: "fs9",
@@ -189,7 +178,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "IDEC",
     presence: "Présent",
-    compteUtilisateur: false,
   },
   {
     id: "fs10",
@@ -201,7 +189,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "IDEC",
     presence: "Absent",
-    compteUtilisateur: false,
   },
   {
     id: "fs11",
@@ -213,7 +200,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: true,
     manager: "Maîtresse de maison",
     presence: "Présent",
-    compteUtilisateur: false,
   },
   {
     id: "fs12",
@@ -225,7 +211,6 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     contratActif: false,
     manager: "Maîtresse de maison",
     presence: "Absent",
-    compteUtilisateur: false,
   },
 ];
 
