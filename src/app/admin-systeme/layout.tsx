@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import AdminSystemeNav from "@/components/admin-systeme/AdminSystemeNav";
 
@@ -12,9 +11,6 @@ export default function AdminSystemeLayout({ children }: { children: ReactNode }
         <span className="text-xs text-[#0F3A35]">
           Supervision globale — tous établissements confondus
         </span>
-        <Link href="/" className="ml-auto text-xs font-medium text-[#0F3A35] hover:underline">
-          ← Retour au planning
-        </Link>
       </header>
       <div className="flex flex-1 overflow-hidden">
         <AdminSystemeNav />

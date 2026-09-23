@@ -35,19 +35,32 @@ export default function EtablissementsAdminSystemePage() {
     setEtablissementEnEdition(undefined);
   }
 
-  function enregistrer(donnees: Omit<Etablissement, "id">) {
+  function enregistrer(
+    donnees: Omit<Etablissement, "id">,
+    nouveauxAdministrateurs: Omit<AdministrateurEtablissement, "id" | "etablissementId">[]
+  ) {
     if (etablissementEnEdition) {
       setEtablissements((prev) =>
         prev.map((e) => (e.id === etablissementEnEdition.id ? { ...donnees, id: e.id } : e))
       );
       setMessageConfirmation(`Établissement ${donnees.nom} mis à jour.`);
-      fermerPanneau();
     } else {
-      const nouveau: Etablissement = { ...donnees, id: `et${prochainIdEtablissement++}` };
+      const nouvelId = `et${prochainIdEtablissement++}`;
+      const nouveau: Etablissement = { ...donnees, id: nouvelId };
+      const administrateursCrees = nouveauxAdministrateurs.map((admin) => ({
+        ...admin,
+        id: `ad${prochainIdAdmin++}`,
+        etablissementId: nouvelId,
+      }));
       setEtablissements((prev) => [...prev, nouveau]);
-      setMessageConfirmation(`Établissement ${donnees.nom} créé.`);
-      fermerPanneau();
+      setAdministrateurs((prev) => [...prev, ...administrateursCrees]);
+      setMessageConfirmation(
+        `Établissement ${donnees.nom} créé avec ${administrateursCrees.length} administrateur${
+          administrateursCrees.length > 1 ? "s" : ""
+        }.`
+      );
     }
+    fermerPanneau();
     setTimeout(() => setMessageConfirmation(null), 4000);
   }
 

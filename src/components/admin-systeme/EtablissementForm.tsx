@@ -8,11 +8,13 @@ import {
   type Etablissement,
 } from "@/lib/admin-systeme-mock-data";
 
+type NouvelAdministrateur = Omit<AdministrateurEtablissement, "id" | "etablissementId">;
+
 type EtablissementFormProps = {
   valeurInitiale?: Etablissement;
   administrateurs: AdministrateurEtablissement[];
-  onValider: (etablissement: Omit<Etablissement, "id">) => void;
-  onAjouterAdministrateur: (donnees: Omit<AdministrateurEtablissement, "id" | "etablissementId">) => void;
+  onValider: (etablissement: Omit<Etablissement, "id">, nouveauxAdministrateurs: NouvelAdministrateur[]) => void;
+  onAjouterAdministrateur: (donnees: NouvelAdministrateur) => void;
   onAnnuler: () => void;
 };
 
@@ -34,6 +36,11 @@ export default function EtablissementForm({
   const [applications, setApplications] = useState<Application[]>(valeurInitiale?.applications ?? []);
   const [erreur, setErreur] = useState<string | null>(null);
 
+  // En création, les administrateurs saisis sont conservés localement (pas
+  // encore d'etablissementId) et créés en même temps que l'établissement —
+  // cloisonnement système/établissement oblige, un établissement ne peut pas
+  // exister sans au moins un administrateur qui en a la charge.
+  const [administrateursEnAttente, setAdministrateursEnAttente] = useState<NouvelAdministrateur[]>([]);
   const [nomAdmin, setNomAdmin] = useState("");
   const [prenomAdmin, setPrenomAdmin] = useState("");
   const [emailAdmin, setEmailAdmin] = useState("");
@@ -44,14 +51,21 @@ export default function EtablissementForm({
       setErreur("Le nom et la ville sont obligatoires.");
       return;
     }
+    if (!modeEdition && administrateursEnAttente.length === 0) {
+      setErreur("Au moins un administrateur doit être créé pour cet établissement.");
+      return;
+    }
     setErreur(null);
-    onValider({
-      nom: nom.trim(),
-      ville: ville.trim(),
-      statut: statutActif ? "actif" : "inactif",
-      applications,
-      dateCreation: valeurInitiale?.dateCreation ?? new Date().toISOString().slice(0, 10),
-    });
+    onValider(
+      {
+        nom: nom.trim(),
+        ville: ville.trim(),
+        statut: statutActif ? "actif" : "inactif",
+        applications,
+        dateCreation: valeurInitiale?.dateCreation ?? new Date().toISOString().slice(0, 10),
+      },
+      administrateursEnAttente
+    );
   }
 
   function ajouterAdministrateur() {
@@ -64,10 +78,20 @@ export default function EtablissementForm({
       return;
     }
     setErreurAdmin(null);
-    onAjouterAdministrateur({ nom: nomAdmin.trim(), prenom: prenomAdmin.trim(), email: emailAdmin.trim() });
+    const nouvel: NouvelAdministrateur = { nom: nomAdmin.trim(), prenom: prenomAdmin.trim(), email: emailAdmin.trim() };
+    if (modeEdition) {
+      onAjouterAdministrateur(nouvel);
+    } else {
+      setAdministrateursEnAttente((prev) => [...prev, nouvel]);
+      setErreur(null);
+    }
     setNomAdmin("");
     setPrenomAdmin("");
     setEmailAdmin("");
+  }
+
+  function retirerAdministrateurEnAttente(index: number) {
+    setAdministrateursEnAttente((prev) => prev.filter((_, i) => i !== index));
   }
 
   return (
@@ -123,12 +147,20 @@ export default function EtablissementForm({
           </div>
         </div>
 
-        {erreur && <p className="text-xs font-medium text-red-600">{erreur}</p>}
+        <div className="rounded border border-zinc-200 p-3">
+          <p className="mb-1 text-xs font-medium text-zinc-700">
+            Administrateurs de cet établissement
+            {!modeEdition && <span className="text-red-600"> *</span>}
+          </p>
+          {!modeEdition && (
+            <p className="mb-2 text-[11px] text-zinc-400">
+              Obligatoire : un administrateur système ne gère pas les données d&apos;un établissement — seul un
+              administrateur établissement le peut.
+            </p>
+          )}
 
-        {modeEdition && (
-          <div className="rounded border border-zinc-200 p-3">
-            <p className="mb-2 text-xs font-medium text-zinc-700">Administrateurs de cet établissement</p>
-            {administrateurs.length === 0 ? (
+          {modeEdition ? (
+            administrateurs.length === 0 ? (
               <p className="mb-3 text-xs text-zinc-400">Aucun administrateur créé pour l&apos;instant.</p>
             ) : (
               <ul className="mb-3 space-y-1">
@@ -141,41 +173,66 @@ export default function EtablissementForm({
                   </li>
                 ))}
               </ul>
-            )}
+            )
+          ) : administrateursEnAttente.length === 0 ? (
+            <p className="mb-3 text-xs text-zinc-400">Aucun administrateur ajouté pour l&apos;instant.</p>
+          ) : (
+            <ul className="mb-3 space-y-1">
+              {administrateursEnAttente.map((admin, index) => (
+                <li key={index} className="flex items-center justify-between text-xs text-zinc-700">
+                  <span>
+                    {admin.prenom} {admin.nom}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-zinc-400">{admin.email}</span>
+                    <button
+                      type="button"
+                      onClick={() => retirerAdministrateurEnAttente(index)}
+                      aria-label={`Retirer ${admin.prenom} ${admin.nom}`}
+                      className="text-zinc-400 hover:text-red-600"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
 
-            <div className="space-y-2 border-t border-zinc-100 pt-2">
-              <div className="flex gap-2">
-                <input
-                  value={prenomAdmin}
-                  onChange={(e) => setPrenomAdmin(e.target.value)}
-                  placeholder="Prénom"
-                  className="w-1/2 rounded border border-zinc-300 px-2 py-1.5 text-xs"
-                />
-                <input
-                  value={nomAdmin}
-                  onChange={(e) => setNomAdmin(e.target.value)}
-                  placeholder="Nom"
-                  className="w-1/2 rounded border border-zinc-300 px-2 py-1.5 text-xs"
-                />
-              </div>
+          <div className="space-y-2 border-t border-zinc-100 pt-2">
+            <div className="flex gap-2">
               <input
-                value={emailAdmin}
-                onChange={(e) => setEmailAdmin(e.target.value)}
-                placeholder="Email"
-                type="email"
-                className="w-full rounded border border-zinc-300 px-2 py-1.5 text-xs"
+                value={prenomAdmin}
+                onChange={(e) => setPrenomAdmin(e.target.value)}
+                placeholder="Prénom"
+                className="w-1/2 rounded border border-zinc-300 px-2 py-1.5 text-xs"
               />
-              {erreurAdmin && <p className="text-[11px] font-medium text-red-600">{erreurAdmin}</p>}
-              <button
-                type="button"
-                onClick={ajouterAdministrateur}
-                className="w-full rounded border border-[#A7D97A] bg-[#A7D97A]/15 px-2 py-1.5 text-xs font-medium text-[#0F3A35] hover:bg-[#A7D97A]/30"
-              >
-                + Ajouter un administrateur
-              </button>
+              <input
+                value={nomAdmin}
+                onChange={(e) => setNomAdmin(e.target.value)}
+                placeholder="Nom"
+                className="w-1/2 rounded border border-zinc-300 px-2 py-1.5 text-xs"
+              />
             </div>
+            <input
+              value={emailAdmin}
+              onChange={(e) => setEmailAdmin(e.target.value)}
+              placeholder="Email"
+              type="email"
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-xs"
+            />
+            {erreurAdmin && <p className="text-[11px] font-medium text-red-600">{erreurAdmin}</p>}
+            <button
+              type="button"
+              onClick={ajouterAdministrateur}
+              className="w-full rounded border border-[#A7D97A] bg-[#A7D97A]/15 px-2 py-1.5 text-xs font-medium text-[#0F3A35] hover:bg-[#A7D97A]/30"
+            >
+              + Ajouter un administrateur
+            </button>
           </div>
-        )}
+        </div>
+
+        {erreur && <p className="text-xs font-medium text-red-600">{erreur}</p>}
       </div>
 
       <div className="flex justify-end gap-2 border-t border-zinc-200 px-4 py-3">

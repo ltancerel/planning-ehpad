@@ -68,6 +68,7 @@ export const ADMINISTRATEURS_DEMO: AdministrateurEtablissement[] = [
   { id: "ad1", etablissementId: "et1", nom: "Hontaa", prenom: "Virginie", email: "virginie.hontaa@example.fr" },
   { id: "ad2", etablissementId: "et2", nom: "Lefevre", prenom: "Marc", email: "marc.lefevre@example.fr" },
   { id: "ad3", etablissementId: "et3", nom: "Girard", prenom: "Nadia", email: "nadia.girard@example.fr" },
+  { id: "ad4", etablissementId: "et4", nom: "Perrin", prenom: "Julien", email: "julien.perrin@example.fr" },
 ];
 
 export type NiveauLog = "info" | "avertissement" | "erreur";
