@@ -56,15 +56,17 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
     const dateISO = formatDateISO(jour);
     const valeur = PLANNING_DEMO[`${salarie.id}__${dateISO}`];
     const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
+    const horaireInformatif = valeur?.informatif ? HORAIRE_CODES_PAR_CODE[valeur.informatif] : undefined;
     const horaireEvenementiel = valeur?.evenementiel ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel] : undefined;
     const heuresBase = valeur?.travail ? heuresDuCode(valeur.travail) : 0;
     const heures = valeur ? heuresReellesCellule(valeur) : 0;
-    // Type "superposition" : le code travail est barré (décompte écrasé) et
-    // remplacé par le décompte du code évènement. Type "complement" : le
+    // Type "normal" : le code travail est barré (décompte écrasé) et
+    // remplacé par le décompte du code évènement. Type "partiel" : le
     // delta (+/-) doit être explicitement visible, sans barrer le travail.
-    const travailBarre = horaireEvenementiel?.typeEvenement === "superposition";
+    // Type "special" : traité séparément (affichage plein, pas de barré).
+    const travailBarre = horaireEvenementiel?.typeEvenement === "normal";
     const delta = valeur ? deltaEvenementielCellule(valeur) : undefined;
-    return { valeur, horaireTravail, horaireEvenementiel, heuresBase, heures, travailBarre, delta };
+    return { valeur, horaireTravail, horaireInformatif, horaireEvenementiel, heuresBase, heures, travailBarre, delta };
   }
 
   const totalHeures = joursDuMois.reduce((total, jour) => total + valeurDuJour(jour).heures, 0);
@@ -121,11 +123,19 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                 <tr key={index}>
                   {semaine.map((jour) => {
                     const dansLeMois = jour.getMonth() === dateMois.getMonth();
-                    const { valeur, horaireTravail, horaireEvenementiel, heuresBase, heures, travailBarre, delta } =
-                      valeurDuJour(jour);
+                    const {
+                      valeur,
+                      horaireTravail,
+                      horaireInformatif,
+                      horaireEvenementiel,
+                      heuresBase,
+                      heures,
+                      travailBarre,
+                      delta,
+                    } = valeurDuJour(jour);
                     const grise = estJourGrise(jour);
                     const plagesTravail = formatPlages(horaireTravail?.plages);
-                    const estComplement = horaireEvenementiel?.typeEvenement === "complement";
+                    const estPartiel = horaireEvenementiel?.typeEvenement === "partiel";
 
                     if (!dansLeMois) {
                       return (
@@ -152,7 +162,10 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                           </div>
 
                           {/* Code horaire de travail — au-dessus du code événementiel
-                              (empilés, cf. retour client du 17/09). */}
+                              (empilés, cf. retour client du 17/09), toujours visible même
+                              avec un évènement "spécial" superposé (retour client du
+                              23/09 : contrairement à la grille planning, la vue mensuelle
+                              ne l'efface jamais — seul le décompte peut être barré). */}
                           {valeur?.travail && horaireTravail && (
                             <div
                               className="rounded px-1 py-0.5 leading-tight"
@@ -186,8 +199,9 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                             </div>
                           )}
 
-                          {/* Code événementiel — superposition (décompte écrasé, cf.
-                              ci-dessus) ou complément à la volée (plage + delta). */}
+                          {/* Code événementiel — special (décompte du travail gardé,
+                              affiché ci-dessus), normal (décompte écrasé, cf. ci-dessus)
+                              ou partiel (plage + delta). */}
                           {valeur?.evenementiel && horaireEvenementiel && (
                             <div
                               className="rounded px-1 py-0.5 leading-tight"
@@ -198,13 +212,29 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                             >
                               <div className="text-[10px] font-bold">{horaireEvenementiel.code}</div>
                               <div className="text-[9px]">{horaireEvenementiel.intitule}</div>
-                              {estComplement && valeur.evenementielPlages && valeur.evenementielPlages.length > 0 && (
+                              {estPartiel && valeur.evenementielPlages && valeur.evenementielPlages.length > 0 && (
                                 <div className="text-[9px] font-semibold">
                                   {valeur.evenementielPlages.map((p) => `${p.debut}–${p.fin}`).join(", ")} (
                                   {delta !== undefined && delta >= 0 ? "+" : ""}
                                   {delta}h)
                                 </div>
                               )}
+                            </div>
+                          )}
+
+                          {/* Code informatif — jamais d'heures propres. En dessous du
+                              travail s'il y en a un, en plein sinon (cf. règle de
+                              composition de cellule du 23/09). */}
+                          {valeur?.informatif && horaireInformatif && (
+                            <div
+                              className="rounded px-1 py-0.5 leading-tight"
+                              style={{
+                                backgroundColor: horaireInformatif.couleurFond,
+                                color: horaireInformatif.couleurTexte,
+                              }}
+                            >
+                              <div className="text-[10px] font-bold">{horaireInformatif.code}</div>
+                              <div className="text-[9px]">{horaireInformatif.intitule}</div>
                             </div>
                           )}
                         </div>

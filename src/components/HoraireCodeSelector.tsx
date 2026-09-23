@@ -3,13 +3,26 @@
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import {
   HORAIRE_CODES,
-  estCodeSuperposable,
-  estCodeComplement,
+  estCodePartiel,
+  peutAjouterInformatif,
+  peutAjouterEvenementiel,
   plageComplementValide,
+  type HoraireCategorie,
   type Plage,
+  type ValeurCellule,
 } from "@/lib/horaire-codes";
 
 export type PositionSelecteur = { top: number; left: number; width: number };
+
+// Ordre et libellé des 3 catégories dans le sélecteur (retour client du
+// 23/09 : distinguer clairement Travail / Informatif / Évènementiel plutôt
+// que de ne marquer qu'une frontière entre "superposition" et le reste).
+const ORDRE_CATEGORIE: Record<HoraireCategorie, number> = { travail: 0, informatif: 1, evenementiel: 2 };
+const LIBELLE_GROUPE_CATEGORIE: Record<HoraireCategorie, string> = {
+  travail: "Codes de travail",
+  informatif: "Codes informatifs",
+  evenementiel: "Codes évènementiels",
+};
 
 type HoraireCodeSelectorProps = {
   position: PositionSelecteur;
@@ -17,6 +30,12 @@ type HoraireCodeSelectorProps = {
   /** Masque les codes événementiels (superposition) — non pertinents hors du
    * planning réel, ex. dans un roulement qui définit un motif récurrent. */
   masquerEvenementiels?: boolean;
+  /** Valeur actuelle de la cellule en édition — sert de garde-fou (retour
+   * client du 23/09) : un informatif ne s'ajoute pas si travail + évènementiel
+   * sont déjà tous les deux présents (jamais 3 codes à la fois) ; un
+   * évènementiel ne se superpose qu'à un travail déjà présent, jamais sur une
+   * cellule vide, et jamais si un informatif occupe déjà la cellule. */
+  valeurActuelle?: ValeurCellule;
   /** Raccourci proposé sur une case jamais remplie dont le salarié a un
    * roulement actuel : l'appliquer directement, sans bloquer la saisie
    * manuelle d'un code qui reste l'action la plus courante. Si le roulement
@@ -43,6 +62,7 @@ export default function HoraireCodeSelector({
   position,
   aUneValeur,
   masquerEvenementiels,
+  valeurActuelle,
   actionRoulement,
   onChoisir,
   onChoisirComplement,
@@ -84,12 +104,17 @@ export default function HoraireCodeSelector({
     setPositionAffichee({ top, left });
   }, [position.top, position.left, position.width, codeComplementEnSaisie, plages.length]);
 
+  const peutInformatif = !valeurActuelle || peutAjouterInformatif(valeurActuelle);
+  const peutEvenementiel = Boolean(valeurActuelle) && peutAjouterEvenementiel(valeurActuelle!);
+
   const codesDisponibles = useMemo(
     () =>
-      masquerEvenementiels
-        ? HORAIRE_CODES.filter((h) => h.categorie !== "evenementiel")
-        : HORAIRE_CODES,
-    [masquerEvenementiels]
+      HORAIRE_CODES.filter((h) => {
+        if (h.categorie === "evenementiel") return !masquerEvenementiels && peutEvenementiel;
+        if (h.categorie === "informatif") return peutInformatif;
+        return true;
+      }),
+    [masquerEvenementiels, peutInformatif, peutEvenementiel]
   );
 
   const resultats = useMemo(() => {
@@ -100,8 +125,8 @@ export default function HoraireCodeSelector({
           (h) => h.code.toUpperCase().includes(terme) || h.intitule.toUpperCase().includes(terme)
         );
     return [...filtres].sort((a, b) => {
-      const groupeA = estCodeSuperposable(a.code) ? 1 : 0;
-      const groupeB = estCodeSuperposable(b.code) ? 1 : 0;
+      const groupeA = ORDRE_CATEGORIE[a.categorie];
+      const groupeB = ORDRE_CATEGORIE[b.categorie];
       if (groupeA !== groupeB) return groupeA - groupeB;
       return a.code.localeCompare(b.code);
     });
@@ -129,7 +154,7 @@ export default function HoraireCodeSelector({
   }
 
   function surChoixCode(code: string) {
-    if (onChoisirComplement && estCodeComplement(code)) {
+    if (onChoisirComplement && estCodePartiel(code)) {
       setCodeComplementEnSaisie(code);
       return;
     }
@@ -328,14 +353,17 @@ export default function HoraireCodeSelector({
       )}
       <ul className="flex-1 overflow-auto py-1">
         {resultats.map((horaire, index) => {
-          const superposable = estCodeSuperposable(horaire.code);
-          const premierSuperposable = superposable && !estCodeSuperposable(resultats[index - 1]?.code ?? "");
+          const premierDuGroupe = horaire.categorie !== resultats[index - 1]?.categorie;
 
           return (
             <li key={horaire.code}>
-              {premierSuperposable && (
-                <div className="mx-2 my-1 border-t border-zinc-100 pt-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-                  Codes de superposition
+              {premierDuGroupe && (
+                <div
+                  className={`mx-2 my-1 pt-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400 ${
+                    index > 0 ? "border-t border-zinc-100" : ""
+                  }`}
+                >
+                  {LIBELLE_GROUPE_CATEGORIE[horaire.categorie]}
                 </div>
               )}
               <button

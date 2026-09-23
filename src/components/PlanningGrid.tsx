@@ -197,6 +197,11 @@ export default function PlanningGrid() {
     [jours]
   );
   const estAdministrateur = UTILISATEUR_CONNECTE.typeUtilisateur === "Administrateur";
+  // Le Manager peut modifier le planning (poser/effacer un code sur une case)
+  // mais pas la sélection multiple / l'application groupée de roulement, ni
+  // le menu Administration — réservés à l'Administrateur (retour client du
+  // 23/09 : nouveau rôle Manager). L'Utilisateur reste en lecture seule.
+  const peutEditerPlanning = estAdministrateur || UTILISATEUR_CONNECTE.typeUtilisateur === "Manager";
 
   function ouvrirEdition(cle: string, cellule: HTMLElement) {
     const rect = cellule.getBoundingClientRect();
@@ -217,9 +222,15 @@ export default function PlanningGrid() {
         return { ...prev, [cle]: undefined };
       }
       const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
-      const nouvelle: ValeurCellule = estCodeSuperposable(codeChoisi)
-        ? { ...actuelle, evenementiel: codeChoisi, evenementielPlages: undefined }
-        : { travail: codeChoisi }; // code travail/informatif/particulier : remplace tout
+      const horaireChoisi = HORAIRE_CODES_PAR_CODE[codeChoisi.toUpperCase()];
+      let nouvelle: ValeurCellule;
+      if (horaireChoisi?.categorie === "informatif") {
+        nouvelle = { ...actuelle, informatif: codeChoisi };
+      } else if (estCodeSuperposable(codeChoisi)) {
+        nouvelle = { ...actuelle, evenementiel: codeChoisi, evenementielPlages: undefined };
+      } else {
+        nouvelle = { travail: codeChoisi }; // code travail : remplace tout (travail, informatif, évènementiel)
+      }
       return { ...prev, [cle]: nouvelle };
     });
     fermerEdition();
@@ -517,7 +528,9 @@ export default function PlanningGrid() {
   const valeurActuelleEdition: ValeurCellule | undefined = cellEnEdition
     ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition])
     : undefined;
-  const editionAUneValeur = Boolean(valeurActuelleEdition?.travail || valeurActuelleEdition?.evenementiel);
+  const editionAUneValeur = Boolean(
+    valeurActuelleEdition?.travail || valeurActuelleEdition?.evenementiel || valeurActuelleEdition?.informatif
+  );
   const plagesTravailEdition = valeurActuelleEdition?.travail
     ? (HORAIRE_CODES_PAR_CODE[valeurActuelleEdition.travail.toUpperCase()]?.plages ?? [])
     : [];
@@ -604,12 +617,14 @@ export default function PlanningGrid() {
             >
               →
             </button>
-            <Link
-              href="/admin/horaires"
-              className="ml-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
-            >
-              Administration
-            </Link>
+            {estAdministrateur && (
+              <Link
+                href="/admin/horaires"
+                className="ml-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+              >
+                Administration
+              </Link>
+            )}
             <UserMenu />
           </div>
         </div>
@@ -700,14 +715,24 @@ export default function PlanningGrid() {
                       const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
                       const jamaisRemplie = valeur === undefined;
                       const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
+                      const horaireInformatif = valeur?.informatif
+                        ? HORAIRE_CODES_PAR_CODE[valeur.informatif]
+                        : undefined;
                       const horaireEvenementiel = valeur?.evenementiel
                         ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel]
                         : undefined;
-                      // Type "superposition" : le code travail est barré, le décompte est
-                      // écrasé. Type "complement" : le code travail reste normal, le delta
-                      // (+/-) est calculé depuis la plage saisie à la volée.
-                      const travailBarre = horaireEvenementiel?.typeEvenement === "superposition";
+                      // Type "special" : le travail est effacé de l'affichage (pleine
+                      // cellule), ses heures restent comptées. Type "normal" : le travail
+                      // reste visible mais barré, sa durée est remplacée par celle de
+                      // l'évènement. Type "partiel" : le travail reste normal, le delta
+                      // (+/-) est calculé depuis la ou les plages saisies à la volée.
+                      const evenementielSpecial = horaireEvenementiel?.typeEvenement === "special";
+                      const travailBarre = horaireEvenementiel?.typeEvenement === "normal";
                       const deltaComplement = valeur ? deltaEvenementielCellule(valeur) : undefined;
+                      // Couleur de fond/texte de la cellule : le spécial prend le dessus
+                      // sur le travail (qu'il efface visuellement) ; à défaut de travail,
+                      // l'informatif porte la couleur (cellule sans code de travail).
+                      const horaireFond = evenementielSpecial ? horaireEvenementiel : (horaireTravail ?? horaireInformatif);
                       const enEdition = cellEnEdition === cle;
                       const enSelection =
                         jamaisRemplie &&
@@ -743,19 +768,19 @@ export default function PlanningGrid() {
                       const infoBulle = valeur?.travail
                         ? `${horaireTravail?.intitule ?? valeur.travail}${
                             horaireEvenementiel ? ` + ${horaireEvenementiel.intitule}` : ""
-                          }${
+                          }${horaireInformatif ? ` + ${horaireInformatif.intitule}` : ""}${
                             deltaComplement !== undefined
                               ? ` (${deltaComplement >= 0 ? "+" : ""}${deltaComplement}h)`
                               : ""
                           } — ${heuresReellesCellule(valeur)}h`
-                        : jamaisRemplie
+                        : jamaisRemplie && estAdministrateur
                           ? "Jamais planifiée — cliquer-glisser sur plusieurs salariés pour appliquer leur roulement"
                           : undefined;
 
                       return (
                         <td
                           key={cle}
-                          onClick={(e) => ouvrirEdition(cle, e.currentTarget)}
+                          onClick={peutEditerPlanning ? (e) => ouvrirEdition(cle, e.currentTarget) : undefined}
                           onMouseDown={
                             !estAdministrateur
                               ? undefined
@@ -773,7 +798,9 @@ export default function PlanningGrid() {
                                   etendreEffacement(salarie.id, dateISO);
                                 }
                           }
-                          className="cursor-pointer select-none border border-zinc-200 p-0 text-center align-middle"
+                          className={`select-none border border-zinc-200 p-0 text-center align-middle ${
+                            peutEditerPlanning ? "cursor-pointer" : "cursor-default"
+                          }`}
                           style={{
                             backgroundColor: enEdition
                               ? "#eff6ff"
@@ -783,12 +810,12 @@ export default function PlanningGrid() {
                                   ? "#dbeafe"
                                   : jamaisRemplie
                                     ? "#fafafa"
-                                    : horaireTravail?.couleurFond ?? "#fff",
+                                    : horaireFond?.couleurFond ?? "#fff",
                             backgroundImage:
                               !enEdition && !enSelection && jamaisRemplie
                                 ? "repeating-linear-gradient(45deg, #e4e4e7 0px, #e4e4e7 4px, transparent 4px, transparent 10px)"
                                 : undefined,
-                            color: horaireTravail?.couleurTexte ?? "#000",
+                            color: horaireFond?.couleurTexte ?? "#000",
                             outline: enEdition
                               ? "2px solid #60a5fa"
                               : enEffacement
@@ -800,25 +827,49 @@ export default function PlanningGrid() {
                           }}
                           title={infoBulle}
                         >
-                          {valeur?.travail && (
-                            <span
-                              className="block px-1 pt-0.5 text-xs font-semibold leading-tight"
-                              style={travailBarre ? { textDecoration: "line-through" } : undefined}
-                            >
-                              {valeur.travail}
+                          {evenementielSpecial ? (
+                            <span className="block px-1 pt-0.5 text-xs font-semibold leading-tight">
+                              {valeur?.evenementiel}
                             </span>
+                          ) : (
+                            <>
+                              {valeur?.travail && (
+                                <span
+                                  className="block px-1 pt-0.5 text-xs font-semibold leading-tight"
+                                  style={travailBarre ? { textDecoration: "line-through" } : undefined}
+                                >
+                                  {valeur.travail}
+                                </span>
+                              )}
+                              {valeur?.evenementiel && (
+                                <span
+                                  className="mx-auto mt-0.5 block w-fit rounded-sm px-1 text-[10px] font-bold leading-tight"
+                                  style={{
+                                    backgroundColor: horaireEvenementiel?.couleurFond,
+                                    color: horaireEvenementiel?.couleurTexte,
+                                  }}
+                                >
+                                  {valeur.evenementiel}
+                                </span>
+                              )}
+                            </>
                           )}
-                          {valeur?.evenementiel && (
-                            <span
-                              className="mx-auto mt-0.5 block w-fit rounded-sm px-1 text-[10px] font-bold leading-tight"
-                              style={{
-                                backgroundColor: horaireEvenementiel?.couleurFond,
-                                color: horaireEvenementiel?.couleurTexte,
-                              }}
-                            >
-                              {valeur.evenementiel}
-                            </span>
-                          )}
+                          {valeur?.informatif &&
+                            (valeur.travail ? (
+                              <span
+                                className="mx-auto mt-0.5 block w-fit rounded-sm px-1 text-[10px] font-bold leading-tight"
+                                style={{
+                                  backgroundColor: horaireInformatif?.couleurFond,
+                                  color: horaireInformatif?.couleurTexte,
+                                }}
+                              >
+                                {valeur.informatif}
+                              </span>
+                            ) : (
+                              <span className="block px-1 pt-0.5 text-xs font-semibold leading-tight">
+                                {valeur.informatif}
+                              </span>
+                            ))}
                         </td>
                       );
                     })}
@@ -836,6 +887,7 @@ export default function PlanningGrid() {
           <HoraireCodeSelector
             position={positionEdition}
             aUneValeur={editionAUneValeur}
+            valeurActuelle={valeurActuelleEdition}
             actionRoulement={
               roulementPourEdition
                 ? {

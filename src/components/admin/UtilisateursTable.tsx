@@ -2,6 +2,12 @@
 
 import type { Utilisateur } from "@/lib/mock-data";
 
+const STYLE_TYPE_UTILISATEUR: Record<Utilisateur["typeUtilisateur"], string> = {
+  Administrateur: "bg-amber-100 text-amber-800",
+  Manager: "bg-blue-100 text-blue-800",
+  Utilisateur: "bg-zinc-100 text-zinc-600",
+};
+
 type UtilisateursTableProps = {
   utilisateurs: Utilisateur[];
   onModifier: (utilisateur: Utilisateur) => void;
@@ -36,11 +42,7 @@ export default function UtilisateursTable({ utilisateurs, onModifier, onSupprime
             <td className="px-3 py-2 text-zinc-500">{utilisateur.email}</td>
             <td className="px-3 py-2">
               <span
-                className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${
-                  utilisateur.typeUtilisateur === "Administrateur"
-                    ? "bg-amber-100 text-amber-800"
-                    : "bg-zinc-100 text-zinc-600"
-                }`}
+                className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${STYLE_TYPE_UTILISATEUR[utilisateur.typeUtilisateur]}`}
               >
                 {utilisateur.typeUtilisateur}
               </span>

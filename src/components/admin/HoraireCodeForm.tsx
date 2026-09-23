@@ -1,13 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type {
-  HoraireCategorie,
-  HoraireCode,
-  Plage,
-  RegleHeuresEvenement,
-  TypeEvenement,
-} from "@/lib/horaire-codes";
+import type { HoraireCategorie, HoraireCode, Plage, TypeEvenement } from "@/lib/horaire-codes";
 import { dureeHeures } from "@/lib/horaire-codes";
 import { PALETTE_FOND, PALETTE_TEXTE } from "@/lib/palette";
 import ColorField from "./ColorField";
@@ -16,28 +10,27 @@ const CATEGORIES: { valeur: HoraireCategorie; libelle: string }[] = [
   { valeur: "travail", libelle: "Travail (plages horaires)" },
   { valeur: "informatif", libelle: "Informatif" },
   { valeur: "evenementiel", libelle: "Événementiel" },
-  { valeur: "special", libelle: "Particulier (repos / absence)" },
 ];
 
 const TYPES_EVENEMENT: { valeur: TypeEvenement; libelle: string; description: string }[] = [
   {
-    valeur: "superposition",
-    libelle: "Superposition",
+    valeur: "special",
+    libelle: "Spécial",
     description:
-      "Se superpose au code de travail et écrase entièrement le décompte d'heures (le code de travail reste visible mais barré).",
+      "Se superpose au code de travail et efface son affichage (la cellule montre uniquement ce code, en pleine cellule) — mais garde ses heures : le décompte reste celui du code de travail, visible au survol. Pas de durée propre.",
   },
   {
-    valeur: "complement",
-    libelle: "Complément à la volée",
+    valeur: "normal",
+    libelle: "Normal",
     description:
-      "Une plage horaire est saisie au moment de positionner l'évènement sur le planning : elle vient en heures en moins si elle chevauche le code de travail, en heures en plus sinon. Le code de travail n'est pas barré.",
+      "Se superpose au code de travail, qui reste visible mais barré. Sa durée propre remplace entièrement celle du code de travail.",
   },
-];
-
-const REGLES_HEURES: { valeur: RegleHeuresEvenement; libelle: string }[] = [
-  { valeur: "zero", libelle: "0 heure" },
-  { valeur: "code_initial", libelle: "Heures du code horaire initial" },
-  { valeur: "personnalise", libelle: "Personnalisé" },
+  {
+    valeur: "partiel",
+    libelle: "Partiel",
+    description:
+      "Une ou plusieurs plages horaires sont saisies au moment de positionner l'évènement sur le planning : chaque plage vient en heures en moins si elle chevauche le code de travail, en heures en plus sinon. Le code de travail n'est pas barré.",
+  },
 ];
 
 const PLAGE_VIDE: Plage = { debut: "", fin: "" };
@@ -67,12 +60,9 @@ export default function HoraireCodeForm({
   );
   const [action, setAction] = useState(valeurInitiale?.action ?? "Se superpose au code horaire");
   const [typeEvenement, setTypeEvenement] = useState<TypeEvenement>(
-    valeurInitiale?.typeEvenement ?? "superposition"
+    valeurInitiale?.typeEvenement ?? "special"
   );
-  const [regleHeures, setRegleHeures] = useState<RegleHeuresEvenement>(valeurInitiale?.regleHeures ?? "zero");
-  const [heuresPersonnalisees, setHeuresPersonnalisees] = useState(
-    valeurInitiale?.heuresPersonnalisees?.toString() ?? ""
-  );
+  const [duree, setDuree] = useState(valeurInitiale?.duree?.toString() ?? "");
   const [afficherVueAnnuelle, setAfficherVueAnnuelle] = useState(
     valeurInitiale?.afficherVueAnnuelle ?? false
   );
@@ -133,11 +123,8 @@ export default function HoraireCodeForm({
     if (categorie === "evenementiel") {
       nouveauCode.action = action.trim() || undefined;
       nouveauCode.typeEvenement = typeEvenement;
-      if (typeEvenement === "superposition") {
-        nouveauCode.regleHeures = regleHeures;
-        if (regleHeures === "personnalise") {
-          nouveauCode.heuresPersonnalisees = Number(heuresPersonnalisees) || 0;
-        }
+      if (typeEvenement === "normal") {
+        nouveauCode.duree = Number(duree) || 0;
       }
     }
 
@@ -254,12 +241,6 @@ export default function HoraireCodeForm({
           </div>
         )}
 
-        {categorie === "special" && (
-          <p className="rounded bg-zinc-50 p-2 text-xs text-zinc-500">
-            Code particulier : pas de plage horaire, 0h de travail comptabilisée.
-          </p>
-        )}
-
         {categorie === "evenementiel" && (
           <div className="space-y-3 rounded border border-zinc-200 p-3">
             <div>
@@ -295,39 +276,33 @@ export default function HoraireCodeForm({
                 ))}
               </div>
             </div>
-            {typeEvenement === "superposition" ? (
+            {typeEvenement === "special" && (
+              <p className="rounded bg-zinc-50 p-2 text-xs text-zinc-500">
+                Pas de durée propre : les heures comptabilisées restent celles du code de travail
+                superposé (visible au survol de la case dans le planning).
+              </p>
+            )}
+            {typeEvenement === "normal" && (
               <div>
                 <label className="mb-1 block text-xs font-medium text-zinc-700">
-                  Total d&apos;heures comptabilisées
+                  Durée (remplace celle du code de travail)
                 </label>
-                <select
-                  value={regleHeures}
-                  onChange={(e) => setRegleHeures(e.target.value as RegleHeuresEvenement)}
-                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-                >
-                  {REGLES_HEURES.map((r) => (
-                    <option key={r.valeur} value={r.valeur}>
-                      {r.libelle}
-                    </option>
-                  ))}
-                </select>
-                {regleHeures === "personnalise" && (
-                  <input
-                    type="number"
-                    min={0}
-                    step={0.5}
-                    value={heuresPersonnalisees}
-                    onChange={(e) => setHeuresPersonnalisees(e.target.value)}
-                    className="mt-2 w-24 rounded border border-zinc-300 px-2 py-1 text-sm"
-                    placeholder="Heures"
-                  />
-                )}
+                <input
+                  type="number"
+                  min={0}
+                  step={0.5}
+                  value={duree}
+                  onChange={(e) => setDuree(e.target.value)}
+                  className="w-24 rounded border border-zinc-300 px-2 py-1 text-sm"
+                  placeholder="Heures"
+                />
               </div>
-            ) : (
+            )}
+            {typeEvenement === "partiel" && (
               <p className="rounded bg-zinc-50 p-2 text-xs text-zinc-500">
-                Les heures sont calculées automatiquement à partir de la plage saisie au moment de
-                positionner l&apos;évènement sur le planning (chevauchement du code de travail = heures en
-                moins, hors travail = heures en plus).
+                Les heures sont calculées automatiquement à partir de la ou des plages saisies au
+                moment de positionner l&apos;évènement sur le planning (chevauchement du code de
+                travail = heures en moins, hors travail = heures en plus).
               </p>
             )}
           </div>

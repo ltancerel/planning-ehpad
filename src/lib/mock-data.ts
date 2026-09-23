@@ -12,7 +12,7 @@ export type Salarie = {
 export type ProfilUtilisateur = {
   nom: string;
   prenom: string;
-  typeUtilisateur: "Administrateur" | "Utilisateur";
+  typeUtilisateur: "Administrateur" | "Manager" | "Utilisateur";
   service: string;
   poste: string;
 };
@@ -32,7 +32,7 @@ export type Utilisateur = {
   nom: string;
   prenom: string;
   email: string;
-  typeUtilisateur: "Administrateur" | "Utilisateur";
+  typeUtilisateur: "Administrateur" | "Manager" | "Utilisateur";
   service: string;
   poste: string;
 };
@@ -56,9 +56,19 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
     nom: "LAMBERT",
     prenom: "Sophie",
     email: "sophie.lambert@example.fr",
-    typeUtilisateur: "Utilisateur",
+    typeUtilisateur: "Manager",
     service: "IDE",
     poste: "Infirmière coordinatrice",
+  },
+  {
+    id: "u3",
+    identifiant: "JDU",
+    nom: "DURAND",
+    prenom: "Julien",
+    email: "julien.durand@example.fr",
+    typeUtilisateur: "Utilisateur",
+    service: "ASH CDD",
+    poste: "Agent",
   },
 ];
 
@@ -414,10 +424,14 @@ function seedAleatoire(seed: number) {
   };
 }
 
-const CODES_TRAVAIL_DEMO = ["60S", "70A", "185", "SEC", "OK", "."];
-// CAR/ABI/MAL se superposent à un code travail (cf. CDC) ; CP s'utilise seul.
-const CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO = ["CAR", "MAL", "ABI"];
-const CODES_AUTONOMES_DEMO = ["CP"];
+const CODES_TRAVAIL_DEMO = ["60S", "70A", "185", "SEC", "OK"];
+const CODE_REPOS_DEMO = "."; // informatif, jamais un code travail — voir note ci-dessous
+// Codes évènementiels "special"/"normal" (se superposent à un code travail
+// déjà présent, cf. redéfinition du 23/09 — un évènementiel ne s'applique
+// jamais sur une cellule vide). Les codes "partiel" (ABT/HSP/CARP) exigent
+// une ou plusieurs plages saisies à la volée, non générées aléatoirement ici
+// — cf. EXEMPLES_EMARGEMENT plus bas pour des cas déterministes.
+const CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO = ["CP", "MAL", "CARJ", "ABA", "ABI"];
 
 export function genererPlanningDemo(salaries: Salarie[], dates: string[]): Record<string, ValeurCellule> {
   const rng = seedAleatoire(42);
@@ -428,12 +442,15 @@ export function genererPlanningDemo(salaries: Salarie[], dates: string[]): Recor
       if (tirage < 0.12) continue; // jamais remplie
 
       const cle = `${salarie.id}__${date}`;
-      if (tirage < 0.2) {
-        const code = CODES_AUTONOMES_DEMO[Math.floor(rng() * CODES_AUTONOMES_DEMO.length)];
-        planning[cle] = { travail: code };
+      // Jour de repos : code informatif seul, jamais de code évènementiel
+      // dessus (un évènementiel exige un travail, cf. redéfinition du
+      // 23/09 — ancien bug de démo corrigé le 23/09 : REPOS figurait à
+      // tort dans le pool des codes travail, produisant des cellules
+      // CP/MAL superposées à un "travail" qui n'en était pas un).
+      if (rng() < 0.15) {
+        planning[cle] = { informatif: CODE_REPOS_DEMO };
         continue;
       }
-
       const travail = CODES_TRAVAIL_DEMO[Math.floor(rng() * CODES_TRAVAIL_DEMO.length)];
       if (rng() < 0.15) {
         const evenementiel =
@@ -467,8 +484,13 @@ export const PLANNING_DEMO = genererPlanningDemo(
 // je n'ai pas besoin de plusieurs exemples").
 const EXEMPLE_TRAVAIL = "70A"; // 07:00-13:00 / 14:00-19:00
 const EXEMPLES_EMARGEMENT: { date: string; valeur: ValeurCellule }[] = [
-  { date: "2026-09-03", valeur: { travail: "CP" } }, // absence
-  { date: "2026-09-08", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "MAL" } }, // superposition (maladie)
+  // "special" : le travail est effacé de l'affichage (pleine cellule CP/MAL)
+  // mais ses heures restent comptées (retour client du 23/09).
+  { date: "2026-09-03", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "CP" } }, // congés
+  { date: "2026-09-08", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "MAL" } }, // maladie
+  // "normal" : le travail reste visible mais barré, remplacé par la durée
+  // propre du code évènementiel (ABI : 0h).
+  { date: "2026-09-10", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "ABI" } }, // absence injustifiée
   {
     date: "2026-09-15",
     valeur: {
@@ -490,6 +512,10 @@ const EXEMPLES_EMARGEMENT: { date: string; valeur: ValeurCellule }[] = [
       ],
     },
   },
+  // Code informatif : jamais d'heures propres. En dessous du travail s'il y
+  // en a un (24/09), en pleine case sinon (25/09) — cf. retour client du 23/09.
+  { date: "2026-09-24", valeur: { travail: EXEMPLE_TRAVAIL, informatif: "ABS" } },
+  { date: "2026-09-25", valeur: { informatif: "." } },
 ];
 for (const salarie of SALARIES.filter((s) => s.service !== SERVICE_BESOINS)) {
   for (const { date, valeur } of EXEMPLES_EMARGEMENT) {

@@ -7,7 +7,12 @@ const LIBELLE_CATEGORIE: Record<HoraireCode["categorie"], string> = {
   travail: "Travail",
   informatif: "Informatif",
   evenementiel: "Événementiel",
-  special: "Particulier",
+};
+
+const LIBELLE_TYPE_EVENEMENT: Record<NonNullable<HoraireCode["typeEvenement"]>, string> = {
+  special: "Spécial",
+  normal: "Normal",
+  partiel: "Partiel",
 };
 
 type HoraireCodesTableProps = {
@@ -31,6 +36,7 @@ export default function HoraireCodesTable({ codes, onModifier, onSupprimer }: Ho
           <th className="px-3 py-2">Catégorie</th>
           <th className="px-3 py-2">Plages</th>
           <th className="px-3 py-2">Heures/jour</th>
+          <th className="px-3 py-2">Type</th>
           <th className="px-3 py-2">Commentaire</th>
           <th className="px-3 py-2" />
         </tr>
@@ -52,7 +58,10 @@ export default function HoraireCodesTable({ codes, onModifier, onSupprimer }: Ho
             <td className="px-3 py-2 text-zinc-600">
               {code.categorie === "travail" ? `${dureeHeures(code.plages)}h` : "—"}
             </td>
-            <td className="max-w-[16rem] truncate px-3 py-2 text-zinc-500" title={code.commentaire}>
+            <td className="px-3 py-2 text-zinc-600">
+              {code.typeEvenement ? LIBELLE_TYPE_EVENEMENT[code.typeEvenement] : "—"}
+            </td>
+            <td className="max-w-[12rem] truncate px-3 py-2 text-zinc-500" title={code.commentaire}>
               {code.commentaire ?? "—"}
             </td>
             <td className="px-3 py-2 text-right">
@@ -73,7 +82,7 @@ export default function HoraireCodesTable({ codes, onModifier, onSupprimer }: Ho
         ))}
         {codes.length === 0 && (
           <tr>
-            <td colSpan={7} className="px-3 py-6 text-center text-sm text-zinc-400">
+            <td colSpan={8} className="px-3 py-6 text-center text-sm text-zinc-400">
               Aucun code horaire.
             </td>
           </tr>

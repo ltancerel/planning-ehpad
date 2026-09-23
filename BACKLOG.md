@@ -332,6 +332,65 @@ export réel, connecteur paie.
   chaque plage, chacune validée indépendamment (incluse/exclue du code de
   travail). `ValeurCellule.evenementielPlage` (une plage) devient
   `evenementielPlages` (tableau)._
+  _Redéfinition du 23/09 (nouvelle revue client) : les catégories de code
+  horaire passent de 4 à 3 — Travail / Informatif / Évènementiel — la
+  catégorie "Particulier" disparaît, REPOS (`.`) et ABSENCE rejoignent
+  Informatif. Le couple "Superposition"/"Complément à la volée" +
+  `regleHeures` implicite est remplacé par un champ `typeEvenement` explicite
+  à 3 valeurs, choisi par code dans l'admin :_
+  _- **spécial** (CP, MAL, CARJ, ABA) : superpose le travail et l'efface à
+  l'affichage (case pleine), sans toucher à ses heures — l'infobulle
+  affiche le code de travail conservé et ses heures._
+  _- **normal** (ABI) : le travail reste visible mais barré, l'évènementiel
+  s'affiche dessous ; une durée propre au code (`duree`, ex. 0h) remplace
+  entièrement les heures du travail._
+  _- **partiel** (ABT, HSP, CARP) : inchangé (ex-"Complément à la volée"),
+  plages ad-hoc en delta._
+  _`CAR` est retiré au profit de deux codes distincts : `CARJ` (spécial,
+  carence maladie journalière) et `CARP` (partiel, carence maladie
+  partielle). `ABA` (congé sans solde) est désormais explicitement rattaché
+  à "spécial" comme `CP` — il n'avait auparavant aucun type d'évènement, ce
+  qui le faisait remplacer toute la cellule au lieu de se superposer (bug
+  latent corrigé au passage, avec le même défaut dans le formulaire admin qui
+  présélectionnait silencieusement "Superposition" pour tout code sans type)._
+  _Nouvelles règles de composition de cellule (jusqu'à 2 codes parmi
+  travail/informatif/évènementiel, jamais les 3) : poser un travail efface
+  toujours l'informatif et l'évènementiel existants ; un évènementiel ne
+  peut se poser que sur une cellule ayant déjà du travail, jamais sur une
+  cellule vide ; poser un évènementiel est refusé si un informatif est déjà
+  présent ; un informatif peut en revanche se poser sur un évènementiel sauf
+  si le travail est aussi présent. Filtrage appliqué directement dans le
+  sélecteur de code (options masquées plutôt qu'erreur après coup)._
+  _Modèle de données mis à jour en conséquence (cf. issue #25) : `CHECK` sur
+  `code_horaire` liant `categorie`/`type_evenement`/`duree_heures`, `CHECK`
+  sur `journee` empêchant un évènementiel sans travail et les 3 codes à la
+  fois, nouvelle colonne `journee.code_informatif_id`, et les anciennes
+  colonnes `journee.evenementiel_plage_debut/fin` remplacées par une table
+  `journee_evenementiel_plage` (une ligne par plage, pour suivre l'ajout du
+  22/09 ci-dessus) — détail dans l'artefact du modèle de données._
+  _Correction du 23/09 (vue émargement mensuelle oubliée lors de la
+  redéfinition ci-dessus) : le code informatif n'y était pas du tout affiché
+  — corrigé, même règle que la grille planning (sous le travail s'il y en a
+  un, en pleine case sinon)._
+  _Précision du 23/09 (retour client) : sur la vue émargement mensuelle
+  seulement (pas la grille planning, dont les cases sont trop petites pour
+  tout montrer), le code de travail reste **toujours visible**, y compris
+  avec un code événementiel spécial — la note "conservé" devenue redondante
+  est retirée, le décompte d'heures du travail suffit._
+  _Correction du 23/09 (données de démo, retour client) : le générateur
+  aléatoire de la grille planning incluait par erreur `.` (REPOS, catégorie
+  informatif) dans le pool des codes travail — un évènementiel (CP, MAL…)
+  pouvait donc se retrouver visuellement superposé à un jour de repos, comme
+  si REPOS était un code travail valide, ce qui n'est pas possible (un
+  évènementiel exige un vrai code travail dessous). REPOS est désormais
+  généré séparément, comme code informatif seul, jamais sous un
+  évènementiel. Vérifié : 0 anomalie sur les 6736 cellules de démo générées._
+  _Amélioration du 23/09 (retour client) : le sélecteur de code horaire
+  distingue désormais clairement ses 3 catégories par un intitulé de groupe
+  ("Codes de travail" / "Codes informatifs" / "Codes évènementiels"), dans
+  cet ordre — auparavant seule la frontière avant les codes "superposables"
+  était marquée, sans distinguer travail d'informatif ni faire apparaître
+  les codes évènementiels "partiel" dans un groupe identifié._
 
 - [x] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
@@ -413,6 +472,34 @@ export réel, connecteur paie.
   jetons), `FiltreSalarie`/`FILTRES_SALARIE` remplacés par le type
   `FiltresAvances` (un `Set` de valeurs par critère)._
 
+- [x] **20. Ajouter le rôle Manager** _(issue #22)_
+  Retour client du 23/09, première d'une liste de 6 évolutions à traiter une
+  par une (chacune son propre commit). Nouveau type de compte, entre
+  Administrateur et Utilisateur :
+  - **Administrateur** : tous les droits, y compris l'accès au menu
+    Administration (inchangé).
+  - **Manager** (nouveau) : peut modifier le planning (poser/effacer un code
+    sur une case — équivalent à ce que "Utilisateur" pouvait déjà faire dans
+    la maquette, la sélection multiple/l'effacement groupé/l'application de
+    roulement restant réservés à l'Administrateur), mais sans accès au menu
+    Administration.
+  - **Utilisateur** (redéfini) : consultation seule, aucune modification —
+    avant cette story, un compte Utilisateur pouvait déjà ouvrir une case et
+    y poser un code (aucune garde n'existait sur le clic simple, seules la
+    sélection multiple et l'application de roulement étaient réservées à
+    l'Administrateur) ; ce comportement bascule désormais sur Manager.
+  _Statut : fait. `typeUtilisateur` étendu à 3 valeurs (`ProfilUtilisateur`,
+  `Utilisateur`) ; nouvelle variable `peutEditerPlanning` (Administrateur ou
+  Manager) gate l'ouverture d'une case en édition (`onClick`), remplaçant
+  l'absence de garde précédente ; le lien "Administration" n'est désormais
+  affiché que pour l'Administrateur (auparavant toujours visible, jamais
+  testé avec un autre rôle puisque `UTILISATEUR_CONNECTE` est figé en
+  Administrateur dans cette maquette sans authentification réelle). Formulaire
+  et liste Admin > Utilisateurs mis à jour (3 types sélectionnables, badge de
+  couleur par type). Vérifié en basculant temporairement `UTILISATEUR_CONNECTE`
+  sur chacun des 3 rôles : Administrateur (tout, lien visible), Manager
+  (édition OK, lien masqué), Utilisateur (case non cliquable, lien masqué)._
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis
@@ -460,10 +547,25 @@ produit des écrans, celui-ci produit des **livrables de conception**
 l'implémentation du backend dans un epic ultérieur.
 
 **Décisions déjà actées (échanges du 17/09)** :
-- Trois profils de compte : *Administrateur Système* (supervision globale, dont
+- Profils de compte : *Administrateur Système* (supervision globale, dont
   visualisation des logs), *Administrateur* (métier — directeur EHPAD ou
   adjoint, commun aux applications), *Utilisateur* (accès indépendant par
   application : aucune, une seule, ou les deux). Le salarié n'a pas de compte.
+  **Mise à jour du 23/09** : un 4e profil *Manager* s'intercale entre
+  Administrateur et Utilisateur — cf. story « Ajouter le rôle Manager »
+  dans l'EPIC Maquette graphique ci-dessus pour son périmètre de droits
+  (modification du planning, pas d'accès au menu Administration).
+  [Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  mis à jour en conséquence (domaine A, `compte.type_compte` passe à 3
+  valeurs, `CHECK` ajouté) — avec une implication jusque-là jamais posée
+  en base : la policy RLS ne peut plus se limiter au scope `ehpad_id`
+  (2 niveaux de droits seulement auparavant, la distinction restait
+  côté front) ; elle doit désormais aussi conditionner l'écriture selon
+  `type_compte` (administrateur : tout ; manager : `journee`/
+  `journee_evenementiel_plage` uniquement ; utilisateur : lecture seule)
+  — détaillé dans la note « type_compte : 3 niveaux de droits ». Reste
+  un modèle de conception, l'implémentation réelle des policies relève
+  de l'Epic backend.
 - Réinitialisation de mot de passe : l'administrateur fixe directement un
   nouveau mot de passe (flux principal, sans email) ; un flux libre-service par
   email nécessiterait un fournisseur SMTP externe (le service email intégré de
