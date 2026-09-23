@@ -101,6 +101,23 @@ Grille principale de gestion du planning des salariés.
 - Une case peut être vidée à tout moment ; elle redevient alors disponible
   pour une nouvelle planification.
 
+**Règles de composition d'une case** — résumé des conditions ci-dessus,
+appliquées par le sélecteur (options masquées plutôt qu'erreur après coup) :
+
+| Code à poser | Condition sur la case | Résultat |
+|---|---|---|
+| Travail | Toujours, quel que soit le contenu actuel | Remplace tout : informatif et évènementiel existants sont effacés |
+| Informatif | Pas déjà travail **et** évènementiel ensemble | Ajouté (ou remplace l'informatif déjà présent) |
+| Informatif | Travail **et** évènementiel déjà présents ensemble | Refusé — 3 codes sur une case sont impossibles |
+| Évènementiel | Travail présent, et pas d'informatif | Ajouté (ou remplace l'évènementiel déjà présent) |
+| Évènementiel | Case vide, ou informatif déjà présent | Refusé — un évènementiel exige un travail et n'accepte pas d'informatif à côté |
+
+En **sélection multiple** (cf. § Sélection multiple ci-dessous), la même
+règle s'applique case par case : l'option n'apparaît dans le sélecteur que
+si **toutes** les cases sélectionnées la satisfont (sélection homogène) ;
+sinon elle est masquée entièrement pour l'ensemble de la sélection, plutôt
+que d'être appliquée sur certaines cases et pas d'autres.
+
 #### Roulements (motifs récurrents)
 
 - Un salarié peut se voir assigner un **roulement** : un motif d'horaires se
@@ -118,24 +135,39 @@ Grille principale de gestion du planning des salariés.
   de la place à l'écran qu'après ce second clic, plutôt que d'être affiché
   d'emblée (retours client du 22/09).
 - Il est également possible de sélectionner plusieurs salariés à la fois
-  (sur un même jour) pour appliquer en une seule action le roulement en
-  cours de chacun ; un récapitulatif indique qui sera planifié, qui est déjà
-  planifié (donc ignoré) et qui n'a pas de roulement assigné. Dans ce cas,
-  le sélecteur de semaine de départ n'est volontairement pas proposé
-  (toujours la semaine 1 du motif de chacun) : les salariés sélectionnés
-  peuvent avoir des roulements de longueurs différentes, un même choix de
-  semaine de départ serait ambigu d'un salarié à l'autre.
+  (sur un même jour, cf. § Sélection multiple ci-dessous) pour appliquer en
+  une seule action le roulement en cours de chacun, via l'option « Appliquer
+  le roulement de chacun » du menu de sélection ; un récapitulatif indique
+  qui sera planifié, qui est déjà planifié (donc ignoré) et qui n'a pas de
+  roulement assigné. Dans ce cas, le sélecteur de semaine de départ n'est
+  volontairement pas proposé (toujours la semaine 1 du motif de chacun) :
+  les salariés sélectionnés peuvent avoir des roulements de longueurs
+  différentes, un même choix de semaine de départ serait ambigu d'un
+  salarié à l'autre.
 - Un roulement ne vient jamais écraser une case déjà remplie : si au moins
   une semaine de la période concernée contient déjà un code, l'application
   du roulement est bloquée pour ce salarié et la semaine en cause est
   signalée, plutôt que d'appliquer partiellement le roulement.
 
-#### Effacement de plages
+#### Sélection multiple
 
-- Il est possible de sélectionner un ensemble de cases déjà remplies (une ou
-  plusieurs lignes, un ou plusieurs jours) et de les effacer en une seule
-  action, après confirmation. Les cases effacées redeviennent disponibles
-  pour une nouvelle planification.
+- Il est possible de sélectionner par cliquer-glisser un ensemble de cases
+  (une ou plusieurs lignes, un ou plusieurs jours), **quel que soit leur
+  contenu actuel** — vides ou déjà remplies indifféremment (retour client du
+  23/09 : auparavant, glisser depuis une case vide déclenchait un mécanisme
+  différent, plus limité). Un menu apparaît alors avec les actions
+  possibles :
+  - **Appliquer un code** : ouvre le sélecteur de code horaire habituel et
+    applique le code choisi à chaque case de la sélection (même logique que
+    poser un code sur une seule case, cf. § Règles de composition d'une case
+    ci-dessus — appliquée case par case, sans confirmation).
+  - **Appliquer le roulement de chacun** : disponible uniquement si la
+    sélection ne porte que sur un seul jour (cf. § Roulements ci-dessus).
+  - **Effacer** : remet toutes les cases sélectionnées à l'état « jamais
+    remplie », disponibles pour une nouvelle planification. Sans
+    confirmation, comme pour l'effacement d'une seule case.
+  - Raccourci clavier : la touche Suppr/Retour arrière efface directement la
+    sélection en cours.
 
 #### Accès à la fiche d'un salarié
 
