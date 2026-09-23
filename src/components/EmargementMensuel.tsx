@@ -59,10 +59,11 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
     const horaireEvenementiel = valeur?.evenementiel ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel] : undefined;
     const heuresBase = valeur?.travail ? heuresDuCode(valeur.travail) : 0;
     const heures = valeur ? heuresReellesCellule(valeur) : 0;
-    // Type "superposition" : le code travail est barré (décompte écrasé) et
-    // remplacé par le décompte du code évènement. Type "complement" : le
+    // Type "normal" : le code travail est barré (décompte écrasé) et
+    // remplacé par le décompte du code évènement. Type "partiel" : le
     // delta (+/-) doit être explicitement visible, sans barrer le travail.
-    const travailBarre = horaireEvenementiel?.typeEvenement === "superposition";
+    // Type "special" : traité séparément (affichage plein, pas de barré).
+    const travailBarre = horaireEvenementiel?.typeEvenement === "normal";
     const delta = valeur ? deltaEvenementielCellule(valeur) : undefined;
     return { valeur, horaireTravail, horaireEvenementiel, heuresBase, heures, travailBarre, delta };
   }
@@ -125,7 +126,8 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                       valeurDuJour(jour);
                     const grise = estJourGrise(jour);
                     const plagesTravail = formatPlages(horaireTravail?.plages);
-                    const estComplement = horaireEvenementiel?.typeEvenement === "complement";
+                    const estPartiel = horaireEvenementiel?.typeEvenement === "partiel";
+                    const estSpecial = horaireEvenementiel?.typeEvenement === "special";
 
                     if (!dansLeMois) {
                       return (
@@ -152,8 +154,11 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                           </div>
 
                           {/* Code horaire de travail — au-dessus du code événementiel
-                              (empilés, cf. retour client du 17/09). */}
-                          {valeur?.travail && horaireTravail && (
+                              (empilés, cf. retour client du 17/09). Masqué si un
+                              évènement "special" est superposé : il efface l'affichage
+                              du travail tout en gardant ses heures (retour client du
+                              23/09). */}
+                          {!estSpecial && valeur?.travail && horaireTravail && (
                             <div
                               className="rounded px-1 py-0.5 leading-tight"
                               style={{
@@ -167,7 +172,7 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                               {plagesTravail && <div className="text-[9px]">{plagesTravail}</div>}
                             </div>
                           )}
-                          {valeur?.travail && (
+                          {!estSpecial && valeur?.travail && (
                             <div className="flex items-center gap-1 text-[10px]">
                               <span className={travailBarre ? "text-zinc-400 line-through" : "text-zinc-600"}>
                                 {heuresBase}h
@@ -186,8 +191,9 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                             </div>
                           )}
 
-                          {/* Code événementiel — superposition (décompte écrasé, cf.
-                              ci-dessus) ou complément à la volée (plage + delta). */}
+                          {/* Code événementiel — special (décompte du travail gardé,
+                              affichage plein), normal (décompte écrasé, cf. ci-dessus)
+                              ou partiel (plage + delta). */}
                           {valeur?.evenementiel && horaireEvenementiel && (
                             <div
                               className="rounded px-1 py-0.5 leading-tight"
@@ -198,7 +204,12 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                             >
                               <div className="text-[10px] font-bold">{horaireEvenementiel.code}</div>
                               <div className="text-[9px]">{horaireEvenementiel.intitule}</div>
-                              {estComplement && valeur.evenementielPlages && valeur.evenementielPlages.length > 0 && (
+                              {estSpecial && (
+                                <div className="text-[9px]">
+                                  {horaireTravail?.code ?? valeur.travail} conservé — {heures}h
+                                </div>
+                              )}
+                              {estPartiel && valeur.evenementielPlages && valeur.evenementielPlages.length > 0 && (
                                 <div className="text-[9px] font-semibold">
                                   {valeur.evenementielPlages.map((p) => `${p.debut}–${p.fin}`).join(", ")} (
                                   {delta !== undefined && delta >= 0 ? "+" : ""}

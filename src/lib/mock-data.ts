@@ -415,9 +415,12 @@ function seedAleatoire(seed: number) {
 }
 
 const CODES_TRAVAIL_DEMO = ["60S", "70A", "185", "SEC", "OK", "."];
-// CAR/ABI/MAL se superposent à un code travail (cf. CDC) ; CP s'utilise seul.
-const CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO = ["CAR", "MAL", "ABI"];
-const CODES_AUTONOMES_DEMO = ["CP"];
+// Codes évènementiels "special"/"normal" (se superposent à un code travail
+// déjà présent, cf. redéfinition du 23/09 — un évènementiel ne s'applique
+// jamais sur une cellule vide). Les codes "partiel" (ABT/HSP/CARP) exigent
+// une ou plusieurs plages saisies à la volée, non générées aléatoirement ici
+// — cf. EXEMPLES_EMARGEMENT plus bas pour des cas déterministes.
+const CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO = ["CP", "MAL", "CARJ", "ABA", "ABI"];
 
 export function genererPlanningDemo(salaries: Salarie[], dates: string[]): Record<string, ValeurCellule> {
   const rng = seedAleatoire(42);
@@ -428,12 +431,6 @@ export function genererPlanningDemo(salaries: Salarie[], dates: string[]): Recor
       if (tirage < 0.12) continue; // jamais remplie
 
       const cle = `${salarie.id}__${date}`;
-      if (tirage < 0.2) {
-        const code = CODES_AUTONOMES_DEMO[Math.floor(rng() * CODES_AUTONOMES_DEMO.length)];
-        planning[cle] = { travail: code };
-        continue;
-      }
-
       const travail = CODES_TRAVAIL_DEMO[Math.floor(rng() * CODES_TRAVAIL_DEMO.length)];
       if (rng() < 0.15) {
         const evenementiel =
@@ -467,8 +464,13 @@ export const PLANNING_DEMO = genererPlanningDemo(
 // je n'ai pas besoin de plusieurs exemples").
 const EXEMPLE_TRAVAIL = "70A"; // 07:00-13:00 / 14:00-19:00
 const EXEMPLES_EMARGEMENT: { date: string; valeur: ValeurCellule }[] = [
-  { date: "2026-09-03", valeur: { travail: "CP" } }, // absence
-  { date: "2026-09-08", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "MAL" } }, // superposition (maladie)
+  // "special" : le travail est effacé de l'affichage (pleine cellule CP/MAL)
+  // mais ses heures restent comptées (retour client du 23/09).
+  { date: "2026-09-03", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "CP" } }, // congés
+  { date: "2026-09-08", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "MAL" } }, // maladie
+  // "normal" : le travail reste visible mais barré, remplacé par la durée
+  // propre du code évènementiel (ABI : 0h).
+  { date: "2026-09-10", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "ABI" } }, // absence injustifiée
   {
     date: "2026-09-15",
     valeur: {

@@ -4,9 +4,12 @@ import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "
 import {
   HORAIRE_CODES,
   estCodeSuperposable,
-  estCodeComplement,
+  estCodePartiel,
+  peutAjouterInformatif,
+  peutAjouterEvenementiel,
   plageComplementValide,
   type Plage,
+  type ValeurCellule,
 } from "@/lib/horaire-codes";
 
 export type PositionSelecteur = { top: number; left: number; width: number };
@@ -17,6 +20,12 @@ type HoraireCodeSelectorProps = {
   /** Masque les codes événementiels (superposition) — non pertinents hors du
    * planning réel, ex. dans un roulement qui définit un motif récurrent. */
   masquerEvenementiels?: boolean;
+  /** Valeur actuelle de la cellule en édition — sert de garde-fou (retour
+   * client du 23/09) : un informatif ne s'ajoute pas si travail + évènementiel
+   * sont déjà tous les deux présents (jamais 3 codes à la fois) ; un
+   * évènementiel ne se superpose qu'à un travail déjà présent, jamais sur une
+   * cellule vide, et jamais si un informatif occupe déjà la cellule. */
+  valeurActuelle?: ValeurCellule;
   /** Raccourci proposé sur une case jamais remplie dont le salarié a un
    * roulement actuel : l'appliquer directement, sans bloquer la saisie
    * manuelle d'un code qui reste l'action la plus courante. Si le roulement
@@ -43,6 +52,7 @@ export default function HoraireCodeSelector({
   position,
   aUneValeur,
   masquerEvenementiels,
+  valeurActuelle,
   actionRoulement,
   onChoisir,
   onChoisirComplement,
@@ -84,12 +94,17 @@ export default function HoraireCodeSelector({
     setPositionAffichee({ top, left });
   }, [position.top, position.left, position.width, codeComplementEnSaisie, plages.length]);
 
+  const peutInformatif = !valeurActuelle || peutAjouterInformatif(valeurActuelle);
+  const peutEvenementiel = Boolean(valeurActuelle) && peutAjouterEvenementiel(valeurActuelle!);
+
   const codesDisponibles = useMemo(
     () =>
-      masquerEvenementiels
-        ? HORAIRE_CODES.filter((h) => h.categorie !== "evenementiel")
-        : HORAIRE_CODES,
-    [masquerEvenementiels]
+      HORAIRE_CODES.filter((h) => {
+        if (h.categorie === "evenementiel") return !masquerEvenementiels && peutEvenementiel;
+        if (h.categorie === "informatif") return peutInformatif;
+        return true;
+      }),
+    [masquerEvenementiels, peutInformatif, peutEvenementiel]
   );
 
   const resultats = useMemo(() => {
@@ -129,7 +144,7 @@ export default function HoraireCodeSelector({
   }
 
   function surChoixCode(code: string) {
-    if (onChoisirComplement && estCodeComplement(code)) {
+    if (onChoisirComplement && estCodePartiel(code)) {
       setCodeComplementEnSaisie(code);
       return;
     }

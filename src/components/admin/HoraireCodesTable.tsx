@@ -7,7 +7,6 @@ const LIBELLE_CATEGORIE: Record<HoraireCode["categorie"], string> = {
   travail: "Travail",
   informatif: "Informatif",
   evenementiel: "Événementiel",
-  special: "Particulier",
 };
 
 type HoraireCodesTableProps = {
