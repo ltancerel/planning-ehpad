@@ -57,20 +57,38 @@ Grille principale de gestion du planning des salariés.
 
 - Un clic sur une case ouvre un sélecteur de code horaire (recherche par
   code ou par intitulé), avec aperçu de la couleur du code.
-- Deux familles de codes horaires peuvent être posées sur une case :
+- Redéfini le 23/09 (revue client) : trois catégories de code horaire,
+  jusqu'à deux posées simultanément sur une même case (jamais les trois) :
   - **Code de travail** : détermine les heures effectivement travaillées à
     partir des plages horaires définies pour ce code (ex. 07:00–13:00 /
-    14:00–19:00).
-  - **Code événementiel** : vient qualifier ou modifier un jour. Deux
-    comportements possibles, définis par l'administrateur sur chaque code :
-    - **Superposition** (ex. Maladie, Carence maladie, Absence injustifiée) :
-      se superpose au code de travail du jour et **remplace entièrement**
-      le décompte d'heures de la journée (règle définie sur le code : 0
-      heure, heures du code de travail initial, ou nombre d'heures
-      personnalisé). Le code de travail reste affiché mais barré, et le
-      nombre d'heures résultant est indiqué à côté.
-    - **Complément à la volée** (ex. Absence temporaire, Heures
-      supplémentaires) : au moment de poser le code, l'utilisateur saisit
+    14:00–19:00). Poser un code de travail efface toujours un code
+    informatif ou événementiel déjà présent sur la case.
+  - **Code informatif** (ex. Repos, Absence) : n'a aucune heure associée. Il
+    s'affiche en pleine case s'il est seul, ou en petit sous le code de
+    travail s'il y en a un. Il peut se poser sur une case portant déjà un
+    code événementiel, sauf si un code de travail y est aussi présent (ce
+    serait alors trois codes sur la même case). Un code informatif ne peut
+    jamais se combiner avec un code événementiel sans code de travail —
+    l'utilisateur doit d'abord effacer explicitement l'informatif pour poser
+    un événementiel, jamais l'inverse implicitement.
+  - **Code événementiel** : vient qualifier ou modifier un jour, et ne peut
+    se poser **que** sur une case portant déjà un code de travail (jamais
+    sur une case vide). Le sélecteur masque les codes événementiels tant
+    qu'aucun travail n'est posé, et masque le code informatif dès qu'un
+    événementiel est déjà présent avec le travail. Trois comportements
+    possibles, définis par l'administrateur sur chaque code :
+    - **Spécial** (ex. Congés, Maladie, Carence maladie journalière, Congé
+      sans solde) : se superpose au code de travail et **l'efface
+      entièrement à l'affichage** (la case affiche uniquement le code
+      événementiel), sans toucher au décompte d'heures — les heures du code
+      de travail restent comptées telles quelles, et un survol de la case
+      rappelle le code de travail conservé et ses heures.
+    - **Normal** (ex. Absence injustifiée) : se superpose au code de
+      travail, qui reste affiché mais barré, avec le code événementiel
+      en dessous ; une durée propre au code événementiel **remplace
+      entièrement** le décompte d'heures de la journée.
+    - **Partiel** (ex. Absence temporaire, Heures supplémentaires, Carence
+      maladie partielle) : au moment de poser le code, l'utilisateur saisit
       une ou plusieurs plages horaires libres (une plage par défaut, avec
       un lien « + Ajouter une plage » pour en saisir d'autres — ex. une
       arrivée anticipée et un départ tardif le même jour). Pour chaque
@@ -80,8 +98,6 @@ Grille principale de gestion du planning des salariés.
       explicitement. Pour éviter toute ambiguïté, chaque plage saisie doit
       être **entièrement incluse** dans une plage du code de travail, ou
       **entièrement en dehors** : un chevauchement partiel est refusé.
-  - Certains codes (ex. Congés, Congé sans solde) s'utilisent seuls et
-    remplacent la case entière plutôt que de se superposer.
 - Une case peut être vidée à tout moment ; elle redevient alors disponible
   pour une nouvelle planification.
 
@@ -137,13 +153,16 @@ Vue calendaire mensuelle du planning d'un salarié, destinée à sa validation.
 - Pour chaque jour : le code de travail (avec son intitulé et ses plages
   horaires) est affiché au-dessus du code événementiel du jour, chacun dans
   sa propre couleur.
-  - Si le jour porte un code événementiel de type superposition, le
-    décompte d'heures initial du code de travail est barré et le nombre
-    d'heures réellement retenu (selon la règle du code événementiel)
-    apparaît à côté.
-  - Si le jour porte un code événementiel de type complément à la volée, la
-    plage horaire saisie et l'écart (+/− heures) sont affichés directement
-    sur ce code.
+  - Si le jour porte un code événementiel **spécial**, le code de travail
+    et son décompte d'heures ne sont plus affichés ; le code événementiel
+    occupe la case, avec une note rappelant le code de travail conservé et
+    ses heures (toujours comptées).
+  - Si le jour porte un code événementiel **normal**, le décompte d'heures
+    initial du code de travail est barré et le nombre d'heures réellement
+    retenu (la durée propre au code événementiel) apparaît à côté.
+  - Si le jour porte un code événementiel **partiel**, la ou les plages
+    horaires saisies et l'écart (+/− heures) sont affichés directement sur
+    ce code.
 - Un total d'heures est affiché pour chaque semaine (aligné à droite de la
   ligne) et pour le mois entier (en bas de la vue).
 - Un bouton permet de **valider le mois**, ce qui indique que le salarié
@@ -186,13 +205,16 @@ d'impression).
 - Liste des codes horaires existants, avec création, modification et
   suppression.
 - Pour chaque code : un code court, un intitulé, une couleur de fond et de
-  texte, une catégorie (Travail, Informatif, Particulier, Événementiel).
+  texte, une catégorie (Travail, Informatif, Événementiel — la catégorie
+  Particulier a été retirée le 23/09, ses codes Repos/Absence reclassés en
+  Informatif).
 - Pour un code de catégorie Travail : jusqu'à 4 plages horaires, avec calcul
   automatique du total d'heures.
-- Pour un code de catégorie Événementiel : choix du comportement
-  (superposition ou complément à la volée) et, pour la superposition, choix
-  de la règle de décompte d'heures (0 heure / heures du code initial /
-  nombre d'heures personnalisé).
+- Pour un code de catégorie Événementiel : choix explicite du type
+  (redéfini le 23/09) — **spécial** (aucune durée propre, superpose le
+  travail sans toucher à ses heures), **normal** (une durée propre
+  remplace celles du travail), ou **partiel** (plages ad-hoc saisies au
+  moment de poser le code, sans durée propre).
 - Une case à cocher détermine si le code doit apparaître dans la vue
   annuelle d'un salarié.
 - Un champ commentaire libre est disponible sur chaque code.
@@ -348,15 +370,18 @@ de détail : [modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7N
   salarié peut avoir eu plusieurs contrats successifs (CDD renouvelés,
   passage en CDI…), un seul étant actif à un instant donné.
 - **Codes horaires** : un code horaire porte les champs communs à toute
-  catégorie (Travail / Informatif / Particulier / Événementiel), ainsi que
-  les champs propres à la catégorie Événementiel (comportement, règle de
-  décompte).
+  catégorie (Travail / Informatif / Événementiel), ainsi que les champs
+  propres à la catégorie Événementiel — un type explicite (spécial / normal
+  / partiel) et, pour le type normal, une durée propre qui remplace celle
+  du travail. Garde-fous posés en `CHECK` sur leur cohérence mutuelle.
 - **Roulements** : un motif récurrent (nombre de semaines × 7 jours), et son
   affectation dans le temps à un salarié, avec historique des affectations
   successives.
-- **Planning & émargement** : une case par salarié et par jour, portant un
-  code de travail et/ou un code événementiel ; un enregistrement dédié
-  matérialise la validation mensuelle d'un salarié.
+- **Planning & émargement** : une case par salarié et par jour, portant
+  jusqu'à 2 codes parmi travail / informatif / événementiel (jamais les 3) ;
+  un événementiel ne peut être posé que si un travail l'est déjà, garanti
+  par `CHECK`. Un enregistrement dédié matérialise la validation mensuelle
+  d'un salarié.
 - **Calendrier** : une année planifiée par établissement, avec ses jours
   fériés fixes, calculés et personnalisés.
 - **Traçabilité** : un historique dédié aux valeurs successives d'une case

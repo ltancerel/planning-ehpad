@@ -332,6 +332,42 @@ export réel, connecteur paie.
   chaque plage, chacune validée indépendamment (incluse/exclue du code de
   travail). `ValeurCellule.evenementielPlage` (une plage) devient
   `evenementielPlages` (tableau)._
+  _Redéfinition du 23/09 (nouvelle revue client) : les catégories de code
+  horaire passent de 4 à 3 — Travail / Informatif / Évènementiel — la
+  catégorie "Particulier" disparaît, REPOS (`.`) et ABSENCE rejoignent
+  Informatif. Le couple "Superposition"/"Complément à la volée" +
+  `regleHeures` implicite est remplacé par un champ `typeEvenement` explicite
+  à 3 valeurs, choisi par code dans l'admin :_
+  _- **spécial** (CP, MAL, CARJ, ABA) : superpose le travail et l'efface à
+  l'affichage (case pleine), sans toucher à ses heures — l'infobulle
+  affiche le code de travail conservé et ses heures._
+  _- **normal** (ABI) : le travail reste visible mais barré, l'évènementiel
+  s'affiche dessous ; une durée propre au code (`duree`, ex. 0h) remplace
+  entièrement les heures du travail._
+  _- **partiel** (ABT, HSP, CARP) : inchangé (ex-"Complément à la volée"),
+  plages ad-hoc en delta._
+  _`CAR` est retiré au profit de deux codes distincts : `CARJ` (spécial,
+  carence maladie journalière) et `CARP` (partiel, carence maladie
+  partielle). `ABA` (congé sans solde) est désormais explicitement rattaché
+  à "spécial" comme `CP` — il n'avait auparavant aucun type d'évènement, ce
+  qui le faisait remplacer toute la cellule au lieu de se superposer (bug
+  latent corrigé au passage, avec le même défaut dans le formulaire admin qui
+  présélectionnait silencieusement "Superposition" pour tout code sans type)._
+  _Nouvelles règles de composition de cellule (jusqu'à 2 codes parmi
+  travail/informatif/évènementiel, jamais les 3) : poser un travail efface
+  toujours l'informatif et l'évènementiel existants ; un évènementiel ne
+  peut se poser que sur une cellule ayant déjà du travail, jamais sur une
+  cellule vide ; poser un évènementiel est refusé si un informatif est déjà
+  présent ; un informatif peut en revanche se poser sur un évènementiel sauf
+  si le travail est aussi présent. Filtrage appliqué directement dans le
+  sélecteur de code (options masquées plutôt qu'erreur après coup)._
+  _Modèle de données mis à jour en conséquence (cf. issue #25) : `CHECK` sur
+  `code_horaire` liant `categorie`/`type_evenement`/`duree_heures`, `CHECK`
+  sur `journee` empêchant un évènementiel sans travail et les 3 codes à la
+  fois, nouvelle colonne `journee.code_informatif_id`, et les anciennes
+  colonnes `journee.evenementiel_plage_debut/fin` remplacées par une table
+  `journee_evenementiel_plage` (une ligne par plage, pour suivre l'ajout du
+  22/09 ci-dessus) — détail dans l'artefact du modèle de données._
 
 - [x] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
