@@ -160,7 +160,13 @@ que d'être appliquée sur certaines cases et pas d'autres.
   - **Appliquer un code** : ouvre le sélecteur de code horaire habituel et
     applique le code choisi à chaque case de la sélection (même logique que
     poser un code sur une seule case, cf. § Règles de composition d'une case
-    ci-dessus — appliquée case par case, sans confirmation).
+    ci-dessus — appliquée case par case, sans confirmation). Les codes
+    évènementiels **partiel** (ABT, HSP, CARP — qui demandent une plage
+    horaire ad hoc saisie au moment de poser le code) ne sont volontairement
+    **pas proposés** en sélection multiple, contrairement à l'édition d'une
+    seule case : une même plage saisie une fois n'a pas de sens uniforme sur
+    des cases dont le code de travail (et donc les horaires de référence)
+    peut différer d'une case à l'autre.
   - **Appliquer le roulement de chacun** : disponible uniquement si la
     sélection ne porte que sur un seul jour (cf. § Roulements ci-dessus).
   - **Effacer** : remet toutes les cases sélectionnées à l'état « jamais
