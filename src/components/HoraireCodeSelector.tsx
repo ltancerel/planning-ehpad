@@ -3,16 +3,26 @@
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import {
   HORAIRE_CODES,
-  estCodeSuperposable,
   estCodePartiel,
   peutAjouterInformatif,
   peutAjouterEvenementiel,
   plageComplementValide,
+  type HoraireCategorie,
   type Plage,
   type ValeurCellule,
 } from "@/lib/horaire-codes";
 
 export type PositionSelecteur = { top: number; left: number; width: number };
+
+// Ordre et libellé des 3 catégories dans le sélecteur (retour client du
+// 23/09 : distinguer clairement Travail / Informatif / Évènementiel plutôt
+// que de ne marquer qu'une frontière entre "superposition" et le reste).
+const ORDRE_CATEGORIE: Record<HoraireCategorie, number> = { travail: 0, informatif: 1, evenementiel: 2 };
+const LIBELLE_GROUPE_CATEGORIE: Record<HoraireCategorie, string> = {
+  travail: "Codes de travail",
+  informatif: "Codes informatifs",
+  evenementiel: "Codes évènementiels",
+};
 
 type HoraireCodeSelectorProps = {
   position: PositionSelecteur;
@@ -115,8 +125,8 @@ export default function HoraireCodeSelector({
           (h) => h.code.toUpperCase().includes(terme) || h.intitule.toUpperCase().includes(terme)
         );
     return [...filtres].sort((a, b) => {
-      const groupeA = estCodeSuperposable(a.code) ? 1 : 0;
-      const groupeB = estCodeSuperposable(b.code) ? 1 : 0;
+      const groupeA = ORDRE_CATEGORIE[a.categorie];
+      const groupeB = ORDRE_CATEGORIE[b.categorie];
       if (groupeA !== groupeB) return groupeA - groupeB;
       return a.code.localeCompare(b.code);
     });
@@ -343,14 +353,17 @@ export default function HoraireCodeSelector({
       )}
       <ul className="flex-1 overflow-auto py-1">
         {resultats.map((horaire, index) => {
-          const superposable = estCodeSuperposable(horaire.code);
-          const premierSuperposable = superposable && !estCodeSuperposable(resultats[index - 1]?.code ?? "");
+          const premierDuGroupe = horaire.categorie !== resultats[index - 1]?.categorie;
 
           return (
             <li key={horaire.code}>
-              {premierSuperposable && (
-                <div className="mx-2 my-1 border-t border-zinc-100 pt-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
-                  Codes de superposition
+              {premierDuGroupe && (
+                <div
+                  className={`mx-2 my-1 pt-1 text-[10px] font-medium uppercase tracking-wide text-zinc-400 ${
+                    index > 0 ? "border-t border-zinc-100" : ""
+                  }`}
+                >
+                  {LIBELLE_GROUPE_CATEGORIE[horaire.categorie]}
                 </div>
               )}
               <button

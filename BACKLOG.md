@@ -385,6 +385,12 @@ export réel, connecteur paie.
   évènementiel exige un vrai code travail dessous). REPOS est désormais
   généré séparément, comme code informatif seul, jamais sous un
   évènementiel. Vérifié : 0 anomalie sur les 6736 cellules de démo générées._
+  _Amélioration du 23/09 (retour client) : le sélecteur de code horaire
+  distingue désormais clairement ses 3 catégories par un intitulé de groupe
+  ("Codes de travail" / "Codes informatifs" / "Codes évènementiels"), dans
+  cet ordre — auparavant seule la frontière avant les codes "superposables"
+  était marquée, sans distinguer travail d'informatif ni faire apparaître
+  les codes évènementiels "partiel" dans un groupe identifié._
 
 - [x] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
