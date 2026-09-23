@@ -472,6 +472,34 @@ export réel, connecteur paie.
   jetons), `FiltreSalarie`/`FILTRES_SALARIE` remplacés par le type
   `FiltresAvances` (un `Set` de valeurs par critère)._
 
+- [x] **20. Ajouter le rôle Manager** _(issue #22)_
+  Retour client du 23/09, première d'une liste de 6 évolutions à traiter une
+  par une (chacune son propre commit). Nouveau type de compte, entre
+  Administrateur et Utilisateur :
+  - **Administrateur** : tous les droits, y compris l'accès au menu
+    Administration (inchangé).
+  - **Manager** (nouveau) : peut modifier le planning (poser/effacer un code
+    sur une case — équivalent à ce que "Utilisateur" pouvait déjà faire dans
+    la maquette, la sélection multiple/l'effacement groupé/l'application de
+    roulement restant réservés à l'Administrateur), mais sans accès au menu
+    Administration.
+  - **Utilisateur** (redéfini) : consultation seule, aucune modification —
+    avant cette story, un compte Utilisateur pouvait déjà ouvrir une case et
+    y poser un code (aucune garde n'existait sur le clic simple, seules la
+    sélection multiple et l'application de roulement étaient réservées à
+    l'Administrateur) ; ce comportement bascule désormais sur Manager.
+  _Statut : fait. `typeUtilisateur` étendu à 3 valeurs (`ProfilUtilisateur`,
+  `Utilisateur`) ; nouvelle variable `peutEditerPlanning` (Administrateur ou
+  Manager) gate l'ouverture d'une case en édition (`onClick`), remplaçant
+  l'absence de garde précédente ; le lien "Administration" n'est désormais
+  affiché que pour l'Administrateur (auparavant toujours visible, jamais
+  testé avec un autre rôle puisque `UTILISATEUR_CONNECTE` est figé en
+  Administrateur dans cette maquette sans authentification réelle). Formulaire
+  et liste Admin > Utilisateurs mis à jour (3 types sélectionnables, badge de
+  couleur par type). Vérifié en basculant temporairement `UTILISATEUR_CONNECTE`
+  sur chacun des 3 rôles : Administrateur (tout, lien visible), Manager
+  (édition OK, lien masqué), Utilisateur (case non cliquable, lien masqué)._
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis
@@ -519,10 +547,25 @@ produit des écrans, celui-ci produit des **livrables de conception**
 l'implémentation du backend dans un epic ultérieur.
 
 **Décisions déjà actées (échanges du 17/09)** :
-- Trois profils de compte : *Administrateur Système* (supervision globale, dont
+- Profils de compte : *Administrateur Système* (supervision globale, dont
   visualisation des logs), *Administrateur* (métier — directeur EHPAD ou
   adjoint, commun aux applications), *Utilisateur* (accès indépendant par
   application : aucune, une seule, ou les deux). Le salarié n'a pas de compte.
+  **Mise à jour du 23/09** : un 4e profil *Manager* s'intercale entre
+  Administrateur et Utilisateur — cf. story « Ajouter le rôle Manager »
+  dans l'EPIC Maquette graphique ci-dessus pour son périmètre de droits
+  (modification du planning, pas d'accès au menu Administration).
+  [Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  mis à jour en conséquence (domaine A, `compte.type_compte` passe à 3
+  valeurs, `CHECK` ajouté) — avec une implication jusque-là jamais posée
+  en base : la policy RLS ne peut plus se limiter au scope `ehpad_id`
+  (2 niveaux de droits seulement auparavant, la distinction restait
+  côté front) ; elle doit désormais aussi conditionner l'écriture selon
+  `type_compte` (administrateur : tout ; manager : `journee`/
+  `journee_evenementiel_plage` uniquement ; utilisateur : lecture seule)
+  — détaillé dans la note « type_compte : 3 niveaux de droits ». Reste
+  un modèle de conception, l'implémentation réelle des policies relève
+  de l'Epic backend.
 - Réinitialisation de mot de passe : l'administrateur fixe directement un
   nouveau mot de passe (flux principal, sans email) ; un flux libre-service par
   email nécessiterait un fournisseur SMTP externe (le service email intégré de

@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { Utilisateur } from "@/lib/mock-data";
 import { SERVICES_ORDRE } from "@/lib/mock-data";
 
-const TYPES_UTILISATEUR: Utilisateur["typeUtilisateur"][] = ["Administrateur", "Utilisateur"];
+const TYPES_UTILISATEUR: Utilisateur["typeUtilisateur"][] = ["Administrateur", "Manager", "Utilisateur"];
 
 type UtilisateurFormProps = {
   valeurInitiale?: Utilisateur;
@@ -136,6 +136,10 @@ export default function UtilisateurForm({
               </option>
             ))}
           </select>
+          <p className="mt-1 text-[11px] text-zinc-400">
+            Administrateur : tous les droits, dont le menu Administration. Manager : peut modifier le
+            planning, sans accès au menu Administration. Utilisateur : consultation seule.
+          </p>
         </div>
 
         <div>

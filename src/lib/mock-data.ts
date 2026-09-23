@@ -12,7 +12,7 @@ export type Salarie = {
 export type ProfilUtilisateur = {
   nom: string;
   prenom: string;
-  typeUtilisateur: "Administrateur" | "Utilisateur";
+  typeUtilisateur: "Administrateur" | "Manager" | "Utilisateur";
   service: string;
   poste: string;
 };
@@ -32,7 +32,7 @@ export type Utilisateur = {
   nom: string;
   prenom: string;
   email: string;
-  typeUtilisateur: "Administrateur" | "Utilisateur";
+  typeUtilisateur: "Administrateur" | "Manager" | "Utilisateur";
   service: string;
   poste: string;
 };
@@ -56,9 +56,19 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
     nom: "LAMBERT",
     prenom: "Sophie",
     email: "sophie.lambert@example.fr",
-    typeUtilisateur: "Utilisateur",
+    typeUtilisateur: "Manager",
     service: "IDE",
     poste: "Infirmière coordinatrice",
+  },
+  {
+    id: "u3",
+    identifiant: "JDU",
+    nom: "DURAND",
+    prenom: "Julien",
+    email: "julien.durand@example.fr",
+    typeUtilisateur: "Utilisateur",
+    service: "ASH CDD",
+    poste: "Agent",
   },
 ];
 

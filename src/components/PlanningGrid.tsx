@@ -197,6 +197,11 @@ export default function PlanningGrid() {
     [jours]
   );
   const estAdministrateur = UTILISATEUR_CONNECTE.typeUtilisateur === "Administrateur";
+  // Le Manager peut modifier le planning (poser/effacer un code sur une case)
+  // mais pas la sélection multiple / l'application groupée de roulement, ni
+  // le menu Administration — réservés à l'Administrateur (retour client du
+  // 23/09 : nouveau rôle Manager). L'Utilisateur reste en lecture seule.
+  const peutEditerPlanning = estAdministrateur || UTILISATEUR_CONNECTE.typeUtilisateur === "Manager";
 
   function ouvrirEdition(cle: string, cellule: HTMLElement) {
     const rect = cellule.getBoundingClientRect();
@@ -612,12 +617,14 @@ export default function PlanningGrid() {
             >
               →
             </button>
-            <Link
-              href="/admin/horaires"
-              className="ml-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
-            >
-              Administration
-            </Link>
+            {estAdministrateur && (
+              <Link
+                href="/admin/horaires"
+                className="ml-2 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+              >
+                Administration
+              </Link>
+            )}
             <UserMenu />
           </div>
         </div>
@@ -766,14 +773,14 @@ export default function PlanningGrid() {
                               ? ` (${deltaComplement >= 0 ? "+" : ""}${deltaComplement}h)`
                               : ""
                           } — ${heuresReellesCellule(valeur)}h`
-                        : jamaisRemplie
+                        : jamaisRemplie && estAdministrateur
                           ? "Jamais planifiée — cliquer-glisser sur plusieurs salariés pour appliquer leur roulement"
                           : undefined;
 
                       return (
                         <td
                           key={cle}
-                          onClick={(e) => ouvrirEdition(cle, e.currentTarget)}
+                          onClick={peutEditerPlanning ? (e) => ouvrirEdition(cle, e.currentTarget) : undefined}
                           onMouseDown={
                             !estAdministrateur
                               ? undefined
@@ -791,7 +798,9 @@ export default function PlanningGrid() {
                                   etendreEffacement(salarie.id, dateISO);
                                 }
                           }
-                          className="cursor-pointer select-none border border-zinc-200 p-0 text-center align-middle"
+                          className={`select-none border border-zinc-200 p-0 text-center align-middle ${
+                            peutEditerPlanning ? "cursor-pointer" : "cursor-default"
+                          }`}
                           style={{
                             backgroundColor: enEdition
                               ? "#eff6ff"
