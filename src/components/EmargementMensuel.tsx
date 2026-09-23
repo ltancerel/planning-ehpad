@@ -136,7 +136,6 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                     const grise = estJourGrise(jour);
                     const plagesTravail = formatPlages(horaireTravail?.plages);
                     const estPartiel = horaireEvenementiel?.typeEvenement === "partiel";
-                    const estSpecial = horaireEvenementiel?.typeEvenement === "special";
 
                     if (!dansLeMois) {
                       return (
@@ -163,11 +162,11 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                           </div>
 
                           {/* Code horaire de travail — au-dessus du code événementiel
-                              (empilés, cf. retour client du 17/09). Masqué si un
-                              évènement "special" est superposé : il efface l'affichage
-                              du travail tout en gardant ses heures (retour client du
-                              23/09). */}
-                          {!estSpecial && valeur?.travail && horaireTravail && (
+                              (empilés, cf. retour client du 17/09), toujours visible même
+                              avec un évènement "spécial" superposé (retour client du
+                              23/09 : contrairement à la grille planning, la vue mensuelle
+                              ne l'efface jamais — seul le décompte peut être barré). */}
+                          {valeur?.travail && horaireTravail && (
                             <div
                               className="rounded px-1 py-0.5 leading-tight"
                               style={{
@@ -181,7 +180,7 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                               {plagesTravail && <div className="text-[9px]">{plagesTravail}</div>}
                             </div>
                           )}
-                          {!estSpecial && valeur?.travail && (
+                          {valeur?.travail && (
                             <div className="flex items-center gap-1 text-[10px]">
                               <span className={travailBarre ? "text-zinc-400 line-through" : "text-zinc-600"}>
                                 {heuresBase}h
@@ -201,7 +200,7 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                           )}
 
                           {/* Code événementiel — special (décompte du travail gardé,
-                              affichage plein), normal (décompte écrasé, cf. ci-dessus)
+                              affiché ci-dessus), normal (décompte écrasé, cf. ci-dessus)
                               ou partiel (plage + delta). */}
                           {valeur?.evenementiel && horaireEvenementiel && (
                             <div
@@ -213,11 +212,6 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                             >
                               <div className="text-[10px] font-bold">{horaireEvenementiel.code}</div>
                               <div className="text-[9px]">{horaireEvenementiel.intitule}</div>
-                              {estSpecial && (
-                                <div className="text-[9px]">
-                                  {horaireTravail?.code ?? valeur.travail} conservé — {heures}h
-                                </div>
-                              )}
                               {estPartiel && valeur.evenementielPlages && valeur.evenementielPlages.length > 0 && (
                                 <div className="text-[9px] font-semibold">
                                   {valeur.evenementielPlages.map((p) => `${p.debut}–${p.fin}`).join(", ")} (

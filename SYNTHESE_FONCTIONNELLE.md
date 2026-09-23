@@ -152,11 +152,12 @@ Vue calendaire mensuelle du planning d'un salarié, destinée à sa validation.
   colonne).
 - Pour chaque jour : le code de travail (avec son intitulé et ses plages
   horaires) est affiché au-dessus du code événementiel du jour, chacun dans
-  sa propre couleur.
+  sa propre couleur. Contrairement à la grille planning (case trop petite
+  pour tout montrer), **le code de travail reste toujours visible ici**,
+  y compris avec un code événementiel spécial (précisé le 23/09) :
   - Si le jour porte un code événementiel **spécial**, le code de travail
-    et son décompte d'heures ne sont plus affichés ; le code événementiel
-    occupe la case, avec une note rappelant le code de travail conservé et
-    ses heures (toujours comptées).
+    et son décompte d'heures restent affichés normalement (non barrés) ;
+    le code événementiel apparaît en dessous.
   - Si le jour porte un code événementiel **normal**, le décompte d'heures
     initial du code de travail est barré et le nombre d'heures réellement
     retenu (la durée propre au code événementiel) apparaît à côté.

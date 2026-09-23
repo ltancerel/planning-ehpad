@@ -368,6 +368,15 @@ export réel, connecteur paie.
   colonnes `journee.evenementiel_plage_debut/fin` remplacées par une table
   `journee_evenementiel_plage` (une ligne par plage, pour suivre l'ajout du
   22/09 ci-dessus) — détail dans l'artefact du modèle de données._
+  _Correction du 23/09 (vue émargement mensuelle oubliée lors de la
+  redéfinition ci-dessus) : le code informatif n'y était pas du tout affiché
+  — corrigé, même règle que la grille planning (sous le travail s'il y en a
+  un, en pleine case sinon)._
+  _Précision du 23/09 (retour client) : sur la vue émargement mensuelle
+  seulement (pas la grille planning, dont les cases sont trop petites pour
+  tout montrer), le code de travail reste **toujours visible**, y compris
+  avec un code événementiel spécial — la note "conservé" devenue redondante
+  est retirée, le décompte d'heures du travail suffit._
 
 - [x] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
