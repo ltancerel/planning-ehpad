@@ -414,7 +414,8 @@ function seedAleatoire(seed: number) {
   };
 }
 
-const CODES_TRAVAIL_DEMO = ["60S", "70A", "185", "SEC", "OK", "."];
+const CODES_TRAVAIL_DEMO = ["60S", "70A", "185", "SEC", "OK"];
+const CODE_REPOS_DEMO = "."; // informatif, jamais un code travail — voir note ci-dessous
 // Codes évènementiels "special"/"normal" (se superposent à un code travail
 // déjà présent, cf. redéfinition du 23/09 — un évènementiel ne s'applique
 // jamais sur une cellule vide). Les codes "partiel" (ABT/HSP/CARP) exigent
@@ -431,6 +432,15 @@ export function genererPlanningDemo(salaries: Salarie[], dates: string[]): Recor
       if (tirage < 0.12) continue; // jamais remplie
 
       const cle = `${salarie.id}__${date}`;
+      // Jour de repos : code informatif seul, jamais de code évènementiel
+      // dessus (un évènementiel exige un travail, cf. redéfinition du
+      // 23/09 — ancien bug de démo corrigé le 23/09 : REPOS figurait à
+      // tort dans le pool des codes travail, produisant des cellules
+      // CP/MAL superposées à un "travail" qui n'en était pas un).
+      if (rng() < 0.15) {
+        planning[cle] = { informatif: CODE_REPOS_DEMO };
+        continue;
+      }
       const travail = CODES_TRAVAIL_DEMO[Math.floor(rng() * CODES_TRAVAIL_DEMO.length)];
       if (rng() < 0.15) {
         const evenementiel =

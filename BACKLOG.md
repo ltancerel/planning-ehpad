@@ -377,6 +377,14 @@ export réel, connecteur paie.
   tout montrer), le code de travail reste **toujours visible**, y compris
   avec un code événementiel spécial — la note "conservé" devenue redondante
   est retirée, le décompte d'heures du travail suffit._
+  _Correction du 23/09 (données de démo, retour client) : le générateur
+  aléatoire de la grille planning incluait par erreur `.` (REPOS, catégorie
+  informatif) dans le pool des codes travail — un évènementiel (CP, MAL…)
+  pouvait donc se retrouver visuellement superposé à un jour de repos, comme
+  si REPOS était un code travail valide, ce qui n'est pas possible (un
+  évènementiel exige un vrai code travail dessous). REPOS est désormais
+  généré séparément, comme code informatif seul, jamais sous un
+  évènementiel. Vérifié : 0 anomalie sur les 6736 cellules de démo générées._
 
 - [x] **18. Correction de la vue émargement mensuelle** _(issue #20)_
   Retour client du 16/09, à faire après la story #17 :
