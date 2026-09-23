@@ -36,6 +36,14 @@ type HoraireCodeSelectorProps = {
    * évènementiel ne se superpose qu'à un travail déjà présent, jamais sur une
    * cellule vide, et jamais si un informatif occupe déjà la cellule. */
   valeurActuelle?: ValeurCellule;
+  /** Sélection multiple (plusieurs cases) : valeur actuelle de chacune,
+   * remplace valeurActuelle. Le garde-fou informatif/évènementiel exige
+   * alors que TOUTES les cases sélectionnées l'autorisent — une sélection
+   * hétérogène (ex. certaines cases sans travail) bloque l'option plutôt
+   * que de l'appliquer partiellement (retour client du 23/09). Les codes
+   * évènementiels "partiel" (plage ad hoc saisie au moment de poser le
+   * code) sont masqués : leur saisie ne s'applique qu'à une case unique. */
+  valeursActuelles?: ValeurCellule[];
   /** Raccourci proposé sur une case jamais remplie dont le salarié a un
    * roulement actuel : l'appliquer directement, sans bloquer la saisie
    * manuelle d'un code qui reste l'action la plus courante. Si le roulement
@@ -63,6 +71,7 @@ export default function HoraireCodeSelector({
   aUneValeur,
   masquerEvenementiels,
   valeurActuelle,
+  valeursActuelles,
   actionRoulement,
   onChoisir,
   onChoisirComplement,
@@ -104,17 +113,25 @@ export default function HoraireCodeSelector({
     setPositionAffichee({ top, left });
   }, [position.top, position.left, position.width, codeComplementEnSaisie, plages.length]);
 
-  const peutInformatif = !valeurActuelle || peutAjouterInformatif(valeurActuelle);
-  const peutEvenementiel = Boolean(valeurActuelle) && peutAjouterEvenementiel(valeurActuelle!);
+  const peutInformatif = valeursActuelles
+    ? valeursActuelles.length > 0 && valeursActuelles.every(peutAjouterInformatif)
+    : !valeurActuelle || peutAjouterInformatif(valeurActuelle);
+  const peutEvenementiel = valeursActuelles
+    ? valeursActuelles.length > 0 && valeursActuelles.every(peutAjouterEvenementiel)
+    : Boolean(valeurActuelle) && peutAjouterEvenementiel(valeurActuelle!);
 
   const codesDisponibles = useMemo(
     () =>
       HORAIRE_CODES.filter((h) => {
-        if (h.categorie === "evenementiel") return !masquerEvenementiels && peutEvenementiel;
+        if (h.categorie === "evenementiel") {
+          if (masquerEvenementiels || !peutEvenementiel) return false;
+          if (valeursActuelles && h.typeEvenement === "partiel") return false; // plage ad hoc = case unique
+          return true;
+        }
         if (h.categorie === "informatif") return peutInformatif;
         return true;
       }),
-    [masquerEvenementiels, peutInformatif, peutEvenementiel]
+    [masquerEvenementiels, peutInformatif, peutEvenementiel, valeursActuelles]
   );
 
   const resultats = useMemo(() => {
