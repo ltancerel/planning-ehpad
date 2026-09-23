@@ -500,6 +500,49 @@ export réel, connecteur paie.
   sur chacun des 3 rôles : Administrateur (tout, lien visible), Manager
   (édition OK, lien masqué), Utilisateur (case non cliquable, lien masqué)._
 
+- [x] **21. Sélection multiple : appliquer un code sur plusieurs cases** _(issue #22)_
+  Retour client du 23/09, 2e d'une liste de 6 évolutions. Deux mécanismes de
+  glisser-sélection distincts coexistaient jusqu'ici, chacun limité à un type
+  de case : depuis une case jamais remplie, la sélection ne portait que sur un
+  seul jour (plusieurs salariés) pour appliquer leur roulement ; depuis une
+  case déjà remplie, un rectangle (plusieurs jours/salariés) permettait
+  uniquement d'effacer. Il fallait pouvoir sélectionner un ou plusieurs
+  salariés, sur tout type de case (y compris non définies), et appliquer un
+  code sur la sélection.
+  _Statut : fait. Les deux mécanismes sont unifiés en un seul rectangle de
+  sélection fonctionnant sur tout type de case, dont dépend un seul menu
+  d'action :_
+  _- **Appliquer un code…** : ouvre le sélecteur de code horaire habituel
+  (nouvelle prop `valeursActuelles` sur `HoraireCodeSelector`, remplaçant
+  `valeurActuelle` en sélection multiple) et applique le code choisi à
+  chaque case sélectionnée (même logique de fusion que l'édition d'une
+  seule case, factorisée dans `fusionnerCode`)._
+  _- **Sélection hétérogène** (retour client explicite) : les garde-fous
+  informatif/évènementiel exigent que TOUTES les cases sélectionnées les
+  autorisent — une case évènementielle sans travail sur au moins une des
+  cases sélectionnées masque entièrement la section Événementiel plutôt que
+  de l'appliquer partiellement, cohérent avec le filtrage déjà en place pour
+  l'édition d'une seule case. Les codes évènementiels "partiel" (plage ad hoc)
+  sont masqués en sélection multiple : leur saisie ne s'applique qu'à une
+  case unique._
+  _- **Appliquer le roulement de chacun** : conservé, désormais affiché comme
+  une option du même menu plutôt que déclenché par un mécanisme de glisser
+  séparé — visible uniquement quand la sélection ne porte que sur un seul
+  jour (limite déjà en place, inchangée)._
+  _- **Effacer** : remet les cases sélectionnées à l'état "jamais remplie"._
+  _Vérifié : glisser depuis une case vide vers une case remplie (auparavant
+  impossible) ouvre bien le menu unifié ; sélection hétérogène (une case
+  vide + une remplie) masque la section Événementiel ; sélection homogène
+  (toutes avec travail) la fait apparaître ; le code appliqué se retrouve
+  bien sur toutes les cases sélectionnées ; le roulement groupé mono-jour et
+  l'effacement restent fonctionnels ; le clic simple sur une case (édition
+  normale) n'est pas affecté._
+  _Retrait du 23/09 (retour client) : la boîte de dialogue de confirmation de
+  l'effacement multiple est retirée — ni l'effacement d'une seule case
+  (bouton "Vider la cellule") ni le remplacement par un code travail n'en
+  demandent, la sélection multiple ne fait pas exception. L'effacement (bouton
+  ou touche Suppr/Retour arrière) est désormais immédiat._
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis
