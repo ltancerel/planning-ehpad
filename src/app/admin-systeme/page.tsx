@@ -4,11 +4,14 @@ import Link from "next/link";
 import {
   ETABLISSEMENTS_DEMO,
   LOGS_DEMO,
+  TRAFIC_HEBDO_DEMO,
+  VOLUME_PAR_ETABLISSEMENT_DEMO,
   calculerKpis,
   formatHorodatageUTC,
   logsRecents,
   nomEtablissement,
 } from "@/lib/admin-systeme-mock-data";
+import { TraficLineChart, VolumeBarChart } from "@/components/admin-systeme/DashboardCharts";
 
 function StatTile({ label, valeur, sousTexte }: { label: string; valeur: string; sousTexte?: string }) {
   return (
@@ -35,6 +38,14 @@ const LIBELLE_NIVEAU: Record<string, string> = {
 export default function AdminSystemeDashboardPage() {
   const kpis = calculerKpis(ETABLISSEMENTS_DEMO, LOGS_DEMO);
   const derniersLogs = logsRecents(LOGS_DEMO, 8);
+  const barresVolume = VOLUME_PAR_ETABLISSEMENT_DEMO.map((v) => {
+    const etablissement = ETABLISSEMENTS_DEMO.find((e) => e.id === v.etablissementId);
+    return {
+      label: etablissement?.ville ?? "?",
+      labelComplet: etablissement?.nom ?? "Établissement inconnu",
+      valeur: v.volumeMo,
+    };
+  });
 
   return (
     <div className="h-full overflow-auto p-4">
@@ -58,6 +69,17 @@ export default function AdminSystemeDashboardPage() {
           valeur={String(kpis.nbErreurs24h)}
           sousTexte={kpis.nbErreurs24h > 0 ? "à examiner" : "aucune"}
         />
+      </div>
+
+      <div className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <div className="rounded border border-zinc-200 p-3">
+          <p className="mb-1 text-xs font-medium text-zinc-500">Trafic — connexions par jour (7 derniers jours)</p>
+          <TraficLineChart points={TRAFIC_HEBDO_DEMO} />
+        </div>
+        <div className="rounded border border-zinc-200 p-3">
+          <p className="mb-1 text-xs font-medium text-zinc-500">Volume de données par établissement</p>
+          <VolumeBarChart barres={barresVolume} />
+        </div>
       </div>
 
       <div className="mt-6">

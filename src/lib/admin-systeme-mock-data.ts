@@ -317,6 +317,31 @@ export function formatHorodatageUTC(iso: string): string {
   return `${formateur.format(date)} UTC`;
 }
 
+// Trafic (connexions/jour) sur les 7 derniers jours glissants — alimente le
+// graphique en courbe du tableau de bord.
+export type PointTrafic = { jour: string; dateISO: string; connexions: number };
+
+export const TRAFIC_HEBDO_DEMO: PointTrafic[] = [
+  { jour: "Jeu", dateISO: "2026-09-17", connexions: 132 },
+  { jour: "Ven", dateISO: "2026-09-18", connexions: 149 },
+  { jour: "Sam", dateISO: "2026-09-19", connexions: 79 },
+  { jour: "Dim", dateISO: "2026-09-20", connexions: 66 },
+  { jour: "Lun", dateISO: "2026-09-21", connexions: 178 },
+  { jour: "Mar", dateISO: "2026-09-22", connexions: 187 },
+  { jour: "Mer", dateISO: "2026-09-23", connexions: 135 },
+];
+
+// Volume de données par établissement — alimente le graphique en barres du
+// tableau de bord.
+export type VolumeEtablissement = { etablissementId: string; volumeMo: number };
+
+export const VOLUME_PAR_ETABLISSEMENT_DEMO: VolumeEtablissement[] = [
+  { etablissementId: "et1", volumeMo: 640 },
+  { etablissementId: "et2", volumeMo: 820 },
+  { etablissementId: "et3", volumeMo: 340 },
+  { etablissementId: "et4", volumeMo: 40 },
+];
+
 // KPIs globaux du tableau de bord (calculés à partir des données de démo —
 // dans la vraie application, agrégés en base tous établissements confondus).
 export function calculerKpis(etablissements: Etablissement[], logs: LogEntry[]) {
@@ -326,8 +351,8 @@ export function calculerKpis(etablissements: Etablissement[], logs: LogEntry[]) 
     nbEtablissementsActifs: actifs.length,
     nbUtilisateurs: 47, // proxy démo : total comptes Administrateur + Utilisateur tous établissements
     nbSalaries: 312, // proxy démo : total fiches salariés tous établissements
-    volumeDonneesMo: 1840, // proxy démo : volume de données stocké
-    traficConnexions7j: 926, // proxy démo : nombre de connexions sur 7 jours glissants
+    volumeDonneesMo: VOLUME_PAR_ETABLISSEMENT_DEMO.reduce((somme, v) => somme + v.volumeMo, 0),
+    traficConnexions7j: TRAFIC_HEBDO_DEMO.reduce((somme, p) => somme + p.connexions, 0),
     nbErreurs24h: logs.filter(
       (l) => l.niveau === "erreur" && Date.now() - new Date(l.horodatageUTC).getTime() < 24 * 3600 * 1000
     ).length,
