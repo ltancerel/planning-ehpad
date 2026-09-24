@@ -42,6 +42,19 @@ export function lundiDeLaSemaine(date: Date): Date {
   return d;
 }
 
+// Lundi le plus proche de la date donnée (contrairement à lundiDeLaSemaine,
+// qui arrondit toujours au lundi précédent) — sert à positionner par défaut
+// une fenêtre de plusieurs semaines "à cheval" sur le milieu d'un mois (cf.
+// vue mensuelle Émargement, retour client du 24/09).
+export function lundiLePlusProche(date: Date): Date {
+  const jour = (date.getDay() + 6) % 7; // 0 = lundi ... 6 = dimanche
+  const decalage = jour <= 3 ? -jour : 7 - jour;
+  const d = new Date(date);
+  d.setDate(d.getDate() + decalage);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
 export function genererPeriode(dateDebut: Date, nbJours: number): Date[] {
   const jours: Date[] = [];
   for (let i = 0; i < nbJours; i++) {

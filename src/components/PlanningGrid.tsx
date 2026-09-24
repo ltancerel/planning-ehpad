@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   SALARIES,
@@ -46,24 +46,64 @@ import UserMenu from "@/components/UserMenu";
 import { useEhpad } from "@/context/EhpadProvider";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
 
-const NB_SEMAINES = 4;
-const NB_JOURS = NB_SEMAINES * 7;
+// Fenêtre visible toujours à 4 semaines (retour client du 24/09) ; le
+// nombre de semaines chargées (au-delà, avec ascenseur horizontal) est lui
+// configurable — cf. NB_SEMAINES_CHARGEES_MIN/MAX ci-dessous. Objectif :
+// limiter la fréquence des accès BDD une fois le backend réel branché, en
+// chargeant plusieurs semaines d'un coup plutôt qu'une seule à chaque clic
+// sur une flèche de navigation.
+const NB_SEMAINES_VISIBLES = 4;
+const NB_SEMAINES_CHARGEES_DEFAUT = 4;
+const NB_SEMAINES_CHARGEES_MIN = 4;
+const NB_SEMAINES_CHARGEES_MAX = 26;
 const LARGEUR_COLONNE = 44;
 const LARGEUR_COLONNE_SALARIE = 200;
+const LARGEUR_SEMAINE = 7 * LARGEUR_COLONNE;
+const LARGEUR_VISIBLE = LARGEUR_COLONNE_SALARIE + NB_SEMAINES_VISIBLES * LARGEUR_SEMAINE;
 const HAUTEUR_LIGNE_ENTETE = 28;
 const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
+const CLE_STOCKAGE_NB_SEMAINES = "planning-ehpad:nb-semaines-chargees";
 
 // Vue par défaut : septembre 2026, pour une démo cohérente quelle que soit la
 // date réelle de consultation.
 const PERIODE_PAR_DEFAUT = new Date(2026, 8, 1);
 
-function estJourGrise(date: Date): boolean {
-  return estWeekend(date) || JOURS_FERIES_2026.has(formatDateISO(date));
+// Distinction visuelle jour férié / week-end (retour client du 24/09) : un
+// jour férié tombant un week-end reste marqué férié (priorité), pas juste
+// grisé comme un week-end ordinaire.
+type ClasseJour = "ferie" | "weekend" | "normal";
+function classeEnTeteJour(date: Date): ClasseJour {
+  if (JOURS_FERIES_2026.has(formatDateISO(date))) return "ferie";
+  if (estWeekend(date)) return "weekend";
+  return "normal";
 }
 
 export default function PlanningGrid() {
   const [debutPeriode, setDebutPeriode] = useState(() => lundiDeLaSemaine(PERIODE_PAR_DEFAUT));
-  const jours = useMemo(() => genererPeriode(debutPeriode, NB_JOURS), [debutPeriode]);
+  // Nombre de semaines chargées d'un coup (≥ semaines visibles) — réglable
+  // de 4 à n, cf. NB_SEMAINES_CHARGEES_MIN/MAX. Par défaut égal aux semaines
+  // visibles : pas d'ascenseur horizontal tant que l'utilisateur n'a pas
+  // délibérément augmenté ce nombre.
+  const [nbSemainesChargees, setNbSemainesChargees] = useState(NB_SEMAINES_CHARGEES_DEFAUT);
+  const jours = useMemo(
+    () => genererPeriode(debutPeriode, nbSemainesChargees * 7),
+    [debutPeriode, nbSemainesChargees]
+  );
+  // Conteneur scrollable horizontalement : les flèches de navigation
+  // avancent/reculent d'une semaine dans le lot déjà chargé (gratuit, pas de
+  // rechargement) tant que c'est possible, et ne déclenchent un changement
+  // de période (nouveau lot) qu'une fois le bord du lot atteint — cf.
+  // allerSemaine ci-dessous. scrollIntentionRef mémorise, juste avant un tel
+  // changement, si le nouveau lot doit s'afficher depuis son début (flèche
+  // suivante) ou sa fin (flèche précédente).
+  const conteneurScrollRef = useRef<HTMLDivElement>(null);
+  const scrollIntentionRef = useRef<"debut" | "fin">("debut");
+  useEffect(() => {
+    const conteneur = conteneurScrollRef.current;
+    if (!conteneur) return;
+    conteneur.scrollLeft = scrollIntentionRef.current === "fin" ? conteneur.scrollWidth : 0;
+    scrollIntentionRef.current = "debut";
+  }, [debutPeriode, nbSemainesChargees]);
   // undefined = case hachurée (jamais remplie), y compris quand une case est
   // effacée : l'effacement remet la case en attente de planification plutôt
   // que de la marquer comme "vidée" (retour client du 17/09).
@@ -116,6 +156,32 @@ export default function PlanningGrid() {
       // ignoré : la mémorisation est un confort, pas une exigence bloquante
     }
   }, [debutPeriode]);
+
+  // Mémorisation du nombre de semaines chargées, même logique que la période.
+  useEffect(() => {
+    try {
+      const enregistre = localStorage.getItem(CLE_STOCKAGE_NB_SEMAINES);
+      if (!enregistre) return;
+      const borne = Math.min(
+        NB_SEMAINES_CHARGEES_MAX,
+        Math.max(NB_SEMAINES_CHARGEES_MIN, Number(enregistre))
+      );
+      if (Number.isFinite(borne)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setNbSemainesChargees(borne);
+      }
+    } catch {
+      // localStorage indisponible : on garde la valeur par défaut
+    }
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(CLE_STOCKAGE_NB_SEMAINES, String(nbSemainesChargees));
+    } catch {
+      // ignoré : la mémorisation est un confort, pas une exigence bloquante
+    }
+  }, [nbSemainesChargees]);
 
   // "Avec/sans planning" dépend de la période actuellement affichée (retour
   // client du 17/09) : au moins un jour de la période a un code travail ou
@@ -516,6 +582,35 @@ export default function PlanningGrid() {
     });
   }
 
+  // Avance/recule d'une semaine : défile dans le lot déjà chargé quand c'est
+  // possible (gratuit, aucun rechargement), et ne change de période (nouveau
+  // lot, cf. changerPeriode) qu'une fois le bord du lot atteint — c'est ce
+  // qui rend le chargement de plusieurs semaines à la fois utile une fois le
+  // backend réel branché.
+  function allerSemaine(direction: 1 | -1) {
+    const conteneur = conteneurScrollRef.current;
+    if (!conteneur) {
+      changerPeriode(direction);
+      return;
+    }
+    const scrollMax = conteneur.scrollWidth - conteneur.clientWidth;
+    if (direction === 1) {
+      if (conteneur.scrollLeft < scrollMax - 1) {
+        conteneur.scrollBy({ left: LARGEUR_SEMAINE, behavior: "smooth" });
+      } else {
+        scrollIntentionRef.current = "debut";
+        changerPeriode(nbSemainesChargees);
+      }
+    } else {
+      if (conteneur.scrollLeft > 1) {
+        conteneur.scrollBy({ left: -LARGEUR_SEMAINE, behavior: "smooth" });
+      } else {
+        scrollIntentionRef.current = "fin";
+        changerPeriode(-nbSemainesChargees);
+      }
+    }
+  }
+
   const premierJour = jours[0];
   const dernierJour = jours[jours.length - 1];
   const { identite } = useEhpad();
@@ -564,10 +659,10 @@ export default function PlanningGrid() {
               nbResultats={salariesOrdonnes.length}
             />
             <button
-              onClick={() => changerPeriode(-1)}
+              onClick={() => allerSemaine(-1)}
               className="ml-2 rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
-              aria-label="Période précédente"
-              title="Période précédente"
+              aria-label="Semaine précédente"
+              title="Semaine précédente"
             >
               ←
             </button>
@@ -596,19 +691,39 @@ export default function PlanningGrid() {
                       }}
                       className="rounded border border-zinc-300 px-2 py-1 text-sm"
                     />
+                    <label className="mb-1 mt-3 block text-xs font-medium text-zinc-600">
+                      Nombre de semaines chargées
+                    </label>
+                    <input
+                      type="number"
+                      min={NB_SEMAINES_CHARGEES_MIN}
+                      max={NB_SEMAINES_CHARGEES_MAX}
+                      value={nbSemainesChargees}
+                      onChange={(e) => {
+                        const brut = Number(e.target.value);
+                        if (!Number.isFinite(brut)) return;
+                        const borne = Math.min(
+                          NB_SEMAINES_CHARGEES_MAX,
+                          Math.max(NB_SEMAINES_CHARGEES_MIN, Math.round(brut))
+                        );
+                        setNbSemainesChargees(borne);
+                      }}
+                      className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm"
+                    />
                     <p className="mt-2 max-w-[16rem] text-xs text-zinc-500">
-                      La période affichée ({NB_SEMAINES} semaines) est mémorisée d&apos;une ouverture à
-                      l&apos;autre.
+                      La fenêtre visible reste toujours à {NB_SEMAINES_VISIBLES} semaines, avec un
+                      ascenseur horizontal pour parcourir les semaines chargées en plus. Ces réglages
+                      sont mémorisés d&apos;une ouverture à l&apos;autre.
                     </p>
                   </div>
                 </>
               )}
             </div>
             <button
-              onClick={() => changerPeriode(1)}
+              onClick={() => allerSemaine(1)}
               className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50"
-              aria-label="Période suivante"
-              title="Période suivante"
+              aria-label="Semaine suivante"
+              title="Semaine suivante"
             >
               →
             </button>
@@ -626,8 +741,19 @@ export default function PlanningGrid() {
         <FiltresActifsChips filtres={filtres} onChange={setFiltres} />
       </header>
 
-      <div className="flex-1 overflow-auto">
-        <table className="border-collapse" style={{ tableLayout: "fixed" }}>
+      <div ref={conteneurScrollRef} className="flex-1 overflow-auto" style={{ maxWidth: LARGEUR_VISIBLE }}>
+        <table
+          className="border-collapse"
+          style={{
+            tableLayout: "fixed",
+            // Largeur explicite indispensable ici : sans elle, table-layout
+            // fixed comprime quand même les colonnes pour tenir dans le
+            // conteneur (au lieu de déborder), ce qui empêchait l'ascenseur
+            // horizontal d'apparaître quand plus de semaines sont chargées
+            // que de semaines visibles.
+            width: LARGEUR_COLONNE_SALARIE + jours.length * LARGEUR_COLONNE,
+          }}
+        >
           <colgroup>
             <col style={{ width: LARGEUR_COLONNE_SALARIE }} />
             {jours.map((j) => (
@@ -642,14 +768,19 @@ export default function PlanningGrid() {
                 rowSpan={2}
               />
               {jours.map((jour) => {
-                const grise = estJourGrise(jour);
+                const classe = classeEnTeteJour(jour);
                 return (
                   <th
                     key={formatDateISO(jour)}
                     className={`sticky top-0 z-10 border border-zinc-200 text-xs font-medium leading-none ${
-                      grise ? "bg-zinc-300 text-zinc-600" : "bg-zinc-100 text-zinc-700"
+                      classe === "ferie"
+                        ? "bg-amber-200 text-amber-900"
+                        : classe === "weekend"
+                          ? "bg-zinc-300 text-zinc-600"
+                          : "bg-zinc-100 text-zinc-700"
                     }`}
                     style={{ height: HAUTEUR_LIGNE_ENTETE, boxSizing: "border-box" }}
+                    title={classe === "ferie" ? "Jour férié" : undefined}
                   >
                     {lettreJour(jour)}
                   </th>
@@ -658,18 +789,23 @@ export default function PlanningGrid() {
             </tr>
             <tr>
               {jours.map((jour) => {
-                const grise = estJourGrise(jour);
+                const classe = classeEnTeteJour(jour);
                 return (
                   <th
                     key={formatDateISO(jour)}
                     className={`sticky z-10 border border-zinc-200 text-xs font-normal leading-none ${
-                      grise ? "bg-zinc-300 text-zinc-600" : "bg-zinc-50 text-zinc-500"
+                      classe === "ferie"
+                        ? "bg-amber-100 text-amber-800"
+                        : classe === "weekend"
+                          ? "bg-zinc-300 text-zinc-600"
+                          : "bg-zinc-50 text-zinc-500"
                     }`}
                     style={{
                       top: HAUTEUR_LIGNE_ENTETE,
                       height: HAUTEUR_LIGNE_ENTETE,
                       boxSizing: "border-box",
                     }}
+                    title={classe === "ferie" ? "Jour férié" : undefined}
                   >
                     {formatJourMois(jour)}
                   </th>
@@ -682,7 +818,7 @@ export default function PlanningGrid() {
               <Fragment key={groupe.service}>
                 <tr>
                   <td
-                    colSpan={NB_JOURS + 1}
+                    colSpan={jours.length + 1}
                     className="sticky left-0 z-10 border border-zinc-200 bg-zinc-200 px-2 py-1 text-xs font-bold text-zinc-700"
                   >
                     {groupe.service}

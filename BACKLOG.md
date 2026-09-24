@@ -576,6 +576,83 @@ export réel, connecteur paie.
   `salarie.alignement_roulement`, valeurs Équipe A/B/C/D, sans FK ni lien
   avec le domaine D (Roulements) — simple étiquette à 4 valeurs._
 
+- [x] **23. Distinguer les jours fériés des week-ends dans l'affichage** _(issue #22)_
+  Retour client du 24/09, 5e d'une liste de 6 évolutions. Les jours fériés
+  et les week-ends partageaient la même couleur grise dans l'en-tête de la
+  grille Planning et dans les cases de la vue mensuelle Émargement,
+  impossible à distinguer au premier coup d'œil.
+  _Statut : fait. Nouvelle classification à 3 états (férié / week-end /
+  normal) dans `PlanningGrid.tsx` et `EmargementMensuel.tsx` (remplace le
+  booléen `estJourGrise` qui fusionnait les deux) : un jour férié tombant un
+  week-end reste marqué férié (priorité), pas juste grisé comme un week-end
+  ordinaire. Couleur ambre pour les jours fériés (fond + texte, distincte du
+  gris week-end), avec un titre HTML "Jour férié" au survol. Vérifié sur la
+  grille Planning (en-tête, 2 lignes) et la vue mensuelle Émargement (cases
+  du calendrier) autour du 1er et du 11 novembre 2026 (jours fériés du jeu
+  de démo)._
+
+- [x] **24. Nombre de semaines chargées configurable sur la grille Planning** _(issue #22)_
+  Retour client du 24/09, 4e d'une liste de 6 évolutions. Inquiétude du
+  client : une fois les accès base de données branchés, naviguer semaine par
+  semaine avec les flèches multiplierait les allers-retours au serveur.
+  Demande : pouvoir configurer le nombre de semaines chargées (de 4 à n),
+  tout en gardant une fenêtre visible de 4 semaines avec un ascenseur
+  horizontal.
+  _Statut : fait, sur `PlanningGrid.tsx` uniquement (la grille Planning
+  principale — distincte de la vue mensuelle Émargement salarié, cf. story
+  #25). Deux réglages désormais indépendants : `NB_SEMAINES_VISIBLES` (fixe,
+  4) et `nbSemainesChargees` (état, réglable de 4 à 26 via un champ dans le
+  panneau de sélection de période, mémorisé en localStorage comme la
+  période). Par défaut chargées = visibles : aucun ascenseur au quotidien.
+  Le conteneur de la grille est plafonné en largeur à 4 semaines
+  (`maxWidth`) ; au-delà, la table (rendue à sa largeur réelle grâce à un
+  `width` explicite sur l'élément `<table>` — indispensable avec
+  `table-layout: fixed`, sans quoi le navigateur comprime les colonnes pour
+  tenir dans le conteneur au lieu de déborder) dépasse ce plafond et un
+  ascenseur horizontal apparaît sous la grille.
+  Les flèches de navigation défilent d'abord dans le lot déjà chargé (pur
+  scroll, aucun rechargement) et ne déclenchent un changement de période
+  (nouveau lot) qu'une fois le bord du lot atteint — c'est ce qui répond à
+  l'inquiétude initiale : avec un lot large, l'essentiel de la navigation ne
+  coûte plus rien côté données.
+  Vérifié : à 4 semaines chargées (défaut) sur un écran large, aucun
+  ascenseur (largeur de la grille = largeur du conteneur, à l'arrondi près).
+  À 12 semaines chargées, la grille déborde bien (table 3897px dans un
+  conteneur plafonné à 1432px) et 4 clics consécutifs sur la flèche
+  suivante ne changent pas la période affichée dans l'en-tête (confirmation
+  que la navigation reste dans le lot chargé)._
+
+- [x] **25. Vue mensuelle salarié (Émargement) configurable 4 ou 6 semaines** _(issue #22)_
+  Retour client du 24/09, 6e d'une liste de 6 évolutions — à ne pas
+  confondre avec la story #24 (grille Planning principale) : deux écrans
+  distincts. Demande : pouvoir choisir 4 ou 6 semaines, toutes entièrement
+  visibles (pas d'ascenseur), navigation semaine par semaine, démarrage par
+  défaut aligné sur le milieu du mois (en fonction d'où tombe le lundi),
+  toujours un lundi en première colonne.
+  _Statut : fait. `EmargementMensuel.tsx` ne s'appuie plus sur
+  `genererCalendrierMois` (grille calendaire figée sur un mois civil, avec
+  cases grisées de remplissage pour les jours hors mois) mais sur
+  `genererPeriode` depuis un lundi de départ, sur `nbSemaines * 7` jours (4
+  ou 6, bascule en haut de l'écran, mémorisée dans l'URL via `?semaines=`).
+  Plus de notion de "jour hors mois" : chaque case affichée est réelle,
+  l'étiquette de date passe de `jour.getDate()` à `formatJourMois` (jj/mm)
+  pour rester lisible quand la fenêtre déborde sur un ou plusieurs mois
+  voisins._
+  _Nouveau helper `lundiLePlusProche` dans `dates.ts` (distinct de
+  `lundiDeLaSemaine`, qui arrondit toujours au lundi précédent) : trouve le
+  lundi le plus proche d'une date donnée. Départ par défaut = lundi le plus
+  proche du 15 du mois de référence (paramètre `?mois=`, celui transmis par
+  le lien depuis la grille Planning). Une fois affichée, la navigation
+  (`?debut=`, `?semaines=`) prend le pas sur `?mois=`._
+  _Navigation : les boutons "Mois précédent/suivant" deviennent "Semaine
+  précédente/suivante" (±7 jours). Le total et le bouton de validation ne
+  référencent plus "le mois" mais "la période affichée", cohérent avec une
+  fenêtre qui ne correspond plus forcément à un mois civil._
+  _Vérifié : `mois=2026-09` affiche par défaut 14/09–11/10/2026 (lundi le
+  plus proche du 15/09, qui est un mardi) ; bascule vers 6 semaines
+  conserve le même départ (14/09–25/10/2026) ; 2 clics sur "Semaine
+  suivante" avancent bien de 2 semaines exactement (28/09–08/11/2026)._
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis
