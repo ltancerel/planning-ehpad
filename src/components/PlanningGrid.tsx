@@ -6,6 +6,7 @@ import {
   SALARIES,
   SERVICES_ORDRE,
   MANAGERS,
+  GROUPES_ROULEMENT,
   JOURS_FERIES_2026,
   PLANNING_DEMO,
   ROULEMENTS_DEMO,
@@ -138,7 +139,11 @@ export default function PlanningGrid() {
   function salarieCorrespondAuxFiltres(salarie: Salarie): boolean {
     if (filtres.service.size > 0 && !filtres.service.has(salarie.service)) return false;
 
-    const besoinDeFiche = filtres.contrat.size > 0 || filtres.presence.size > 0 || filtres.manager.size > 0;
+    const besoinDeFiche =
+      filtres.contrat.size > 0 ||
+      filtres.presence.size > 0 ||
+      filtres.manager.size > 0 ||
+      filtres.groupeRoulement.size > 0;
     const fiche = besoinDeFiche ? ficheDuSalarie(salarie.id) : undefined;
     if (besoinDeFiche && !fiche) return false;
 
@@ -153,6 +158,7 @@ export default function PlanningGrid() {
         return false;
       }
       if (filtres.manager.size > 0 && !filtres.manager.has(fiche.manager)) return false;
+      if (filtres.groupeRoulement.size > 0 && !filtres.groupeRoulement.has(fiche.groupeRoulement)) return false;
     }
 
     if (filtres.planning.size > 0) {
@@ -554,6 +560,7 @@ export default function PlanningGrid() {
               onChange={setFiltres}
               services={SERVICES_ORDRE}
               managers={MANAGERS}
+              groupesRoulement={GROUPES_ROULEMENT}
               nbResultats={salariesOrdonnes.length}
             />
             <button

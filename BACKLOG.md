@@ -543,6 +543,39 @@ export réel, connecteur paie.
   demandent, la sélection multiple ne fait pas exception. L'effacement (bouton
   ou touche Suppr/Retour arrière) est désormais immédiat._
 
+- [x] **22. Nouvel attribut Alignement roulement sur le salarié, filtrable** _(issue #22)_
+  Retour client du 23/09, 3e d'une liste de 6 évolutions. Nouvel attribut
+  sur la fiche salarié : Équipe A / Équipe B / Équipe C / Équipe D, à ajouter
+  au filtre de la vue Planning.
+  _Statut : fait. Ajouté sur `FicheSalarie` (comme `manager`, pas sur
+  `Salarie` : un salarié sans fiche, ex. les lignes "Besoin", n'a donc pas
+  cet attribut et est exclu dès que ce critère est actif — même comportement
+  que Contrat/Présence/Manager déjà établi en story #19). Nouveau type
+  `GroupeRoulement` et constante `GROUPES_ROULEMENT` dans `mock-data.ts`,
+  section ajoutée au panneau de filtres avancé (à côté de Manager), champ
+  dans le formulaire Admin > Salariés (à côté de Manager) et nouvelle
+  colonne dans la liste. Données de démo réparties sur les 4 valeurs pour
+  couvrir chaque option du filtre._
+  _Renommage du 23/09 (retour client, même jour) : d'abord demandé "Équipe
+  A/B/C/D" → "Roulement A/B/C/D" (valeurs et libellé), plus réaliste.
+  Attention signalée au client : le champ « Roulement » existait déjà sur la
+  fiche salarié pour le motif d'horaires récurrent assigné (type
+  `Roulement`, table `roulement` en base) — un même mot pour deux notions
+  différentes sur le même écran. Décision initiale : garder les valeurs
+  "Roulement A/B/C/D" mais distinguer le libellé du champ ("Alignement
+  roulement" plutôt que "Roulement")._
+  _Correction du 23/09 (typo du client, même jour) : c'est l'inverse —
+  seul le **libellé du champ** devient "Alignement roulement", les
+  **valeurs** restent "Équipe A/B/C/D" (jamais renommées en "Roulement").
+  Champ `GroupeRoulement`/`GROUPES_ROULEMENT` gardé (le nom du champ,
+  "Alignement roulement", justifie toujours des identifiants distincts du
+  type `Roulement` existant), seules les 4 valeurs littérales sont
+  revenues à "Équipe A/B/C/D"._
+  _[Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  mis à jour en conséquence (domaine B) : nouvelle colonne
+  `salarie.alignement_roulement`, valeurs Équipe A/B/C/D, sans FK ni lien
+  avec le domaine D (Roulements) — simple étiquette à 4 valeurs._
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis

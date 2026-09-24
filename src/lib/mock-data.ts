@@ -75,6 +75,14 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
 export type Manager = "Aucun" | "Maîtresse de maison" | "IDEC";
 export const MANAGERS: Manager[] = ["Aucun", "Maîtresse de maison", "IDEC"];
 
+// Regroupement salarié à valeurs "Équipe A/B/C/D" (ajouté le 23/09), affiché
+// à l'écran sous le libellé "Alignement roulement" (formulaire, colonne de
+// liste, filtre) plutôt que "Équipe" — distinct du roulement horaire (type
+// Roulement ci-dessous, motif d'horaires assigné via AffectationRoulement),
+// d'où le nom GroupeRoulement/GROUPES_ROULEMENT malgré des valeurs "Équipe".
+export type GroupeRoulement = "Équipe A" | "Équipe B" | "Équipe C" | "Équipe D";
+export const GROUPES_ROULEMENT: GroupeRoulement[] = ["Équipe A", "Équipe B", "Équipe C", "Équipe D"];
+
 export type FicheSalarie = {
   id: string;
   matricule: string; // 4 lettres majuscules
@@ -84,6 +92,7 @@ export type FicheSalarie = {
   typeContrat: "CDD" | "CDI";
   contratActif: boolean;
   manager: Manager;
+  groupeRoulement: GroupeRoulement;
   presence: "Présent" | "Absent";
 };
 
@@ -99,6 +108,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Aucun",
+    groupeRoulement: "Équipe A",
     presence: "Présent",
   },
   {
@@ -110,6 +120,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    groupeRoulement: "Équipe B",
     presence: "Présent",
   },
   {
@@ -121,6 +132,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Aucun",
+    groupeRoulement: "Équipe C",
     presence: "Présent",
   },
   {
@@ -132,6 +144,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Aucun",
+    groupeRoulement: "Équipe D",
     presence: "Présent",
   },
   {
@@ -143,6 +156,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Aucun",
+    groupeRoulement: "Équipe A",
     presence: "Absent",
   },
   {
@@ -154,6 +168,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    groupeRoulement: "Équipe B",
     presence: "Présent",
   },
   {
@@ -165,6 +180,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    groupeRoulement: "Équipe C",
     presence: "Présent",
   },
   {
@@ -176,6 +192,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: false,
     manager: "IDEC",
+    groupeRoulement: "Équipe D",
     presence: "Absent",
   },
   {
@@ -187,6 +204,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    groupeRoulement: "Équipe A",
     presence: "Présent",
   },
   {
@@ -198,6 +216,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDD",
     contratActif: true,
     manager: "IDEC",
+    groupeRoulement: "Équipe B",
     presence: "Absent",
   },
   {
@@ -209,6 +228,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: true,
     manager: "Maîtresse de maison",
+    groupeRoulement: "Équipe C",
     presence: "Présent",
   },
   {
@@ -220,6 +240,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     typeContrat: "CDI",
     contratActif: false,
     manager: "Maîtresse de maison",
+    groupeRoulement: "Équipe D",
     presence: "Absent",
   },
 ];
