@@ -25,9 +25,16 @@ Grille principale de gestion du planning des salariés.
 
 - **Organisation** : une ligne par salarié, une colonne par jour. Les
   salariés sont regroupés par service, puis triés par ordre alphabétique.
-- **Période affichée** : 4 semaines visibles à la fois, avec navigation vers
-  la période précédente/suivante, ou sélection directe d'une date de départ.
-  La dernière période consultée est mémorisée d'une visite à l'autre.
+- **Période affichée** : 4 semaines toujours visibles à la fois (largeur
+  fixe), avec navigation semaine par semaine ou sélection directe d'une date
+  de départ. Le nombre de semaines réellement **chargées** est réglable (de
+  4 à 26, ajouté le 24/09) indépendamment des semaines visibles : au-delà de
+  4, un ascenseur horizontal apparaît sous la grille pour parcourir le
+  surplus chargé sans recharger de données — pensé pour limiter la
+  fréquence des accès à la base une fois le backend réel branché (chaque
+  clic sur une flèche ne redemande une nouvelle période qu'une fois le lot
+  chargé épuisé). La dernière période consultée et le nombre de semaines
+  chargées sont mémorisés d'une visite à l'autre.
 - **Repères visuels** : les week-ends sont grisés et les jours fériés
   distingués en ambre (couleur propre, ajouté le 24/09) dans les en-têtes de
   colonnes — un jour férié tombant un week-end reste marqué férié en

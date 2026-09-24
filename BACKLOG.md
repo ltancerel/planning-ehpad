@@ -591,6 +591,46 @@ export réel, connecteur paie.
   du calendrier) autour du 1er et du 11 novembre 2026 (jours fériés du jeu
   de démo)._
 
+- [x] **24. Nombre de semaines chargées configurable sur la grille Planning** _(issue #22)_
+  Retour client du 24/09, 4e d'une liste de 6 évolutions. Inquiétude du
+  client : une fois les accès base de données branchés, naviguer semaine par
+  semaine avec les flèches multiplierait les allers-retours au serveur.
+  Demande : pouvoir configurer le nombre de semaines chargées (de 4 à n),
+  tout en gardant une fenêtre visible de 4 semaines avec un ascenseur
+  horizontal.
+  _Statut : fait, sur `PlanningGrid.tsx` uniquement (la grille Planning
+  principale — distincte de la vue mensuelle Émargement salarié, cf. story
+  #25). Deux réglages désormais indépendants : `NB_SEMAINES_VISIBLES` (fixe,
+  4) et `nbSemainesChargees` (état, réglable de 4 à 26 via un champ dans le
+  panneau de sélection de période, mémorisé en localStorage comme la
+  période). Par défaut chargées = visibles : aucun ascenseur au quotidien.
+  Le conteneur de la grille est plafonné en largeur à 4 semaines
+  (`maxWidth`) ; au-delà, la table (rendue à sa largeur réelle grâce à un
+  `width` explicite sur l'élément `<table>` — indispensable avec
+  `table-layout: fixed`, sans quoi le navigateur comprime les colonnes pour
+  tenir dans le conteneur au lieu de déborder) dépasse ce plafond et un
+  ascenseur horizontal apparaît sous la grille.
+  Les flèches de navigation défilent d'abord dans le lot déjà chargé (pur
+  scroll, aucun rechargement) et ne déclenchent un changement de période
+  (nouveau lot) qu'une fois le bord du lot atteint — c'est ce qui répond à
+  l'inquiétude initiale : avec un lot large, l'essentiel de la navigation ne
+  coûte plus rien côté données.
+  Vérifié : à 4 semaines chargées (défaut) sur un écran large, aucun
+  ascenseur (largeur de la grille = largeur du conteneur, à l'arrondi près).
+  À 12 semaines chargées, la grille déborde bien (table 3897px dans un
+  conteneur plafonné à 1432px) et 4 clics consécutifs sur la flèche
+  suivante ne changent pas la période affichée dans l'en-tête (confirmation
+  que la navigation reste dans le lot chargé)._
+
+- [x] **25. Vue mensuelle salarié (Émargement) configurable 4 ou 6 semaines** _(issue #22)_
+  Retour client du 24/09, 6e d'une liste de 6 évolutions — à ne pas
+  confondre avec la story #24 (grille Planning principale) : deux écrans
+  distincts. Demande : pouvoir choisir 4 ou 6 semaines, toutes entièrement
+  visibles (pas d'ascenseur), navigation semaine par semaine, démarrage par
+  défaut aligné sur le milieu du mois (en fonction d'où tombe le lundi),
+  toujours un lundi en première colonne.
+  _Statut : en cours._
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis
