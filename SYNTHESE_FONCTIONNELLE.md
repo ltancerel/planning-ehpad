@@ -198,10 +198,21 @@ que d'être appliquée sur certaines cases et pas d'autres.
 
 ### 2. Émargement — vue mensuelle
 
-Vue calendaire mensuelle du planning d'un salarié, destinée à sa validation.
+Vue calendaire du planning d'un salarié, destinée à sa validation.
 
-- Présentation en calendrier classique (semaines en ligne, jours en
-  colonne).
+- Présentation en calendrier (semaines en ligne, jours en colonne), sur une
+  fenêtre de **4 ou 6 semaines complètes au choix** (bascule en haut de
+  l'écran, ajouté le 24/09) — toujours entièrement visible, sans ascenseur.
+  Contrairement à la grille Planning (story #24), le nombre de semaines
+  visibles ici est directement le nombre de semaines chargées : ce sont deux
+  réglages indépendants, sur deux écrans distincts.
+  - **Navigation** : semaine par semaine (et non plus mois par mois), le
+    lundi toujours en première colonne.
+  - **Départ par défaut** : le lundi le plus proche du milieu du mois de
+    référence (15 du mois, arrondi au lundi le plus proche) plutôt que le
+    1er du mois — la fenêtre de 4 ou 6 semaines déborde ainsi naturellement
+    sur le mois suivant, plutôt que de s'arrêter pile à la fin du mois de
+    référence.
 - Pour chaque jour : le code de travail (avec son intitulé et ses plages
   horaires) est affiché au-dessus du code événementiel du jour, chacun dans
   sa propre couleur. Contrairement à la grille planning (case trop petite
@@ -217,10 +228,10 @@ Vue calendaire mensuelle du planning d'un salarié, destinée à sa validation.
     horaires saisies et l'écart (+/− heures) sont affichés directement sur
     ce code.
 - Un total d'heures est affiché pour chaque semaine (aligné à droite de la
-  ligne) et pour le mois entier (en bas de la vue).
-- Un bouton permet de **valider le mois**, ce qui indique que le salarié
-  confirme que le planning correspond aux heures réellement effectuées ; une
-  fois validé, le mois est marqué comme non modifiable.
+  ligne) et pour la période entière affichée (en bas de la vue).
+- Un bouton permet de **valider la période affichée**, ce qui indique que le
+  salarié confirme que le planning correspond aux heures réellement
+  effectuées ; une fois validé, la période est marquée comme non modifiable.
 - Des emplacements de signature (salarié et responsable) sont prévus pour un
   usage papier, avec un bouton d'impression qui adapte l'affichage au
   format imprimé.

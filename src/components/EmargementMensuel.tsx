@@ -13,13 +13,16 @@ import {
 } from "@/lib/horaire-codes";
 import {
   formatDateISO,
+  formatJourMois,
   parseDateISO,
   estWeekend,
-  genererMois,
-  genererCalendrierMois,
-  formatAnneeMois,
-  libelleMois,
+  genererPeriode,
+  lundiDeLaSemaine,
+  lundiLePlusProche,
 } from "@/lib/dates";
+
+type NbSemaines = 4 | 6;
+const NB_SEMAINES_DEFAUT: NbSemaines = 4;
 
 const JOURS_SEMAINE = ["L", "Ma", "M", "J", "V", "S", "D"];
 
@@ -42,21 +45,30 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  // "mois" ne sert qu'à calculer le départ par défaut (milieu de mois, cf.
+  // lundiLePlusProche ci-dessous) — c'est le paramètre transmis par le lien
+  // depuis la grille Planning. Une fois affichée, la navigation (semaine par
+  // semaine, ou changement du nombre de semaines) passe par "debut", qui
+  // prend le pas sur "mois" dès qu'il est présent.
   const moisParam = searchParams.get("mois");
-  const dateMois = useMemo(
-    () => (moisParam ? parseDateISO(`${moisParam}-01`) : new Date(2026, 8, 1)),
-    [moisParam]
-  );
+  const debutParam = searchParams.get("debut");
+  const semainesParam = searchParams.get("semaines");
+  const nbSemaines: NbSemaines = semainesParam === "6" ? 6 : NB_SEMAINES_DEFAUT;
   const [valide, setValide] = useState(false);
 
-  const semaines = useMemo(
-    () => genererCalendrierMois(dateMois.getFullYear(), dateMois.getMonth()),
-    [dateMois]
-  );
-  const joursDuMois = useMemo(
-    () => genererMois(dateMois.getFullYear(), dateMois.getMonth()),
-    [dateMois]
-  );
+  const debutFenetre = useMemo(() => {
+    if (debutParam) return lundiDeLaSemaine(parseDateISO(debutParam));
+    const dateReference = moisParam ? parseDateISO(`${moisParam}-01`) : new Date(2026, 8, 1);
+    return lundiLePlusProche(new Date(dateReference.getFullYear(), dateReference.getMonth(), 15));
+  }, [debutParam, moisParam]);
+
+  const jours = useMemo(() => genererPeriode(debutFenetre, nbSemaines * 7), [debutFenetre, nbSemaines]);
+  const semaines = useMemo(() => {
+    const groupes: Date[][] = [];
+    for (let i = 0; i < jours.length; i += 7) groupes.push(jours.slice(i, i + 7));
+    return groupes;
+  }, [jours]);
+  const finFenetre = jours[jours.length - 1];
 
   function valeurDuJour(jour: Date) {
     const dateISO = formatDateISO(jour);
@@ -75,30 +87,66 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
     return { valeur, horaireTravail, horaireInformatif, horaireEvenementiel, heuresBase, heures, travailBarre, delta };
   }
 
-  const totalHeures = joursDuMois.reduce((total, jour) => total + valeurDuJour(jour).heures, 0);
+  const totalHeures = jours.reduce((total, jour) => total + valeurDuJour(jour).heures, 0);
 
-  function changerMois(delta: number) {
-    const suivant = new Date(dateMois.getFullYear(), dateMois.getMonth() + delta, 1);
-    router.push(`/emargement?salarie=${salarie.id}&mois=${formatAnneeMois(suivant)}`);
+  function naviguer(nouveauDebut: Date, nouveauNbSemaines: NbSemaines) {
+    const params = new URLSearchParams({
+      salarie: salarie.id,
+      debut: formatDateISO(nouveauDebut),
+      semaines: String(nouveauNbSemaines),
+    });
+    router.push(`/emargement?${params.toString()}`);
     setValide(false);
+  }
+
+  function allerSemaine(delta: number) {
+    const suivant = new Date(debutFenetre);
+    suivant.setDate(suivant.getDate() + delta * 7);
+    naviguer(suivant, nbSemaines);
+  }
+
+  function choisirNbSemaines(n: NbSemaines) {
+    naviguer(debutFenetre, n);
   }
 
   return (
     <>
       <div className="mb-3 flex max-w-5xl items-center justify-between">
         <button
-          onClick={() => changerMois(-1)}
+          onClick={() => allerSemaine(-1)}
           className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50 print:hidden"
         >
-          ← Mois précédent
+          ← Semaine précédente
         </button>
-        <span className="text-sm font-semibold text-zinc-700">{libelleMois(dateMois)}</span>
-        <button
-          onClick={() => changerMois(1)}
-          className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50 print:hidden"
-        >
-          Mois suivant →
-        </button>
+        <span className="text-sm font-semibold text-zinc-700">
+          {formatJourMois(debutFenetre)} – {formatJourMois(finFenetre)} {finFenetre.getFullYear()}
+        </span>
+        <div className="flex items-center gap-2">
+          <div className="flex overflow-hidden rounded border border-zinc-300 text-xs print:hidden">
+            <button
+              onClick={() => choisirNbSemaines(4)}
+              className={`px-2 py-1 font-medium ${
+                nbSemaines === 4 ? "bg-blue-600 text-white" : "text-zinc-600 hover:bg-zinc-50"
+              }`}
+            >
+              4 semaines
+            </button>
+            <button
+              onClick={() => choisirNbSemaines(6)}
+              className={`border-l border-zinc-300 px-2 py-1 font-medium ${
+                nbSemaines === 6 ? "bg-blue-600 text-white" : "text-zinc-600 hover:bg-zinc-50"
+              }`}
+            >
+              6 semaines
+            </button>
+          </div>
+          <button
+            onClick={() => allerSemaine(1)}
+            className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-50 print:hidden"
+          >
+            Semaine suivante →
+          </button>
+        </div>
       </div>
 
       <div className="max-w-5xl overflow-hidden rounded border border-zinc-200">
@@ -120,15 +168,10 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
           </thead>
           <tbody>
             {semaines.map((semaine, index) => {
-              const totalSemaine = semaine.reduce(
-                (total, jour) =>
-                  jour.getMonth() === dateMois.getMonth() ? total + valeurDuJour(jour).heures : total,
-                0
-              );
+              const totalSemaine = semaine.reduce((total, jour) => total + valeurDuJour(jour).heures, 0);
               return (
                 <tr key={index}>
                   {semaine.map((jour) => {
-                    const dansLeMois = jour.getMonth() === dateMois.getMonth();
                     const {
                       valeur,
                       horaireTravail,
@@ -142,17 +185,6 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                     const classe = classeJour(jour);
                     const plagesTravail = formatPlages(horaireTravail?.plages);
                     const estPartiel = horaireEvenementiel?.typeEvenement === "partiel";
-
-                    if (!dansLeMois) {
-                      return (
-                        <td
-                          key={formatDateISO(jour)}
-                          className="min-h-32 border border-zinc-100 bg-zinc-50 align-top text-zinc-300"
-                        >
-                          <span className="block px-1.5 py-1 text-xs">{jour.getDate()}</span>
-                        </td>
-                      );
-                    }
 
                     return (
                       <td
@@ -173,7 +205,7 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                                     : "text-zinc-500"
                               }`}
                             >
-                              {jour.getDate()}
+                              {formatJourMois(jour)}
                             </span>
                             {valeur && <span className="text-[10px] font-semibold text-zinc-700">{heures}h</span>}
                           </div>
@@ -270,7 +302,7 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
 
       <div className="mt-2 flex max-w-5xl items-center justify-between text-xs text-zinc-500">
         <p className="max-w-md">
-          Heures extrapolées à partir des codes horaires du mois (planifié, amendé par les codes
+          Heures extrapolées à partir des codes horaires de la période (planifié, amendé par les codes
           événementiels — superposition ou complément à la volée, cf. story #19).
         </p>
         <p className="font-semibold text-zinc-700">Total : {totalHeures}h</p>
@@ -279,20 +311,21 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
       <div className="mt-4 max-w-5xl rounded border border-zinc-200 p-3 print:hidden">
         {valide ? (
           <p className="text-sm font-medium text-green-700">
-            ✓ Planning validé par {salarie.prenom} {salarie.nom} pour {libelleMois(dateMois)}. Il ne peut
-            plus être modifié.
+            ✓ Planning validé par {salarie.prenom} {salarie.nom} pour la période du{" "}
+            {formatJourMois(debutFenetre)} au {formatJourMois(finFenetre)} {finFenetre.getFullYear()}. Il
+            ne peut plus être modifié.
           </p>
         ) : (
           <>
             <p className="mb-2 text-xs text-zinc-600">
               En validant, {salarie.prenom} {salarie.nom} confirme que ce planning correspond aux heures
-              réellement effectuées ce mois-ci.
+              réellement effectuées sur la période affichée.
             </p>
             <button
               onClick={() => setValide(true)}
               className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
             >
-              Valider le mois
+              Valider la période
             </button>
           </>
         )}

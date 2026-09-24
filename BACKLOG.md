@@ -629,7 +629,29 @@ export réel, connecteur paie.
   visibles (pas d'ascenseur), navigation semaine par semaine, démarrage par
   défaut aligné sur le milieu du mois (en fonction d'où tombe le lundi),
   toujours un lundi en première colonne.
-  _Statut : en cours._
+  _Statut : fait. `EmargementMensuel.tsx` ne s'appuie plus sur
+  `genererCalendrierMois` (grille calendaire figée sur un mois civil, avec
+  cases grisées de remplissage pour les jours hors mois) mais sur
+  `genererPeriode` depuis un lundi de départ, sur `nbSemaines * 7` jours (4
+  ou 6, bascule en haut de l'écran, mémorisée dans l'URL via `?semaines=`).
+  Plus de notion de "jour hors mois" : chaque case affichée est réelle,
+  l'étiquette de date passe de `jour.getDate()` à `formatJourMois` (jj/mm)
+  pour rester lisible quand la fenêtre déborde sur un ou plusieurs mois
+  voisins._
+  _Nouveau helper `lundiLePlusProche` dans `dates.ts` (distinct de
+  `lundiDeLaSemaine`, qui arrondit toujours au lundi précédent) : trouve le
+  lundi le plus proche d'une date donnée. Départ par défaut = lundi le plus
+  proche du 15 du mois de référence (paramètre `?mois=`, celui transmis par
+  le lien depuis la grille Planning). Une fois affichée, la navigation
+  (`?debut=`, `?semaines=`) prend le pas sur `?mois=`._
+  _Navigation : les boutons "Mois précédent/suivant" deviennent "Semaine
+  précédente/suivante" (±7 jours). Le total et le bouton de validation ne
+  référencent plus "le mois" mais "la période affichée", cohérent avec une
+  fenêtre qui ne correspond plus forcément à un mois civil._
+  _Vérifié : `mois=2026-09` affiche par défaut 14/09–11/10/2026 (lundi le
+  plus proche du 15/09, qui est un mardi) ; bascule vers 6 semaines
+  conserve le même départ (14/09–25/10/2026) ; 2 clics sur "Semaine
+  suivante" avancent bien de 2 semaines exactement (28/09–08/11/2026)._
 
 ## Sortie de l'Epic — WAIVED
 
