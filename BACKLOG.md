@@ -556,23 +556,25 @@ export réel, connecteur paie.
   dans le formulaire Admin > Salariés (à côté de Manager) et nouvelle
   colonne dans la liste. Données de démo réparties sur les 4 valeurs pour
   couvrir chaque option du filtre._
-  _Renommage du 23/09 (retour client, même jour) : "Équipe A/B/C/D" →
-  "Roulement A/B/C/D", plus réaliste. Attention signalée au client : le
-  champ « Roulement » existait déjà sur la fiche salarié pour le motif
-  d'horaires récurrent assigné (type `Roulement`, table `roulement` en
-  base) — un même mot pour deux notions différentes sur le même écran.
-  Décision : les valeurs restent "Roulement A/B/C/D" mais le libellé du
-  champ (formulaire, colonne de liste, section du filtre) est "Alignement
-  roulement", distinct du libellé "Roulement" du motif d'horaires, pour lever
-  l'ambiguïté visuelle tout en gardant le vocabulaire "Roulement" demandé.
-  Identifiants TypeScript (`GroupeRoulement`/`GROUPES_ROULEMENT`) gardés
-  distincts du type `Roulement` existant, seule façon d'éviter une collision
-  de nom à la compilation._
+  _Renommage du 23/09 (retour client, même jour) : d'abord demandé "Équipe
+  A/B/C/D" → "Roulement A/B/C/D" (valeurs et libellé), plus réaliste.
+  Attention signalée au client : le champ « Roulement » existait déjà sur la
+  fiche salarié pour le motif d'horaires récurrent assigné (type
+  `Roulement`, table `roulement` en base) — un même mot pour deux notions
+  différentes sur le même écran. Décision initiale : garder les valeurs
+  "Roulement A/B/C/D" mais distinguer le libellé du champ ("Alignement
+  roulement" plutôt que "Roulement")._
+  _Correction du 23/09 (typo du client, même jour) : c'est l'inverse —
+  seul le **libellé du champ** devient "Alignement roulement", les
+  **valeurs** restent "Équipe A/B/C/D" (jamais renommées en "Roulement").
+  Champ `GroupeRoulement`/`GROUPES_ROULEMENT` gardé (le nom du champ,
+  "Alignement roulement", justifie toujours des identifiants distincts du
+  type `Roulement` existant), seules les 4 valeurs littérales sont
+  revenues à "Équipe A/B/C/D"._
   _[Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
   mis à jour en conséquence (domaine B) : nouvelle colonne
-  `salarie.alignement_roulement`, sans FK ni lien avec le domaine D
-  (Roulements) — simple étiquette à 4 valeurs. Note dédiée ajoutée
-  documentant la collision de nom acceptée._
+  `salarie.alignement_roulement`, valeurs Équipe A/B/C/D, sans FK ni lien
+  avec le domaine D (Roulements) — simple étiquette à 4 valeurs._
 
 ## Sortie de l'Epic — WAIVED
 
