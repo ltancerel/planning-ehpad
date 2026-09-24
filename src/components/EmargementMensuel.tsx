@@ -23,8 +23,14 @@ import {
 
 const JOURS_SEMAINE = ["L", "Ma", "M", "J", "V", "S", "D"];
 
-function estJourGrise(date: Date): boolean {
-  return estWeekend(date) || JOURS_FERIES_2026.has(formatDateISO(date));
+// Distinction visuelle jour férié / week-end (retour client du 24/09) : un
+// jour férié tombant un week-end reste marqué férié (priorité), pas juste
+// grisé comme un week-end ordinaire.
+type ClasseJour = "ferie" | "weekend" | "normal";
+function classeJour(date: Date): ClasseJour {
+  if (JOURS_FERIES_2026.has(formatDateISO(date))) return "ferie";
+  if (estWeekend(date)) return "weekend";
+  return "normal";
 }
 
 function formatPlages(plages?: Plage[]): string {
@@ -133,7 +139,7 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                       travailBarre,
                       delta,
                     } = valeurDuJour(jour);
-                    const grise = estJourGrise(jour);
+                    const classe = classeJour(jour);
                     const plagesTravail = formatPlages(horaireTravail?.plages);
                     const estPartiel = horaireEvenementiel?.typeEvenement === "partiel";
 
@@ -151,11 +157,22 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
                     return (
                       <td
                         key={formatDateISO(jour)}
-                        className={`min-h-32 border border-zinc-200 align-top ${grise ? "bg-zinc-50" : "bg-white"}`}
+                        className={`min-h-32 border border-zinc-200 align-top ${
+                          classe === "ferie" ? "bg-amber-50" : classe === "weekend" ? "bg-zinc-50" : "bg-white"
+                        }`}
+                        title={classe === "ferie" ? "Jour férié" : undefined}
                       >
                         <div className="flex h-full flex-col gap-1 px-1.5 py-1">
                           <div className="flex items-center justify-between">
-                            <span className={`text-xs ${grise ? "text-zinc-400" : "text-zinc-500"}`}>
+                            <span
+                              className={`text-xs ${
+                                classe === "ferie"
+                                  ? "font-semibold text-amber-700"
+                                  : classe === "weekend"
+                                    ? "text-zinc-400"
+                                    : "text-zinc-500"
+                              }`}
+                            >
                               {jour.getDate()}
                             </span>
                             {valeur && <span className="text-[10px] font-semibold text-zinc-700">{heures}h</span>}

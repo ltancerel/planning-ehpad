@@ -576,6 +576,21 @@ export réel, connecteur paie.
   `salarie.alignement_roulement`, valeurs Équipe A/B/C/D, sans FK ni lien
   avec le domaine D (Roulements) — simple étiquette à 4 valeurs._
 
+- [x] **23. Distinguer les jours fériés des week-ends dans l'affichage** _(issue #22)_
+  Retour client du 24/09, 5e d'une liste de 6 évolutions. Les jours fériés
+  et les week-ends partageaient la même couleur grise dans l'en-tête de la
+  grille Planning et dans les cases de la vue mensuelle Émargement,
+  impossible à distinguer au premier coup d'œil.
+  _Statut : fait. Nouvelle classification à 3 états (férié / week-end /
+  normal) dans `PlanningGrid.tsx` et `EmargementMensuel.tsx` (remplace le
+  booléen `estJourGrise` qui fusionnait les deux) : un jour férié tombant un
+  week-end reste marqué férié (priorité), pas juste grisé comme un week-end
+  ordinaire. Couleur ambre pour les jours fériés (fond + texte, distincte du
+  gris week-end), avec un titre HTML "Jour férié" au survol. Vérifié sur la
+  grille Planning (en-tête, 2 lignes) et la vue mensuelle Émargement (cases
+  du calendrier) autour du 1er et du 11 novembre 2026 (jours fériés du jeu
+  de démo)._
+
 ## Sortie de l'Epic — WAIVED
 
 - **Menu Export (WAIVED)** — issue #12, retirée de l'EPIC le 15/09, titre GitHub mis

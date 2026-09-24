@@ -28,8 +28,10 @@ Grille principale de gestion du planning des salariés.
 - **Période affichée** : 4 semaines visibles à la fois, avec navigation vers
   la période précédente/suivante, ou sélection directe d'une date de départ.
   La dernière période consultée est mémorisée d'une visite à l'autre.
-- **Repères visuels** : les week-ends et jours fériés sont grisés dans les
-  en-têtes de colonnes.
+- **Repères visuels** : les week-ends sont grisés et les jours fériés
+  distingués en ambre (couleur propre, ajouté le 24/09) dans les en-têtes de
+  colonnes — un jour férié tombant un week-end reste marqué férié en
+  priorité.
 - **Filtre d'affichage des salariés** (retour client du 22/09) : un bouton
   « Filtres » en haut de l'écran ouvre une fenêtre à critères combinables,
   inspirée du filtre de recherche d'offres d'HelloWork, pour répondre au

@@ -57,8 +57,14 @@ const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
 // date réelle de consultation.
 const PERIODE_PAR_DEFAUT = new Date(2026, 8, 1);
 
-function estJourGrise(date: Date): boolean {
-  return estWeekend(date) || JOURS_FERIES_2026.has(formatDateISO(date));
+// Distinction visuelle jour férié / week-end (retour client du 24/09) : un
+// jour férié tombant un week-end reste marqué férié (priorité), pas juste
+// grisé comme un week-end ordinaire.
+type ClasseJour = "ferie" | "weekend" | "normal";
+function classeEnTeteJour(date: Date): ClasseJour {
+  if (JOURS_FERIES_2026.has(formatDateISO(date))) return "ferie";
+  if (estWeekend(date)) return "weekend";
+  return "normal";
 }
 
 export default function PlanningGrid() {
@@ -642,14 +648,19 @@ export default function PlanningGrid() {
                 rowSpan={2}
               />
               {jours.map((jour) => {
-                const grise = estJourGrise(jour);
+                const classe = classeEnTeteJour(jour);
                 return (
                   <th
                     key={formatDateISO(jour)}
                     className={`sticky top-0 z-10 border border-zinc-200 text-xs font-medium leading-none ${
-                      grise ? "bg-zinc-300 text-zinc-600" : "bg-zinc-100 text-zinc-700"
+                      classe === "ferie"
+                        ? "bg-amber-200 text-amber-900"
+                        : classe === "weekend"
+                          ? "bg-zinc-300 text-zinc-600"
+                          : "bg-zinc-100 text-zinc-700"
                     }`}
                     style={{ height: HAUTEUR_LIGNE_ENTETE, boxSizing: "border-box" }}
+                    title={classe === "ferie" ? "Jour férié" : undefined}
                   >
                     {lettreJour(jour)}
                   </th>
@@ -658,18 +669,23 @@ export default function PlanningGrid() {
             </tr>
             <tr>
               {jours.map((jour) => {
-                const grise = estJourGrise(jour);
+                const classe = classeEnTeteJour(jour);
                 return (
                   <th
                     key={formatDateISO(jour)}
                     className={`sticky z-10 border border-zinc-200 text-xs font-normal leading-none ${
-                      grise ? "bg-zinc-300 text-zinc-600" : "bg-zinc-50 text-zinc-500"
+                      classe === "ferie"
+                        ? "bg-amber-100 text-amber-800"
+                        : classe === "weekend"
+                          ? "bg-zinc-300 text-zinc-600"
+                          : "bg-zinc-50 text-zinc-500"
                     }`}
                     style={{
                       top: HAUTEUR_LIGNE_ENTETE,
                       height: HAUTEUR_LIGNE_ENTETE,
                       boxSizing: "border-box",
                     }}
+                    title={classe === "ferie" ? "Jour férié" : undefined}
                   >
                     {formatJourMois(jour)}
                   </th>
