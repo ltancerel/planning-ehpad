@@ -910,7 +910,7 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
 
 ### Stories
 
-- [ ] **1. Provisionner le projet Supabase PROD** _(issue #32)_
+- [x] **1. Provisionner le projet Supabase PROD** _(issue #32)_
   Création du projet, dossier `supabase/migrations/` versionné dans le
   dépôt, application du schéma complet (tables, RLS, triggers, fonctions
   RPC), données de référence (catalogue `application`).
@@ -922,11 +922,61 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   _Tranché le 17/09 : projet Supabase créé en région UE (ex. Francfort),
   pour éviter un transfert de données hors UE par défaut — cf. story RGPD,
   issue #45._
+  _Statut : schéma fait (24/09), création du projet lui-même à faire par
+  le client. 9 migrations dans `supabase/migrations/`, une par domaine du
+  [modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  (21 tables) plus une dédiée aux policies RLS et une au catalogue
+  `application`. Fonctions RPC (`appliquer_roulement`,
+  `generer_annee_planifiee`, `creer_etablissement`) pas encore écrites —
+  hors périmètre de cette story, elles relèvent du branchement des écrans
+  (stories #34/#35)._
+  _Contraintes/triggers posés conformément aux notes de conception : les 4
+  `CHECK` de `code_horaire`, les 2 `CHECK` de composition de `journee`,
+  l'index unique partiel `contrat` (un seul actif par salarié), la
+  cohérence catégorie ↔ code horaire (une fonction trigger générique
+  paramétrée, réutilisée sur `roulement_jour` et les 3 colonnes de
+  `journee`), l'unicité de `identifiant` entre `compte` et
+  `administrateur_systeme`, la cascade de désactivation d'un EHPAD sur ses
+  comptes, la cohérence `ehpad_application`/`compte_application`, et la
+  traçabilité (`journee_historique` dédiée + fonction générique
+  `log_audit` attachée aux 17 tables listées dans la note de conception)._
+  _RLS activée sur les 21 tables, avec les 3 niveaux déjà spécifiés
+  (administrateur_systeme transverse ; administrateur tout son EHPAD ;
+  manager limité à `journee`/`journee_evenementiel_plage` en écriture ;
+  utilisateur lecture seule) — dont le détail de la répartition
+  administrateur/manager n'avait encore jamais été traduit en policies
+  réelles avant cette story. `anon` explicitement privé de tout accès,
+  `authenticated` reçoit les GRANT bruts que RLS restreint ensuite ligne
+  par ligne._
+  _Tout testé de bout en bout sur un Postgres local avant livraison (pas de
+  Docker disponible dans cet environnement pour lancer le stack Supabase
+  local, donc schéma `auth` minimal reconstitué à la main — `auth.users`,
+  `auth.uid()`, rôles `anon`/`authenticated`/`service_role`) : les 9
+  migrations s'appliquent sans erreur dans l'ordre ; les CHECK/triggers
+  bloquent bien les cas invalides (identifiant dupliqué, type_compte
+  inconnu, code évènementiel sans type_evenement, roulement_jour référençant
+  un code non-travail, 2e contrat actif) et laissent passer les cas valides ;
+  la cascade de désactivation d'un EHPAD désactive bien ses comptes ; la
+  RLS renvoie 0 ligne en anonyme, les bonnes lignes scopées pour un
+  administrateur_systeme et pour un compte administrateur d'un EHPAD (et
+  aucun administrateur_systeme visible depuis ce dernier)._
+  _Guide de mise en route (création du projet, réglages de sécurité,
+  application des migrations, amorçage du premier compte) dans
+  `supabase/README.md`._
 
-- [ ] **2. Implémenter l'authentification et les comptes** _(issue #33)_
+- [x] **2. Implémenter l'authentification et les comptes** _(issue #33)_
   Les 4 fonctions Vercel (connexion par identifiant, création EHPAD,
   création compte, réinitialisation de mot de passe) ; amorçage manuel du
   tout premier compte Administrateur Système.
+  _Statut : partiel (24/09). Seul l'amorçage manuel du tout premier compte
+  Administrateur Système est fait — script `supabase/bootstrap_admin_systeme.sql`
+  et procédure pas à pas dans `supabase/README.md` (créer l'utilisateur
+  Supabase Auth pour `ludovic.tancerel@aiot-conseil.fr` depuis le dashboard,
+  copier son UUID, l'insérer dans `administrateur_systeme`). Les 4
+  fonctions Vercel (connexion par identifiant, création EHPAD, création
+  compte, réinitialisation de mot de passe) restent à écrire — nécessitent
+  un projet Vercel branché, hors périmètre de « juste créer le système
+  admin pour démarrer et tester » demandé le 24/09._
 
 - [ ] **3. Brancher les écrans Administration sur le backend** _(issue #34)_
   Comptes/utilisateurs, salariés, codes horaires, roulements, années/jours
