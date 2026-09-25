@@ -2,14 +2,27 @@
 
 import { useState } from "react";
 import { UTILISATEUR_CONNECTE } from "@/lib/mock-data";
+import { logout } from "@/app/compte/actions";
+
+type UtilisateurMenu = {
+  nom: string;
+  prenom: string;
+  typeUtilisateur: string;
+  service?: string;
+  poste?: string;
+};
 
 function initiales({ nom, prenom }: { nom: string; prenom: string }): string {
   return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase();
 }
 
-export default function UserMenu() {
+// `utilisateur` fourni = session réelle (zone branchée sur le backend,
+// cf. story #34) : affiche l'identité réelle et une vraie déconnexion.
+// Non fourni = repli mock (zones pas encore branchées, ex. PlanningGrid).
+export default function UserMenu({ utilisateur: utilisateurProp }: { utilisateur?: UtilisateurMenu }) {
   const [ouvert, setOuvert] = useState(false);
-  const utilisateur = UTILISATEUR_CONNECTE;
+  const reel = Boolean(utilisateurProp);
+  const utilisateur = utilisateurProp ?? UTILISATEUR_CONNECTE;
 
   return (
     <div className="relative">
@@ -47,17 +60,25 @@ export default function UserMenu() {
             <dl className="space-y-1.5 border-t border-zinc-100 pt-3 text-xs">
               <div className="flex justify-between">
                 <dt className="text-zinc-500">Service</dt>
-                <dd className="font-medium text-zinc-700">{utilisateur.service}</dd>
+                <dd className="font-medium text-zinc-700">{utilisateur.service || "—"}</dd>
               </div>
               <div className="flex justify-between">
                 <dt className="text-zinc-500">Poste</dt>
-                <dd className="font-medium text-zinc-700">{utilisateur.poste}</dd>
+                <dd className="font-medium text-zinc-700">{utilisateur.poste || "—"}</dd>
               </div>
             </dl>
 
-            <p className="mt-3 border-t border-zinc-100 pt-2 text-[11px] text-zinc-400">
-              Profil en lecture seule (maquette)
-            </p>
+            {reel ? (
+              <form action={logout} className="mt-3 border-t border-zinc-100 pt-2">
+                <button type="submit" className="text-xs font-medium text-zinc-600 hover:underline">
+                  Se déconnecter
+                </button>
+              </form>
+            ) : (
+              <p className="mt-3 border-t border-zinc-100 pt-2 text-[11px] text-zinc-400">
+                Profil en lecture seule (maquette)
+              </p>
+            )}
           </div>
         </>
       )}

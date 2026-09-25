@@ -1091,6 +1091,36 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   serveur (jamais `NEXT_PUBLIC_`) — pas testable en e2e automatisé ni en
   local sans cette clé, donc pas de nouveau test automatisé pour ce
   parcours précis, ajouté à `STAGING_CHECKLIST.md` à la place._
+  _Précisé le 25/09 (suite) : bug repéré juste après (compte
+  administrateur d'EHPAD connecté, atterrissait sur l'écran
+  Administrateur Système avec badge/lien trompeurs) — corrigé,
+  `/compte/*` vérifie désormais réellement `est_administrateur_systeme()`
+  et affiche un écran honnête sinon. Pas une faille de sécurité : vérifié
+  après coup en rejouant la requête d'insertion exacte de ce compte
+  directement en base (`insufficient_privilege`, RLS), aucune ligne
+  créée._
+  _Démarrage du branchement du reste de la story le 25/09, à la demande
+  du client (« construire plus ou moins manuellement », sans données
+  fictives — les vraies données de l'EHPAD sont attendues séparément) :
+  zone `/admin/*` désormais protégée par une vraie session + vérification
+  du rôle `administrateur` (`src/app/admin/layout.tsx`, même principe que
+  `/compte`), `UserMenu` affiche l'identité réelle du compte connecté
+  (au lieu du mock `UTILISATEUR_CONNECTE`) avec une vraie déconnexion.
+  Premier écran branché : **Identité EHPAD** (`/admin/ehpad`), lecture/
+  écriture réelles sur `ehpad.nom`/`logo_base64`, scopées par RLS au
+  propre établissement de l'administrateur (`auth_ehpad_id()`) — remplace
+  l'ancien `EhpadProvider` (contexte React + localStorage) pour cet
+  écran ; celui-ci reste utilisé ailleurs (Planning/Émargement, pas
+  encore branchés). Redirection post-connexion corrigée pour dépendre du
+  rôle réel (`/compte` pour administrateur_systeme, `/admin` pour
+  administrateur, `/` en repli sinon) — jusque-là tout le monde atterrissait
+  sur `/compte`. Types TypeScript générés depuis le schéma réel
+  (`src/lib/supabase/database.types.ts`, `mcp__Supabase__generate_typescript_types`)
+  et branchés sur les 3 clients Supabase, à régénérer à la main après
+  toute migration de schéma (pas de CLI Supabase utilisable dans ce
+  sandbox). Les 5 autres écrans (Codes horaires, Utilisateurs, Salariés,
+  Roulements, Années) restent en mock pour l'instant, à brancher un par
+  un — approche volontairement incrémentale plutôt que tout d'un coup._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,

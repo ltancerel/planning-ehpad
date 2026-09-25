@@ -79,11 +79,35 @@ et à mesure d'une exécution ; remettre à zéro pour la suivante.
       suppression possible (RLS), cohérent avec le fait que cet écran est
       réservé à l'Administrateur Système.
 
+## Administration d'un EHPAD par son Administrateur (story #34, écran Identité)
+
+- [ ] Se connecter avec un compte `administrateur` d'EHPAD (pas
+      Administrateur Système) → redirection automatique vers `/admin`
+      (pas `/compte`, corrigé le 25/09 — avant ce correctif tout compte
+      atterrissait sur `/compte`, réservé au System Admin).
+- [ ] Avec ce même compte, visiter `/compte` directement → écran « zone
+      réservée à l'Administrateur Système », pas les commandes système.
+- [ ] Sur `/admin/ehpad`, le nom de l'EHPAD affiché correspond à celui
+      saisi à la création (`/compte/ehpads`), le logo est vide (jamais
+      renseigné) — c'est l'état attendu pour un nouvel EHPAD, pas une
+      donnée manquante par erreur.
+- [ ] Modifier le nom et/ou ajouter un logo, Enregistrer → persiste
+      réellement (recharger la page confirme, pas juste l'état local du
+      formulaire).
+- [ ] Se déconnecter puis revisiter `/admin/ehpad` sans session →
+      redirection vers `/login`.
+- [ ] Avec un compte `manager` ou `utilisateur` (pas `administrateur`)
+      connecté : visiter `/admin/ehpad` → écran « zone réservée au rôle
+      Administrateur », pas le formulaire d'édition.
+
 ## Régression — écrans encore non branchés
 
-- [ ] La grille Planning (`/`), l'Émargement et le reste de
-      l'Administration continuent d'afficher les données mock, sans
-      exiger de connexion — comportement attendu tant que les stories
-      #34 (reste) et #35 ne sont pas faites. À retirer de cette section
-      au fur et à mesure qu'un écran est effectivement branché (et à
-      transformer en scénario « doit exiger une session » à la place).
+- [ ] La grille Planning (`/`) et l'Émargement continuent d'afficher les
+      données mock, sans exiger de connexion — comportement attendu tant
+      que la story #35 n'est pas faite.
+- [ ] Les 5 autres écrans `/admin/*` (Codes horaires, Utilisateurs,
+      Salariés, Roulements, Années) exigent maintenant une session et le
+      rôle `administrateur` (layout partagé), mais leur contenu reste
+      encore en données mock — à retirer de cette section un par un au
+      fur et à mesure de leur branchement, et à transformer en scénario
+      de vérification des données réelles à la place.

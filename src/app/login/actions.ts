@@ -32,5 +32,20 @@ export async function login(
     return { error: ERREUR_GENERIQUE };
   }
 
-  redirect("/compte");
+  // Redirection selon le rôle réel plutôt qu'une destination unique : un
+  // compte administrateur d'EHPAD atterrissait sur /compte (réservé à
+  // administrateur_systeme) avant ce correctif du 25/09.
+  const { data: estAdministrateurSysteme } = await supabase.rpc("est_administrateur_systeme");
+  if (estAdministrateurSysteme) {
+    redirect("/compte");
+  }
+
+  const { data: typeCompte } = await supabase.rpc("auth_type_compte");
+  if (typeCompte === "administrateur") {
+    redirect("/admin");
+  }
+
+  // manager/utilisateur : aucun écran réel branché pour l'instant (stories
+  // #34/#35 restantes), repli sur l'accueil (encore en mock).
+  redirect("/");
 }
