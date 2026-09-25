@@ -29,3 +29,17 @@ teste plus tard".
 `npm run test` exécute les deux suites. À faire passer avant de considérer
 une fonctionnalité terminée, en plus de `tsc --noEmit` et `eslint` déjà en
 usage.
+
+## Base de données (accès PROD)
+
+Convention actée le 25/09 : c'est l'agent qui pilote les accès à la base de
+données réelle (Supabase), le client fournit les exigences et vérifie la
+conformité de ce qui est livré.
+
+- Les **migrations de schéma** (`supabase/migrations/`) sont pilotées à la
+  demande, exclusivement sur la base de données de PROD (seul environnement
+  existant pour l'instant — pas de DEV/STAGING, cf. BACKLOG epic #38).
+- **Créer des données** sur la base de données de PROD (au-delà du contenu
+  des migrations elles-mêmes — ex. amorçage d'un compte, données de
+  référence ajoutées hors migration) n'est **jamais** fait sans accord
+  explicite préalable, à chaque fois.
