@@ -1,116 +1,36 @@
-"use client";
+import { createClient } from "@/lib/supabase/server";
+import { GROUPES_ROULEMENT, type Manager, type GroupeRoulement } from "@/lib/mock-data";
+import type { ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
+import SalariesAdminClient from "./SalariesAdminClient";
 
-import { useState } from "react";
-import {
-  FICHES_SALARIES_DEMO,
-  ROULEMENTS_DEMO,
-  AFFECTATIONS_ROULEMENT_DEMO,
-  type AffectationRoulement,
-  type FicheSalarie,
-} from "@/lib/mock-data";
-import SalariesTable from "@/components/admin/SalariesTable";
-import SalarieForm from "@/components/admin/SalarieForm";
+export default async function SalariesAdminPage() {
+  const supabase = await createClient();
 
-let prochainId = FICHES_SALARIES_DEMO.length + 1;
+  const { data: services } = await supabase.from("service").select("id, nom").order("ordre");
 
-export default function SalariesAdminPage() {
-  const [salaries, setSalaries] = useState<FicheSalarie[]>(FICHES_SALARIES_DEMO);
-  const [panneau, setPanneau] = useState<"ferme" | "creation" | "edition">("ferme");
-  const [salarieEnEdition, setSalarieEnEdition] = useState<FicheSalarie | undefined>(undefined);
-  const [messageConfirmation, setMessageConfirmation] = useState<string | null>(null);
-  const [affectationsParSalarie, setAffectationsParSalarie] = useState<
-    Record<string, AffectationRoulement[]>
-  >(AFFECTATIONS_ROULEMENT_DEMO);
+  const { data: salariesData } = await supabase
+    .from("salarie")
+    .select(
+      "id, matricule, nom, prenom, manager, alignement_roulement, presence, service:service_id(id, nom), contrat(type_contrat, actif)"
+    )
+    .order("nom");
 
-  function ouvrirCreation() {
-    setSalarieEnEdition(undefined);
-    setPanneau("creation");
-  }
+  const salaries: ValeurInitialeSalarie[] = (salariesData ?? []).map((s) => {
+    const contratActif = s.contrat.find((c) => c.actif);
+    return {
+      id: s.id,
+      matricule: s.matricule,
+      nom: s.nom,
+      prenom: s.prenom,
+      service: s.service?.nom ?? "",
+      serviceId: s.service?.id ?? "",
+      typeContrat: (contratActif?.type_contrat as "CDI" | "CDD" | undefined) ?? "CDI",
+      contratActif: Boolean(contratActif),
+      manager: (s.manager as Manager | null) ?? "Aucun",
+      groupeRoulement: (s.alignement_roulement as GroupeRoulement | null) ?? GROUPES_ROULEMENT[0],
+      presence: s.presence === "Absent" ? "Absent" : "Présent",
+    };
+  });
 
-  function ouvrirEdition(salarie: FicheSalarie) {
-    setSalarieEnEdition(salarie);
-    setPanneau("edition");
-  }
-
-  function fermerPanneau() {
-    setPanneau("ferme");
-    setSalarieEnEdition(undefined);
-  }
-
-  function enregistrer(donnees: Omit<FicheSalarie, "id">) {
-    if (salarieEnEdition) {
-      setSalaries((prev) =>
-        prev.map((s) => (s.id === salarieEnEdition.id ? { ...donnees, id: s.id } : s))
-      );
-      setMessageConfirmation(`Salarié ${donnees.prenom} ${donnees.nom} mis à jour.`);
-    } else {
-      const nouveau: FicheSalarie = { ...donnees, id: `fs${prochainId++}` };
-      setSalaries((prev) => [...prev, nouveau]);
-      setMessageConfirmation(`Salarié ${donnees.prenom} ${donnees.nom} créé.`);
-    }
-    fermerPanneau();
-    setTimeout(() => setMessageConfirmation(null), 4000);
-  }
-
-  function assignerRoulement(salarieId: string, donnees: Omit<AffectationRoulement, "id">) {
-    setAffectationsParSalarie((prev) => ({
-      ...prev,
-      [salarieId]: [...(prev[salarieId] ?? []), { ...donnees, id: `aff-${Date.now()}` }],
-    }));
-  }
-
-  function supprimer(salarie: FicheSalarie) {
-    if (confirm(`Supprimer le salarié « ${salarie.prenom} ${salarie.nom} » ?`)) {
-      setSalaries((prev) => prev.filter((s) => s.id !== salarie.id));
-    }
-  }
-
-  return (
-    <div className="relative flex h-full">
-      <div className="flex-1 overflow-auto p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-zinc-800">Salariés</h1>
-            <p className="text-xs text-zinc-500">
-              Données non persistées (maquette) — {salaries.length} salarié
-              {salaries.length > 1 ? "s" : ""}
-            </p>
-          </div>
-          <button
-            onClick={ouvrirCreation}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            + Nouveau salarié
-          </button>
-        </div>
-
-        {messageConfirmation && (
-          <div className="mb-3 rounded border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
-            {messageConfirmation}
-          </div>
-        )}
-
-        <div className="overflow-hidden rounded border border-zinc-200">
-          <SalariesTable salaries={salaries} onModifier={ouvrirEdition} onSupprimer={supprimer} />
-        </div>
-      </div>
-
-      {panneau !== "ferme" && (
-        <>
-          <div className="fixed inset-0 z-20 bg-black/20" onClick={fermerPanneau} />
-          <div className="fixed right-0 top-0 z-30 h-full w-full max-w-md border-l border-zinc-200 bg-white shadow-xl">
-            <SalarieForm
-              valeurInitiale={salarieEnEdition}
-              matriculesExistants={salaries.map((s) => s.matricule)}
-              roulements={ROULEMENTS_DEMO}
-              affectationsRoulement={affectationsParSalarie[salarieEnEdition?.id ?? ""] ?? []}
-              onValider={enregistrer}
-              onAssignerRoulement={(donnees) => assignerRoulement(salarieEnEdition!.id, donnees)}
-              onAnnuler={fermerPanneau}
-            />
-          </div>
-        </>
-      )}
-    </div>
-  );
+  return <SalariesAdminClient salaries={salaries} services={services ?? []} />;
 }

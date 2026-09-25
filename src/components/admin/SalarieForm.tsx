@@ -2,21 +2,25 @@
 
 import { useState } from "react";
 import type { AffectationRoulement, GroupeRoulement, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
-import { SERVICES_ORDRE, MANAGERS, GROUPES_ROULEMENT, affectationActuelle } from "@/lib/mock-data";
+import { MANAGERS, GROUPES_ROULEMENT, affectationActuelle } from "@/lib/mock-data";
 import { formatDateISO, formatJourMois, parseDateISO } from "@/lib/dates";
 import RoulementSalariePanel from "@/components/admin/RoulementSalariePanel";
+import type { ChampsSalarie } from "@/app/admin/salaries/actions";
 
 function capitaliser(texte: string): string {
   if (!texte) return texte;
   return texte.charAt(0).toUpperCase() + texte.slice(1).toLowerCase();
 }
 
+export type ValeurInitialeSalarie = FicheSalarie & { serviceId: string };
+
 type SalarieFormProps = {
-  valeurInitiale?: FicheSalarie;
+  valeurInitiale?: ValeurInitialeSalarie;
   matriculesExistants: string[];
+  services: { id: string; nom: string }[];
   roulements: Roulement[];
   affectationsRoulement: AffectationRoulement[];
-  onValider: (salarie: Omit<FicheSalarie, "id">) => void;
+  onValider: (champs: ChampsSalarie) => void;
   onAssignerRoulement: (donnees: Omit<AffectationRoulement, "id">) => void;
   onAnnuler: () => void;
 };
@@ -24,6 +28,7 @@ type SalarieFormProps = {
 export default function SalarieForm({
   valeurInitiale,
   matriculesExistants,
+  services,
   roulements,
   affectationsRoulement,
   onValider,
@@ -34,7 +39,7 @@ export default function SalarieForm({
   const [matricule, setMatricule] = useState(valeurInitiale?.matricule ?? "");
   const [nom, setNom] = useState(valeurInitiale?.nom ?? "");
   const [prenom, setPrenom] = useState(valeurInitiale?.prenom ?? "");
-  const [service, setService] = useState(valeurInitiale?.service ?? SERVICES_ORDRE[0]);
+  const [serviceId, setServiceId] = useState(valeurInitiale?.serviceId ?? services[0]?.id ?? "");
   const [typeContrat, setTypeContrat] = useState<FicheSalarie["typeContrat"]>(
     valeurInitiale?.typeContrat ?? "CDI"
   );
@@ -70,16 +75,20 @@ export default function SalarieForm({
       setErreur("Le nom et le prénom sont obligatoires.");
       return;
     }
+    if (!serviceId) {
+      setErreur("Un service est requis (créez-en un d'abord si la liste est vide).");
+      return;
+    }
     setErreur(null);
     onValider({
       matricule,
       nom: nom.trim().toUpperCase(),
       prenom: capitaliser(prenom.trim()),
-      service,
+      serviceId,
       typeContrat,
       contratActif,
       manager,
-      groupeRoulement,
+      alignementRoulement: groupeRoulement,
       presence,
     });
   }
@@ -130,13 +139,13 @@ export default function SalarieForm({
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-700">Service</label>
           <select
-            value={service}
-            onChange={(e) => setService(e.target.value)}
+            value={serviceId}
+            onChange={(e) => setServiceId(e.target.value)}
             className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
           >
-            {SERVICES_ORDRE.map((s) => (
-              <option key={s} value={s}>
-                {s}
+            {services.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.nom}
               </option>
             ))}
           </select>
@@ -223,6 +232,10 @@ export default function SalarieForm({
               </button>
             )}
           </div>
+          <p className="mt-2 text-[11px] text-zinc-400">
+            Pas encore relié à la base (story #35 restante) — assignation locale à cet écran
+            uniquement pour l&apos;instant.
+          </p>
         </div>
 
         <div>

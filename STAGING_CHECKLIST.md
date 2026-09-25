@@ -129,14 +129,36 @@ avec un EHPAD vide :
       `/login` (couvert par e2e, à revérifier une fois en conditions
       réelles).
 
+## Salariés (story #34, écran /admin/salaries — 25/09)
+
+- [ ] Sur un EHPAD sans service : le bouton « + Nouveau salarié » est
+      désactivé, la liste des services affiche « aucun ».
+- [ ] Créer un service via le champ dédié → apparaît immédiatement dans la
+      liste de chips.
+- [ ] Créer un salarié (matricule 4 lettres, service, type de contrat,
+      manager, alignement roulement, présence) → apparaît dans le tableau ;
+      recharger la page confirme la persistance.
+- [ ] Modifier ce salarié, notamment repasser son contrat à « inactif » →
+      `date_fin` posée en base (vérifiable via une requête, pas encore
+      affichée à l'écran) ; le rebasculer sur un autre type de contrat
+      (CDD→CDI) en le laissant actif → un seul contrat actif à la fois.
+- [ ] Supprimer un salarié → disparaît du tableau.
+- [ ] Avec un compte `manager` ou `utilisateur` connecté : `/admin/salaries`
+      affiche l'écran « zone réservée », pas le formulaire.
+- [ ] Le salarié créé apparaît maintenant comme ligne sur la grille
+      Planning (`/`), dans le bon groupe de service.
+
 ## Régression — écrans encore non branchés
 
 - [ ] L'Émargement (`/emargement`) continue d'afficher les données mock,
       sans exiger de connexion — comportement attendu tant que le reste
       de la story #35 n'est pas fait.
-- [ ] Les 5 autres écrans `/admin/*` (Codes horaires, Utilisateurs,
-      Salariés, Roulements, Années) exigent maintenant une session et le
-      rôle `administrateur` (layout partagé), mais leur contenu reste
-      encore en données mock — à retirer de cette section un par un au
-      fur et à mesure de leur branchement, et à transformer en scénario
-      de vérification des données réelles à la place.
+- [ ] Les 4 autres écrans `/admin/*` (Codes horaires, Utilisateurs,
+      Roulements, Années) exigent maintenant une session et le rôle
+      `administrateur` (layout partagé), mais leur contenu reste encore en
+      données mock — à retirer de cette section un par un au fur et à
+      mesure de leur branchement, et à transformer en scénario de
+      vérification des données réelles à la place.
+- [ ] Sur l'écran Salariés lui-même, la section « Roulement » (assigner un
+      roulement à un salarié) reste sur données mock — dépend de l'écran
+      Roulements, pas encore branché.

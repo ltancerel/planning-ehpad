@@ -1121,6 +1121,22 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   sandbox). Les 5 autres écrans (Codes horaires, Utilisateurs, Salariés,
   Roulements, Années) restent en mock pour l'instant, à brancher un par
   un — approche volontairement incrémentale plutôt que tout d'un coup._
+  _Suite le 25/09, à la demande du client (« relier tous les écrans à la
+  DB ») : **Salariés** (`/admin/salaries`) branché. Gap révélé au passage —
+  aucun écran « Services » n'a jamais été prévu dans la maquette, alors que
+  `service_id` est une FK obligatoire sur `salarie` (`on delete restrict`) :
+  sans service existant, l'écran serait bloqué pour tout nouvel EHPAD.
+  Ajouté en section compacte dans l'écran Salariés (liste + création),
+  plutôt qu'un nouvel écran dédié — scope minimal. Contrat (CDI/CDD, actif)
+  géré selon la règle déjà documentée dans la spec API (issue #26) :
+  passer un contrat à inactif renseigne `date_fin` dans la même opération,
+  côté formulaire ; changer de type pendant qu'actif clôture l'ancien et
+  ouvre un nouveau (jamais deux contrats actifs, index unique partiel déjà
+  en base). L'assignation de roulement reste sur données mock pour
+  l'instant (dépend de l'écran Roulements, pas encore branché). 6 nouveaux
+  tests DB (administrateur peut créer service/salarié/contrat et basculer
+  CDI→CDD, manager ne peut ni créer de service ni de salarié). 43 tests DB,
+  11 e2e, tous verts._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,
