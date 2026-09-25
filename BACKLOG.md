@@ -1032,22 +1032,28 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   (`ludovic.tancerel@aiot-conseil.fr`, identifiant `ltancerel`) — création de
   l'utilisateur Supabase Auth faite par le client via le dashboard (mot de
   passe jamais transmis à l'agent), ligne `administrateur_systeme` insérée
-  ensuite via le script existant. Connexion par identifiant branchée côté
-  Front End : fonction RPC `resoudre_identifiant_email` (migrations
-  `20260925000003`/`20260925000004`, anon uniquement, réponse identique —
-  NULL — pour identifiant inconnu et compte désactivé, contre l'énumération),
-  client Supabase (`@supabase/ssr`) côté navigateur/serveur/proxy
-  (`src/proxy.ts`, remplace `middleware.ts` — renommage Next.js 16), écran
-  `/login` (Server Action, message d'erreur générique) et zone protégée
-  `/compte` (redirection vers `/login` si non connecté, affiche le compte
-  connecté, déconnexion). Volontairement limité à cette zone : le reste de
+  ensuite via le script existant. Connexion branchée côté Front End : client
+  Supabase (`@supabase/ssr`) côté navigateur/serveur/proxy (`src/proxy.ts`,
+  remplace `middleware.ts` — renommage Next.js 16), écran `/login` (Server
+  Action, message d'erreur générique) et zone protégée `/compte`
+  (redirection vers `/login` si non connecté, affiche le compte connecté,
+  déconnexion). Volontairement limité à cette zone : le reste de
   l'application (Planning, Émargement, Administration) tourne encore sur
-  données mock, pas encore branché (stories #34/#35). Testé (35 tests DB +
+  données mock, pas encore branché (stories #34/#35). Testé (25 tests DB +
   12 e2e, dont 3 nouveaux sur `/login`/`/compte` — limités aux chemins
   d'échec, aucun mot de passe réel commité dans le dépôt). Les 4 fonctions
   Vercel (au sens de la story, adaptées ici en Server Actions/Route Handlers
-  Next.js) restent partielles : connexion par identifiant faite, création
-  EHPAD/compte et réinitialisation de mot de passe pas encore écrites._
+  Next.js) restent partielles : connexion faite, création EHPAD/compte et
+  réinitialisation de mot de passe pas encore écrites._
+  _Précisé le 25/09 : connexion finalement par email plutôt que par
+  identifiant — utilise directement le mécanisme natif de Supabase Auth
+  (déjà générique, ne distingue pas email inconnu / mot de passe incorrect)
+  plutôt qu'une résolution identifiant→email maison. La fonction RPC
+  `resoudre_identifiant_email` (migrations `20260925000003`/`20260925000004`)
+  a été écrite puis retirée (migration `20260925000005`) une fois ce choix
+  confirmé. `identifiant` reste inchangé comme champ produit à part (code 3
+  lettres, déjà maquetté sur Admin > Utilisateurs et vraisemblablement la
+  grille Planning) — seule la connexion n'en dépend plus._
 
 - [ ] **3. Brancher les écrans Administration sur le backend** _(issue #34)_
   Comptes/utilisateurs, salariés, codes horaires, roulements, années/jours

@@ -15,12 +15,13 @@ export default function LoginPage() {
         <h1 className="mb-1 text-lg font-semibold text-amber-900">Connexion</h1>
         <p className="mb-4 text-sm text-amber-800">Planning EHPAD</p>
 
-        <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="identifiant">
-          Identifiant
+        <label className="mb-1 block text-sm font-medium text-gray-700" htmlFor="email">
+          Email
         </label>
         <input
-          id="identifiant"
-          name="identifiant"
+          id="email"
+          name="email"
+          type="email"
           autoComplete="username"
           required
           className="mb-3 w-full rounded border border-gray-300 px-3 py-2 text-sm"

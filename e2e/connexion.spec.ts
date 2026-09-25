@@ -13,9 +13,9 @@ test("redirige vers /login quand on visite /compte sans session", async ({ page 
   await expect(page).toHaveURL(/\/login$/);
 });
 
-test("identifiant inconnu : message générique, reste sur /login", async ({ page }) => {
+test("email inconnu : message générique, reste sur /login", async ({ page }) => {
   await page.goto("/login");
-  await page.fill("#identifiant", "identifiant-qui-nexiste-pas");
+  await page.fill("#email", "email-qui-nexiste-pas@test.local");
   await page.fill("#mot_de_passe", "peu-importe");
   await page.click("button[type=submit]");
 
@@ -23,11 +23,11 @@ test("identifiant inconnu : message générique, reste sur /login", async ({ pag
   await expect(page).toHaveURL(/\/login$/);
 });
 
-test("identifiant valide, mauvais mot de passe : même message générique (pas d'énumération)", async ({
+test("email valide, mauvais mot de passe : même message générique (pas d'énumération)", async ({
   page,
 }) => {
   await page.goto("/login");
-  await page.fill("#identifiant", "ltancerel");
+  await page.fill("#email", "ludovic.tancerel@aiot-conseil.fr");
   await page.fill("#mot_de_passe", "mot-de-passe-volontairement-faux");
   await page.click("button[type=submit]");
 
