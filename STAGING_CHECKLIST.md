@@ -186,17 +186,40 @@ avec un EHPAD vide :
       `/admin/utilisateurs` affiche l'écran « zone réservée », pas le
       formulaire.
 
+## Roulements (story #34, écran /admin/roulements — 25/09)
+
+- [ ] Sur un EHPAD sans code horaire de catégorie « Travail » : le bouton
+      « + Nouveau roulement » est désactivé (infobulle : créez d'abord un
+      code horaire de travail).
+- [ ] Créer un roulement (nom, nombre de semaines, motif rempli via le
+      sélecteur de code) → apparaît dans le tableau avec le bon aperçu
+      coloré ; recharger la page confirme la persistance. Le sélecteur ne
+      propose que les vrais codes horaires de catégorie « Travail » de cet
+      EHPAD (pas la liste de démo).
+- [ ] Modifier un roulement existant, notamment changer le nombre de
+      semaines et re-remplir le motif → l'ancien motif est bien remplacé,
+      pas cumulé.
+- [ ] Supprimer un roulement non affecté à un salarié → disparaît du
+      tableau.
+- [ ] Avec un compte `manager` ou `utilisateur` connecté : `/admin/roulements`
+      affiche l'écran « zone réservée », pas le formulaire.
+- [ ] La section « Roulement » de l'écran Salariés (assigner un roulement à
+      un salarié) reste sur données mock — dépend de `affectation_roulement`,
+      pas encore branché ; c'est la seule chose qui reste à connecter pour
+      que la suppression d'un roulement affecté soit testable de bout en
+      bout.
+
 ## Régression — écrans encore non branchés
 
 - [ ] L'Émargement (`/emargement`) continue d'afficher les données mock,
       sans exiger de connexion — comportement attendu tant que le reste
       de la story #35 n'est pas fait.
-- [ ] Les 2 autres écrans `/admin/*` (Roulements, Années) exigent
-      maintenant une session et le rôle `administrateur` (layout
-      partagé), mais leur contenu reste encore en données mock — à retirer
-      de cette section un par un au fur et à mesure de leur branchement,
-      et à transformer en scénario de vérification des données réelles à
-      la place.
+- [ ] `/admin/annees` exige désormais une session et le rôle
+      `administrateur` (layout partagé), mais son contenu reste encore en
+      données mock — à retirer de cette section une fois branché, et à
+      transformer en scénario de vérification des données réelles à la
+      place.
 - [ ] Sur l'écran Salariés lui-même, la section « Roulement » (assigner un
-      roulement à un salarié) reste sur données mock — dépend de l'écran
-      Roulements, pas encore branché.
+      roulement à un salarié) reste sur données mock — dépend de
+      `affectation_roulement`, pas encore branché (l'écran Roulements
+      lui-même l'est désormais).

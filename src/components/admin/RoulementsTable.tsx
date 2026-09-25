@@ -1,17 +1,23 @@
 "use client";
 
+import { useMemo } from "react";
 import type { Roulement } from "@/lib/mock-data";
-import { HORAIRE_CODES_PAR_CODE } from "@/lib/horaire-codes";
+import type { HoraireCode } from "@/lib/horaire-codes";
 
 const JOURS = ["L", "Ma", "M", "J", "V", "S", "D"];
 
 type RoulementsTableProps = {
   roulements: Roulement[];
+  codesHoraires: HoraireCode[];
   onModifier: (roulement: Roulement) => void;
   onSupprimer: (roulement: Roulement) => void;
 };
 
-export default function RoulementsTable({ roulements, onModifier, onSupprimer }: RoulementsTableProps) {
+export default function RoulementsTable({ roulements, codesHoraires, onModifier, onSupprimer }: RoulementsTableProps) {
+  const codesParCode = useMemo(
+    () => Object.fromEntries(codesHoraires.map((h) => [h.code.toUpperCase(), h])),
+    [codesHoraires]
+  );
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
@@ -32,7 +38,7 @@ export default function RoulementsTable({ roulements, onModifier, onSupprimer }:
                 {roulement.motif.map((semaine, index) => (
                   <div key={index} className="flex gap-0.5">
                     {semaine.map((code, jourIndex) => {
-                      const horaire = code ? HORAIRE_CODES_PAR_CODE[code] : undefined;
+                      const horaire = code ? codesParCode[code.toUpperCase()] : undefined;
                       return (
                         <span
                           key={jourIndex}

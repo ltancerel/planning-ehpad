@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Roulement } from "@/lib/mock-data";
-import { HORAIRE_CODES_PAR_CODE } from "@/lib/horaire-codes";
+import type { HoraireCode } from "@/lib/horaire-codes";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
 
 const JOURS = ["L", "Ma", "M", "J", "V", "S", "D"];
@@ -15,12 +15,17 @@ function semaineVide(): string[] {
 
 type RoulementFormProps = {
   valeurInitiale?: Roulement;
+  codesHoraires: HoraireCode[];
   onValider: (roulement: Omit<Roulement, "id">) => void;
   onAnnuler: () => void;
 };
 
-export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: RoulementFormProps) {
+export default function RoulementForm({ valeurInitiale, codesHoraires, onValider, onAnnuler }: RoulementFormProps) {
   const modeEdition = Boolean(valeurInitiale);
+  const codesParCode = useMemo(
+    () => Object.fromEntries(codesHoraires.map((h) => [h.code.toUpperCase(), h])),
+    [codesHoraires]
+  );
   const [nom, setNom] = useState(valeurInitiale?.nom ?? "");
   const [motif, setMotif] = useState<string[][]>(
     valeurInitiale?.motif.map((semaine) => [...semaine]) ?? [semaineVide()]
@@ -147,7 +152,7 @@ export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: 
                     S{semaineIndex + 1}
                   </td>
                   {semaine.map((code, jourIndex) => {
-                    const horaire = code ? HORAIRE_CODES_PAR_CODE[code] : undefined;
+                    const horaire = code ? codesParCode[code.toUpperCase()] : undefined;
                     return (
                       <td key={jourIndex} className="border border-zinc-200 p-0">
                         <button
@@ -194,6 +199,7 @@ export default function RoulementForm({ valeurInitiale, onValider, onAnnuler }: 
           <HoraireCodeSelector
             position={positionEdition}
             aUneValeur={Boolean(motif[celluleEnEdition.s][celluleEnEdition.j])}
+            codes={codesHoraires}
             masquerEvenementiels
             onChoisir={choisirCode}
             onFermer={fermerSelecteur}

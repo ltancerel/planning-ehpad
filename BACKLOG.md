@@ -1164,6 +1164,29 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   administrateur, refus pour un manager) — la création réelle via
   `service_role`/email n'est pas testable en local (pas de vrai GoTrue),
   ajoutée à `STAGING_CHECKLIST.md`. 53 tests DB, 11 e2e, tous verts._
+  _**Roulements** (`/admin/roulements`) branché — CRUD réel sur
+  `roulement`/`roulement_jour` (RLS déjà correcte pour les deux, jamais
+  testée à l'écriture ; cohérence catégorie du code référencé — doit être
+  "travail" — déjà testée en isolation via le trigger générique). Gap
+  révélé au passage, même nature que celui des Services sur l'écran
+  Salariés : `HoraireCodeSelector` (sélecteur de code utilisé pour remplir
+  le motif) était câblé en dur sur la liste de démo `HORAIRE_CODES`, pas
+  sur les vrais codes horaires de l'EHPAD — un nouvel EHPAD sans code
+  horaire de travail créé n'aurait jamais pu constituer de motif cohérent
+  avec la base. Ajouté une prop `codes` (par défaut `HORAIRE_CODES`, pour
+  ne rien casser côté édition des cases du Planning, encore mock) ;
+  `RoulementForm`/`RoulementsTable` reçoivent désormais les vrais codes de
+  catégorie "travail" de l'établissement depuis la page serveur, plus
+  d'import du mock `HORAIRE_CODES_PAR_CODE`. Remplacement complet du motif
+  à chaque modification (delete + insert de `roulement_jour`), même
+  approche que pour les plages horaires. Bouton de création désactivé tant
+  qu'aucun code horaire de travail n'existe, avec l'explication au survol
+  — même pattern que Utilisateurs/Services. Suppression : message clair si
+  bloquée par `affectation_roulement` (`on delete restrict`, la
+  sous-fonctionnalité d'affectation elle-même reste mock, cf. ci-dessous).
+  7 nouveaux tests DB (création roulement + motif, modification,
+  suppression avec cascade sur le motif, refus pour un manager en
+  écriture et en modification). 60 tests DB, 11 e2e, tous verts._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,

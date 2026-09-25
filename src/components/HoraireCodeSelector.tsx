@@ -8,6 +8,7 @@ import {
   peutAjouterEvenementiel,
   plageComplementValide,
   type HoraireCategorie,
+  type HoraireCode,
   type Plage,
   type ValeurCellule,
 } from "@/lib/horaire-codes";
@@ -27,6 +28,11 @@ const LIBELLE_GROUPE_CATEGORIE: Record<HoraireCategorie, string> = {
 type HoraireCodeSelectorProps = {
   position: PositionSelecteur;
   aUneValeur?: boolean;
+  /** Liste des codes proposés — les vrais codes horaires de l'EHPAD connecté
+   * quand l'appelant les a déjà chargés (ex. formulaire Roulement), sinon la
+   * liste de démo (écran Planning, dont l'édition des cases reste mock à ce
+   * stade). */
+  codes?: HoraireCode[];
   /** Masque les codes événementiels (superposition) — non pertinents hors du
    * planning réel, ex. dans un roulement qui définit un motif récurrent. */
   masquerEvenementiels?: boolean;
@@ -69,6 +75,7 @@ type HoraireCodeSelectorProps = {
 export default function HoraireCodeSelector({
   position,
   aUneValeur,
+  codes = HORAIRE_CODES,
   masquerEvenementiels,
   valeurActuelle,
   valeursActuelles,
@@ -122,7 +129,7 @@ export default function HoraireCodeSelector({
 
   const codesDisponibles = useMemo(
     () =>
-      HORAIRE_CODES.filter((h) => {
+      codes.filter((h) => {
         if (h.categorie === "evenementiel") {
           if (masquerEvenementiels || !peutEvenementiel) return false;
           if (valeursActuelles && h.typeEvenement === "partiel") return false; // plage ad hoc = case unique
@@ -131,7 +138,7 @@ export default function HoraireCodeSelector({
         if (h.categorie === "informatif") return peutInformatif;
         return true;
       }),
-    [masquerEvenementiels, peutInformatif, peutEvenementiel, valeursActuelles]
+    [codes, masquerEvenementiels, peutInformatif, peutEvenementiel, valeursActuelles]
   );
 
   const resultats = useMemo(() => {
@@ -211,7 +218,7 @@ export default function HoraireCodeSelector({
   }
 
   if (codeComplementEnSaisie) {
-    const horaire = HORAIRE_CODES.find((h) => h.code === codeComplementEnSaisie);
+    const horaire = codes.find((h) => h.code === codeComplementEnSaisie);
     return (
       <div
         ref={conteneurRef}
