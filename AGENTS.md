@@ -43,3 +43,13 @@ conformité de ce qui est livré.
   des migrations elles-mêmes — ex. amorçage d'un compte, données de
   référence ajoutées hors migration) n'est **jamais** fait sans accord
   explicite préalable, à chaque fois.
+- Une migration n'est **appliquée sur PROD qu'une fois son fichier fusionné
+  sur `main`** — jamais depuis une branche de travail non fusionnée.
+  Objectif : que `main` reflète à tout instant l'état réel du schéma en
+  PROD, sans délai. Appliquer depuis une branche crée une fenêtre où PROD
+  est en avance sur `main` — risque de divergence silencieuse si la
+  branche est abandonnée, réécrite (rebase, force-push) ou fusionnée
+  différemment de prévu avant que quelqu'un ne s'en aperçoive. Ordre à
+  suivre : écrire la migration → tester localement → committer → fusionner
+  la branche sur `main` (ou au moins ce commit) → appliquer depuis `main` →
+  auditer (`get_advisors`).
