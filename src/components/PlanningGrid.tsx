@@ -3,8 +3,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  SALARIES,
-  SERVICES_ORDRE,
   MANAGERS,
   GROUPES_ROULEMENT,
   JOURS_FERIES_2026,
@@ -12,11 +10,11 @@ import {
   ROULEMENTS_DEMO,
   AFFECTATIONS_ROULEMENT_DEMO,
   CORRESPONDANCE_SALARIE_FICHE_DEMO,
-  UTILISATEUR_CONNECTE,
   affectationActuelle,
   ficheDuSalarie,
   type Roulement,
   type Salarie,
+  type ProfilUtilisateur,
 } from "@/lib/mock-data";
 import {
   FiltreSalariesBouton,
@@ -43,7 +41,6 @@ import {
   formatAnneeMois,
 } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
-import { useEhpad } from "@/context/EhpadProvider";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
 
 // Fenêtre visible toujours à 4 semaines (retour client du 24/09) ; le
@@ -78,7 +75,26 @@ function classeEnTeteJour(date: Date): ClasseJour {
   return "normal";
 }
 
-export default function PlanningGrid() {
+// Branché sur le vrai backend le 25/09 (story #35, démarrage) : salariés,
+// services, identité EHPAD et utilisateur connecté viennent maintenant de
+// la vraie base (via le Server Component src/app/page.tsx), scopés par RLS
+// à l'établissement de l'utilisateur — un EHPAD tout juste créé affiche
+// donc une grille vide, sans salarié, plutôt que la démo mock. Le reste
+// (codes horaires, roulements, édition des cases) tourne encore sur les
+// données de démo (`PLANNING_DEMO` et dérivés) : avec zéro salarié réel
+// pour l'instant, cette partie ne s'exerce pas — à brancher à son tour
+// quand de vrais salariés existeront.
+export default function PlanningGrid({
+  salaries,
+  servicesOrdre,
+  ehpad,
+  utilisateur,
+}: {
+  salaries: Salarie[];
+  servicesOrdre: string[];
+  ehpad: { nom: string; logo: string | null };
+  utilisateur: ProfilUtilisateur;
+}) {
   const [debutPeriode, setDebutPeriode] = useState(() => lundiDeLaSemaine(PERIODE_PAR_DEFAUT));
   // Nombre de semaines chargées d'un coup (≥ semaines visibles) — réglable
   // de 4 à n, cf. NB_SEMAINES_CHARGEES_MIN/MAX. Par défaut égal aux semaines
@@ -236,21 +252,21 @@ export default function PlanningGrid() {
   }
 
   const groupes = useMemo(() => {
-    const salariesFiltres = SALARIES.filter(salarieCorrespondAuxFiltres);
-    const parService = new Map<string, typeof SALARIES>();
+    const salariesFiltres = salaries.filter(salarieCorrespondAuxFiltres);
+    const parService = new Map<string, Salarie[]>();
     for (const salarie of salariesFiltres) {
       const liste = parService.get(salarie.service) ?? [];
       liste.push(salarie);
       parService.set(salarie.service, liste);
     }
-    return SERVICES_ORDRE.filter((s) => parService.has(s)).map((service) => ({
+    return servicesOrdre.filter((s) => parService.has(s)).map((service) => ({
       service,
       salaries: parService.get(service)!,
     }));
     // salarieCorrespondAuxFiltres est recréée à chaque rendu mais lit filtres/
     // jours/editions au moment de l'appel : les lister explicitement suffit.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filtres, jours, editions]);
+  }, [filtres, jours, editions, salaries, servicesOrdre]);
 
   // Ordre à plat des lignes salarié tel qu'affiché (groupé par service) et
   // index par jour affiché : nécessaires pour calculer le rectangle d'une
@@ -264,12 +280,12 @@ export default function PlanningGrid() {
     () => new Map(jours.map((j, i) => [formatDateISO(j), i])),
     [jours]
   );
-  const estAdministrateur = UTILISATEUR_CONNECTE.typeUtilisateur === "Administrateur";
+  const estAdministrateur = utilisateur.typeUtilisateur === "Administrateur";
   // Le Manager peut modifier le planning (poser/effacer un code sur une case)
   // mais pas la sélection multiple / l'application groupée de roulement, ni
   // le menu Administration — réservés à l'Administrateur (retour client du
   // 23/09 : nouveau rôle Manager). L'Utilisateur reste en lecture seule.
-  const peutEditerPlanning = estAdministrateur || UTILISATEUR_CONNECTE.typeUtilisateur === "Manager";
+  const peutEditerPlanning = estAdministrateur || utilisateur.typeUtilisateur === "Manager";
 
   function ouvrirEdition(cle: string, cellule: HTMLElement) {
     const rect = cellule.getBoundingClientRect();
@@ -613,7 +629,6 @@ export default function PlanningGrid() {
 
   const premierJour = jours[0];
   const dernierJour = jours[jours.length - 1];
-  const { identite } = useEhpad();
   const valeurActuelleEdition: ValeurCellule | undefined = cellEnEdition
     ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition])
     : undefined;
@@ -636,16 +651,16 @@ export default function PlanningGrid() {
       <header className="flex shrink-0 flex-col border-b border-zinc-200">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="flex items-center gap-2">
-            {identite.logo ? (
+            {ehpad.logo ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo dynamique (data URL uploadé), incompatible avec next/image
-              <img src={identite.logo} alt="" className="h-7 w-7 rounded object-contain" />
+              <img src={ehpad.logo} alt="" className="h-7 w-7 rounded object-contain" />
             ) : (
               <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
-                {identite.nom.charAt(0)}
+                {ehpad.nom.charAt(0)}
               </span>
             )}
             <div className="leading-tight">
-              <h1 className="font-semibold text-zinc-800">{identite.nom}</h1>
+              <h1 className="font-semibold text-zinc-800">{ehpad.nom}</h1>
               <p className="text-[10px] text-zinc-400">Planning</p>
             </div>
           </div>
@@ -653,7 +668,7 @@ export default function PlanningGrid() {
             <FiltreSalariesBouton
               filtres={filtres}
               onChange={setFiltres}
-              services={SERVICES_ORDRE}
+              services={servicesOrdre}
               managers={MANAGERS}
               groupesRoulement={GROUPES_ROULEMENT}
               nbResultats={salariesOrdonnes.length}
@@ -735,7 +750,7 @@ export default function PlanningGrid() {
                 Administration
               </Link>
             )}
-            <UserMenu />
+            <UserMenu utilisateur={utilisateur} />
           </div>
         </div>
         <FiltresActifsChips filtres={filtres} onChange={setFiltres} />
@@ -1033,7 +1048,7 @@ export default function PlanningGrid() {
           // serait ambigu pour une sélection à cheval sur plusieurs semaines.
           const evaluationRoulement = selectionMonoJour
             ? cellulesSelection.map(({ salarieId }) => {
-                const salarie = SALARIES.find((s) => s.id === salarieId)!;
+                const salarie = salaries.find((s) => s.id === salarieId)!;
                 const roulement = roulementActuelDuSalarie(salarieId);
                 const resultat = roulement
                   ? evaluerProjectionRoulement(editions, salarieId, lundi, roulement)

@@ -1,13 +1,18 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Routes qui exigent une session : le reste de l'application (Planning,
-// Émargement…) tourne encore sur des données mock, pas branchée sur le
-// vrai backend (story #35 restante). Étendre cette liste au fur et à
-// mesure du branchement des écrans. La vérification de rôle fine
-// (administrateur_systeme pour /compte, administrateur pour /admin) reste
-// faite dans chaque layout — ceci n'est qu'une redirection optimiste.
-const ROUTES_PROTEGEES = ["/compte", "/admin"];
+// Routes qui exigent une session : l'Émargement tourne encore sur des
+// données mock, pas branchée sur le vrai backend (story #35, reste).
+// Étendre cette liste au fur et à mesure du branchement des écrans. La
+// vérification de rôle fine (administrateur_systeme pour /compte,
+// administrateur pour /admin) reste faite dans chaque layout/page — ceci
+// n'est qu'une redirection optimiste, cf. doc Next.js (pas d'accès base
+// dans le proxy).
+const PREFIXES_PROTEGES = ["/compte", "/admin"];
+
+function routeProtegee(pathname: string): boolean {
+  return pathname === "/" || PREFIXES_PROTEGES.some((prefixe) => pathname.startsWith(prefixe));
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
@@ -36,19 +41,20 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const utilisateurConnecte = Boolean(data?.claims);
 
-  const routeProtegee = ROUTES_PROTEGEES.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  if (routeProtegee && !utilisateurConnecte) {
+  if (routeProtegee(request.nextUrl.pathname) && !utilisateurConnecte) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 
+  // Direction précise (/compte vs /admin vs /) laissée à la Server Action
+  // de connexion, qui connaît le rôle réel — ici on ne fait que renvoyer
+  // vers l'accueil, dont la page elle-même redirige au bon endroit pour un
+  // administrateur_systeme (pas de compte "salarié", donc pas d'écran
+  // Planning pour lui).
   if (request.nextUrl.pathname.startsWith("/login") && utilisateurConnecte) {
     const url = request.nextUrl.clone();
-    url.pathname = "/compte";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 

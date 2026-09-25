@@ -13,6 +13,14 @@ test("redirige vers /login quand on visite /compte sans session", async ({ page 
   await expect(page).toHaveURL(/\/login$/);
 });
 
+test("redirige vers /login quand on visite / (Planning) sans session", async ({ page }) => {
+  // Depuis le 25/09, la grille Planning est branchée sur les vraies données
+  // (salariés/services réels de l'EHPAD, story #35 démarrée) — nécessite
+  // donc une session comme /compte et /admin.
+  await page.goto("/");
+  await expect(page).toHaveURL(/\/login$/);
+});
+
 test("email inconnu : message générique, reste sur /login", async ({ page }) => {
   await page.goto("/login");
   await page.fill("#email", "email-qui-nexiste-pas@test.local");

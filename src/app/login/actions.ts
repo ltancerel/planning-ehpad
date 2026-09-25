@@ -32,20 +32,12 @@ export async function login(
     return { error: ERREUR_GENERIQUE };
   }
 
-  // Redirection selon le rôle réel plutôt qu'une destination unique : un
-  // compte administrateur d'EHPAD atterrissait sur /compte (réservé à
-  // administrateur_systeme) avant ce correctif du 25/09.
+  // Seul l'Administrateur Système a un espace dédié comme page d'accueil
+  // (/compte, réservé) — tout compte d'un EHPAD (administrateur, manager,
+  // utilisateur) atterrit sur le Planning, son écran de travail principal ;
+  // /admin reste accessible depuis là par la navigation, pas comme page
+  // d'atterrissage. Corrigé le 25/09 (un premier essai renvoyait
+  // l'administrateur vers /admin directement).
   const { data: estAdministrateurSysteme } = await supabase.rpc("est_administrateur_systeme");
-  if (estAdministrateurSysteme) {
-    redirect("/compte");
-  }
-
-  const { data: typeCompte } = await supabase.rpc("auth_type_compte");
-  if (typeCompte === "administrateur") {
-    redirect("/admin");
-  }
-
-  // manager/utilisateur : aucun écran réel branché pour l'instant (stories
-  // #34/#35 restantes), repli sur l'accueil (encore en mock).
-  redirect("/");
+  redirect(estAdministrateurSysteme ? "/compte" : "/");
 }

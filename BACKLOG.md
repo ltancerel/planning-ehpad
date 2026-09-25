@@ -1125,6 +1125,24 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,
   émargement mensuel/annuel, validation.
+  _Démarré le 25/09, à la demande du client, pour que « EHPAD Validation »
+  affiche une grille vraiment vide (aucun salarié) plutôt que la démo
+  mock, sans données fictives — les vraies données de l'EHPAD sont
+  attendues séparément. `/` exige désormais une session (comme `/compte`
+  et `/admin`) et récupère salariés, services et identité EHPAD réels
+  (RLS, `src/app/page.tsx`), remplaçant `SALARIES`/`SERVICES_ORDRE`/
+  `UTILISATEUR_CONNECTE`/`EhpadProvider` pour cet écran — le contexte
+  `EhpadProvider` (localStorage) est retiré du dépôt, plus aucun
+  consommateur. Le reste (codes horaires, roulements, édition des cases,
+  effacement de plage, `appliquer_roulement`) tourne encore sur les
+  données de démo internes à `PlanningGrid` : n'a pas d'effet tant qu'il
+  n'y a aucun salarié réel, à brancher à son tour quand de vrais salariés
+  existeront. Effet de bord assumé : 4 tests e2e qui naviguaient vers `/`
+  sans session ne sont plus automatisables (jours fériés sur la grille
+  Planning, 3 sur les semaines chargées) — retirés/déplacés vers
+  `STAGING_CHECKLIST.md`, aucun des deux comportements ne dépendant en
+  réalité de salariés réels, seulement d'une session. Émargement (écran
+  distinct) pas encore touché, reste en mock._
 
 - [ ] **5. Déployer en production** _(issue #36)_
   Projet Vercel connecté à `main`, domaine Vercel par défaut, variables

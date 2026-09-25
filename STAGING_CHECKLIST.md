@@ -100,11 +100,40 @@ et à mesure d'une exécution ; remettre à zéro pour la suivante.
       connecté : visiter `/admin/ehpad` → écran « zone réservée au rôle
       Administrateur », pas le formulaire d'édition.
 
+## Grille Planning sur données réelles (story #35, démarrage — 25/09)
+
+`/` exige désormais une session (comme `/compte` et `/admin`) et affiche
+les salariés/services réels de l'EHPAD connecté, plus l'identité réelle
+(nom/logo) — plus de données mock pour les lignes et l'en-tête. Le reste
+(codes horaires, roulements, édition des cases) tourne encore sur les
+données de démo, mais ça ne s'exerce pas tant qu'il n'y a aucun salarié
+réel. Les 3 scénarios suivants ont dû être retirés de la suite e2e
+automatisée (nécessitent une session réelle) — ils ne dépendent PAS de
+salariés réels, juste d'être connecté, donc testables dès maintenant même
+avec un EHPAD vide :
+
+- [ ] Connecté sur `/`, avec « EHPAD Validation » (ou tout EHPAD sans
+      salarié) : grille vide (aucune ligne), pas la démo (Marie Dupont
+      etc.), en-tête avec le vrai nom/logo de l'EHPAD.
+- [ ] En-tête de la grille : un jour férié (ex. 01/11/2026, via le
+      sélecteur de période) est marqué ambre avec l'infobulle « Jour
+      férié », un week-end ordinaire (ex. 07/11/2026) reste gris sans
+      cette infobulle.
+- [ ] Par défaut, 4 semaines chargées = 4 visibles, aucun ascenseur
+      horizontal ; à 12 semaines chargées (réglage dans le sélecteur de
+      période), la grille déborde et un ascenseur apparaît.
+- [ ] Les flèches ← → défilent dans le lot déjà chargé sans redéclencher
+      de chargement tant que le bord n'est pas atteint (le libellé de
+      période affiché ne change pas après quelques clics).
+- [ ] Se déconnecter puis revisiter `/` sans session → redirection vers
+      `/login` (couvert par e2e, à revérifier une fois en conditions
+      réelles).
+
 ## Régression — écrans encore non branchés
 
-- [ ] La grille Planning (`/`) et l'Émargement continuent d'afficher les
-      données mock, sans exiger de connexion — comportement attendu tant
-      que la story #35 n'est pas faite.
+- [ ] L'Émargement (`/emargement`) continue d'afficher les données mock,
+      sans exiger de connexion — comportement attendu tant que le reste
+      de la story #35 n'est pas fait.
 - [ ] Les 5 autres écrans `/admin/*` (Codes horaires, Utilisateurs,
       Salariés, Roulements, Années) exigent maintenant une session et le
       rôle `administrateur` (layout partagé), mais leur contenu reste
