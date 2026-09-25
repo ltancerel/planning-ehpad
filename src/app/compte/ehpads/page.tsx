@@ -24,16 +24,16 @@ export default async function GestionEhpadsPage() {
     .order("nom");
 
   return (
-    <div className="h-full overflow-auto bg-amber-50 p-4">
-      <Link href="/compte" className="text-xs font-medium text-amber-900 hover:underline">
+    <div className="h-full overflow-auto p-4">
+      <Link href="/compte" className="text-xs font-medium text-[#24543c] hover:underline">
         ← Retour
       </Link>
-      <h1 className="mb-1 mt-2 text-lg font-semibold text-amber-900">Gestion des EHPAD</h1>
-      <p className="mb-4 text-xs text-amber-800">
+      <h1 className="mb-1 mt-2 text-lg font-semibold text-[#183c28]">Gestion des EHPAD</h1>
+      <p className="mb-4 text-xs text-[#3c6c48]">
         Réservé à l&apos;Administrateur Système — tous établissements confondus.
       </p>
 
-      <div className="max-w-lg rounded border border-amber-200 bg-white p-4">
+      <div className="max-w-lg rounded border border-[#c7e3ba] bg-white p-4">
         <CreerEhpadFormulaire />
 
         <ul className="mt-4 divide-y divide-zinc-100 border-t border-zinc-100">

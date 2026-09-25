@@ -20,10 +20,10 @@ export default async function ComptePage() {
     .single();
 
   return (
-    <div className="flex h-full items-center justify-center bg-amber-50">
-      <div className="w-full max-w-sm rounded border border-amber-200 bg-white p-6 text-center shadow-sm">
-        <p className="text-sm text-amber-800">Connecté en tant que</p>
-        <h1 className="mt-1 text-lg font-semibold text-amber-900">
+    <div className="flex h-full items-center justify-center">
+      <div className="w-full max-w-sm rounded border border-[#c7e3ba] bg-white p-6 text-center shadow-sm">
+        <p className="text-sm text-[#3c6c48]">Connecté en tant que</p>
+        <h1 className="mt-1 text-lg font-semibold text-[#183c28]">
           {admin ? `${admin.prenom} ${admin.nom}` : user.email}
         </h1>
         <p className="mt-1 text-xs text-gray-500">
@@ -31,12 +31,12 @@ export default async function ComptePage() {
         </p>
         <Link
           href="/compte/ehpads"
-          className="mt-4 block rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+          className="mt-4 block rounded border border-[#c7e3ba] bg-[#eef7ea] px-3 py-2 text-sm font-medium text-[#183c28] hover:bg-[#dcefd3]"
         >
           Gérer les EHPAD →
         </Link>
         <form action={logout} className="mt-4">
-          <button type="submit" className="text-sm font-medium text-amber-900 hover:underline">
+          <button type="submit" className="text-sm font-medium text-[#24543c] hover:underline">
             Se déconnecter
           </button>
         </form>

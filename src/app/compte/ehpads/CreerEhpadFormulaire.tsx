@@ -126,7 +126,7 @@ export default function CreerEhpadFormulaire() {
       <button
         disabled={pending}
         type="submit"
-        className="rounded bg-amber-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-60"
+        className="rounded bg-[#24543c] px-3 py-1.5 text-sm font-medium text-white hover:bg-[#1a3f2c] disabled:opacity-60"
       >
         {pending ? "Création…" : "Créer l'EHPAD et son Administrateur"}
       </button>
