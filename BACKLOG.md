@@ -1137,6 +1137,15 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   tests DB (administrateur peut créer service/salarié/contrat et basculer
   CDI→CDD, manager ne peut ni créer de service ni de salarié). 43 tests DB,
   11 e2e, tous verts._
+  _**Codes horaires** (`/admin/horaires`) branché — CRUD réel sur
+  `code_horaire`/`plage_horaire` (RLS déjà correcte pour les deux, jamais
+  testée à l'écriture). Formulaire mock réutilisé tel quel (`HoraireCode`
+  mappait déjà proprement sur le schéma réel). Remplacement complet des
+  plages à chaque modification plutôt qu'une synchronisation ligne à
+  ligne (au plus 4 lignes, plus simple). Les 4 CHECK de cohérence
+  categorie/type_evenement/duree_heures restent la garantie réelle,
+  laissés à la base plutôt que redupliqués côté action. 4 nouveaux tests
+  DB. 49 tests DB, 11 e2e, tous verts._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,

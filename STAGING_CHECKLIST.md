@@ -148,17 +148,35 @@ avec un EHPAD vide :
 - [ ] Le salarié créé apparaît maintenant comme ligne sur la grille
       Planning (`/`), dans le bon groupe de service.
 
+## Codes horaires (story #34, écran /admin/horaires — 25/09)
+
+- [ ] Créer un code de catégorie « Travail » avec 1 à 4 plages horaires →
+      apparaît dans le tableau avec la durée calculée ; recharger confirme
+      la persistance.
+- [ ] Créer un code « Événementiel » de chaque type (spécial, normal,
+      partiel) → les champs spécifiques (action, durée pour "normal")
+      s'enregistrent correctement.
+- [ ] Tenter une combinaison incohérente que le formulaire laisserait
+      passer (ex. via manipulation directe) → la base la refuse (CHECK),
+      message d'erreur affiché plutôt qu'un échec silencieux.
+- [ ] Modifier un code existant, notamment changer son nombre de plages →
+      les anciennes plages sont bien remplacées, pas cumulées.
+- [ ] Supprimer un code horaire → disparaît du tableau, ses plages
+      supprimées en cascade.
+- [ ] Avec un compte `manager` ou `utilisateur` connecté : `/admin/horaires`
+      affiche l'écran « zone réservée », pas le formulaire.
+
 ## Régression — écrans encore non branchés
 
 - [ ] L'Émargement (`/emargement`) continue d'afficher les données mock,
       sans exiger de connexion — comportement attendu tant que le reste
       de la story #35 n'est pas fait.
-- [ ] Les 4 autres écrans `/admin/*` (Codes horaires, Utilisateurs,
-      Roulements, Années) exigent maintenant une session et le rôle
-      `administrateur` (layout partagé), mais leur contenu reste encore en
-      données mock — à retirer de cette section un par un au fur et à
-      mesure de leur branchement, et à transformer en scénario de
-      vérification des données réelles à la place.
+- [ ] Les 3 autres écrans `/admin/*` (Utilisateurs, Roulements, Années)
+      exigent maintenant une session et le rôle `administrateur` (layout
+      partagé), mais leur contenu reste encore en données mock — à retirer
+      de cette section un par un au fur et à mesure de leur branchement,
+      et à transformer en scénario de vérification des données réelles à
+      la place.
 - [ ] Sur l'écran Salariés lui-même, la section « Roulement » (assigner un
       roulement à un salarié) reste sur données mock — dépend de l'écran
       Roulements, pas encore branché.

@@ -1,82 +1,36 @@
-"use client";
+import { createClient } from "@/lib/supabase/server";
+import type { HoraireCategorie, TypeEvenement } from "@/lib/horaire-codes";
+import HorairesAdminClient, { type HoraireCodeReel } from "./HorairesAdminClient";
 
-import { useState } from "react";
-import { HORAIRE_CODES, type HoraireCode } from "@/lib/horaire-codes";
-import HoraireCodesTable from "@/components/admin/HoraireCodesTable";
-import HoraireCodeForm from "@/components/admin/HoraireCodeForm";
+export default async function HorairesAdminPage() {
+  const supabase = await createClient();
 
-export default function HorairesAdminPage() {
-  const [codes, setCodes] = useState<HoraireCode[]>(HORAIRE_CODES);
-  const [panneau, setPanneau] = useState<"ferme" | "creation" | "edition">("ferme");
-  const [codeEnEdition, setCodeEnEdition] = useState<HoraireCode | undefined>(undefined);
+  const { data } = await supabase
+    .from("code_horaire")
+    .select(
+      "id, code, intitule, categorie, couleur_fond, couleur_texte, commentaire, afficher_vue_annuelle, action, type_evenement, duree_heures, plage_horaire(heure_debut, heure_fin, ordre)"
+    )
+    .order("code");
 
-  function ouvrirCreation() {
-    setCodeEnEdition(undefined);
-    setPanneau("creation");
-  }
+  const codes: HoraireCodeReel[] = (data ?? []).map((c) => ({
+    id: c.id,
+    code: c.code,
+    intitule: c.intitule,
+    categorie: c.categorie as HoraireCategorie,
+    couleurFond: c.couleur_fond,
+    couleurTexte: c.couleur_texte,
+    commentaire: c.commentaire ?? undefined,
+    afficherVueAnnuelle: c.afficher_vue_annuelle,
+    action: c.action ?? undefined,
+    typeEvenement: (c.type_evenement as TypeEvenement | null) ?? undefined,
+    duree: c.duree_heures ?? undefined,
+    plages:
+      c.categorie === "travail"
+        ? [...c.plage_horaire]
+            .sort((a, b) => a.ordre - b.ordre)
+            .map((p) => ({ debut: p.heure_debut.slice(0, 5), fin: p.heure_fin.slice(0, 5) }))
+        : undefined,
+  }));
 
-  function ouvrirEdition(code: HoraireCode) {
-    setCodeEnEdition(code);
-    setPanneau("edition");
-  }
-
-  function fermerPanneau() {
-    setPanneau("ferme");
-    setCodeEnEdition(undefined);
-  }
-
-  function enregistrer(code: HoraireCode) {
-    setCodes((prev) => {
-      if (codeEnEdition) {
-        return prev.map((c) => (c.code === codeEnEdition.code ? code : c));
-      }
-      return [...prev, code];
-    });
-    fermerPanneau();
-  }
-
-  function supprimer(code: HoraireCode) {
-    if (confirm(`Supprimer le code horaire « ${code.code} » ?`)) {
-      setCodes((prev) => prev.filter((c) => c.code !== code.code));
-    }
-  }
-
-  return (
-    <div className="relative flex h-full">
-      <div className="flex-1 overflow-auto p-4">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-semibold text-zinc-800">Codes horaires</h1>
-            <p className="text-xs text-zinc-500">
-              Données non persistées (maquette) — {codes.length} code{codes.length > 1 ? "s" : ""}
-            </p>
-          </div>
-          <button
-            onClick={ouvrirCreation}
-            className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
-          >
-            + Nouveau code
-          </button>
-        </div>
-
-        <div className="overflow-hidden rounded border border-zinc-200">
-          <HoraireCodesTable codes={codes} onModifier={ouvrirEdition} onSupprimer={supprimer} />
-        </div>
-      </div>
-
-      {panneau !== "ferme" && (
-        <>
-          <div className="fixed inset-0 z-20 bg-black/20" onClick={fermerPanneau} />
-          <div className="fixed right-0 top-0 z-30 h-full w-full max-w-md border-l border-zinc-200 bg-white shadow-xl">
-            <HoraireCodeForm
-              valeurInitiale={codeEnEdition}
-              codesExistants={codes.map((c) => c.code)}
-              onValider={enregistrer}
-              onAnnuler={fermerPanneau}
-            />
-          </div>
-        </>
-      )}
-    </div>
-  );
+  return <HorairesAdminClient codes={codes} />;
 }
