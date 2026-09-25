@@ -1015,7 +1015,7 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   données) : migrations pilotées à la demande sur PROD, aucune donnée
   créée hors contenu des migrations elles-mêmes._
 
-- [x] **2. Implémenter l'authentification et les comptes** _(issue #33)_
+- [ ] **2. Implémenter l'authentification et les comptes** _(issue #33)_
   Les 4 fonctions Vercel (connexion par identifiant, création EHPAD,
   création compte, réinitialisation de mot de passe) ; amorçage manuel du
   tout premier compte Administrateur Système.
