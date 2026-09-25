@@ -1187,6 +1187,26 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   7 nouveaux tests DB (création roulement + motif, modification,
   suppression avec cascade sur le motif, refus pour un manager en
   écriture et en modification). 60 tests DB, 11 e2e, tous verts._
+  _**Années** (`/admin/annees`) branché — débloqué après accord explicite du
+  client pour appliquer sur PROD la migration `generer_annee_planifiee`
+  (`20260925000006`), déjà mergée sur `main` mais dont l'application avait
+  été refusée une fois plus tôt dans la session ; get_advisors a relevé au
+  passage un search_path non fixé sur `calculer_paques`, corrigé par une
+  migration de suivi (`20260925000008`, même schéma que les corrections
+  post-audit précédentes de la session) et réappliqué, audit repassé
+  propre. Types TypeScript régénérés depuis le schéma réel (le RPC
+  n'existait pas encore lors de la dernière génération). Création : appel
+  du RPC (pose l'année + 8 jours fériés fixes + 3 calculés, tous actifs),
+  puis réconciliation avec ce que le formulaire a produit — bascule actif
+  sur les jours calculés, remplacement complet des jours personnalisés
+  (même pattern que les plages horaires et le motif d'un roulement).
+  Modification : même réconciliation, plus la mise à jour du jour de
+  démarrage (l'année elle-même reste non modifiable une fois créée, comme
+  dans le formulaire mock). Pas de suppression — un principe déjà du mock,
+  conservé tel quel (« une année déjà planifiée ne peut pas être
+  supprimée »). 6 nouveaux tests DB (le RPC lui-même avait déjà 5 tests
+  dédiés depuis sa création, jamais exécutés sur une vraie réconciliation).
+  66 tests DB, 11 e2e, tous verts._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,

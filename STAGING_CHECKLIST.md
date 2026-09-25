@@ -209,16 +209,34 @@ avec un EHPAD vide :
       que la suppression d'un roulement affecté soit testable de bout en
       bout.
 
+## Années (story #34/#35, écran /admin/annees — 25/09)
+
+- [ ] Planifier une nouvelle année (ex. 2027) sans rien changer aux jours
+      fériés par défaut → apparaît dans le tableau avec 11/11 jours fériés
+      actifs (8 fixes + 3 calculés depuis Pâques) ; recharger la page
+      confirme la persistance.
+- [ ] Désactiver un jour férié calculé (ex. Ascension) à la création ou en
+      modification → repasse à 10/11 actifs, persiste après rechargement.
+- [ ] Ajouter un jour férié personnalisé → apparaît dans le décompte
+      « actifs », persiste après rechargement.
+- [ ] Modifier une année déjà planifiée : le champ Année reste non
+      modifiable (comme dans la maquette), seul le jour de démarrage et les
+      jours fériés (calculés/personnalisés) le sont.
+- [ ] Retirer un jour férié personnalisé précédemment ajouté, en
+      modification → disparaît réellement (pas seulement de l'écran).
+- [ ] Tenter de planifier deux fois la même année pour le même EHPAD →
+      message d'erreur clair (contrainte unique en base), pas d'année
+      dupliquée.
+- [ ] Le bouton « Supprimer » d'une année reste grisé, comme dans la
+      maquette — pas de suppression possible une fois planifiée.
+- [ ] Avec un compte `manager` ou `utilisateur` connecté : `/admin/annees`
+      affiche l'écran « zone réservée », pas le formulaire.
+
 ## Régression — écrans encore non branchés
 
 - [ ] L'Émargement (`/emargement`) continue d'afficher les données mock,
       sans exiger de connexion — comportement attendu tant que le reste
       de la story #35 n'est pas fait.
-- [ ] `/admin/annees` exige désormais une session et le rôle
-      `administrateur` (layout partagé), mais son contenu reste encore en
-      données mock — à retirer de cette section une fois branché, et à
-      transformer en scénario de vérification des données réelles à la
-      place.
 - [ ] Sur l'écran Salariés lui-même, la section « Roulement » (assigner un
       roulement à un salarié) reste sur données mock — dépend de
       `affectation_roulement`, pas encore branché (l'écran Roulements
