@@ -36,6 +36,11 @@ Convention actée le 25/09 : c'est l'agent qui pilote les accès à la base de
 données réelle (Supabase), le client fournit les exigences et vérifie la
 conformité de ce qui est livré.
 
+- La **lecture** sur la base de données de PROD (requêtes `select`, y
+  compris via `execute_sql`, `list_tables`, `get_advisors`…) est toujours
+  autorisée, sans demander à chaque fois — accordé explicitement le 25/09.
+  Ne concerne que la lecture : toute écriture reste soumise aux règles
+  ci-dessous.
 - Les **migrations de schéma** (`supabase/migrations/`) sont pilotées à la
   demande, exclusivement sur la base de données de PROD (seul environnement
   existant pour l'instant — pas de DEV/STAGING, cf. BACKLOG epic #38).
