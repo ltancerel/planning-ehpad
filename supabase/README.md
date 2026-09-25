@@ -32,7 +32,23 @@ Vercel) et les stories #34/#35 (brancher les écrans) restent à faire.
 
 ## 2. Réglages de sécurité à faire AVANT toute donnée réelle
 
-Tous dans **Authentication** (menu de gauche du dashboard) :
+**À la création du projet**, 3 cases proposées pour la Data API :
+
+- **Enable Data API** : à cocher — toute l'architecture (front, fonctions
+  Vercel) passe par cette API (PostgREST) pour parler à la base.
+- **Enable automatic RLS** : à cocher, même si décochée par défaut. Nos
+  migrations activent déjà explicitement RLS table par table (redondant
+  pour nos tables), mais ce réglage sert de filet de sécurité pour une
+  table qui serait un jour créée hors migration (éditeur Supabase) : elle
+  resterait verrouillée par défaut plutôt que grande ouverte.
+- **Automatically expose new tables** : sans effet réel tant que
+  « Enable automatic RLS » est cochée juste au-dessus — une table exposée
+  automatiquement reste verrouillée par défaut (RLS activée, zéro policy =
+  aucun accès) jusqu'à ce qu'une policy l'autorise explicitement, exactement
+  ce que nos migrations font déjà table par table. Peut donc être cochée
+  sans risque avec les deux réglages précédents.
+
+Ensuite, dans **Authentication** (menu de gauche du dashboard) :
 
 - **Authentication → Sign In / Providers → Email** : désactiver **"Allow
   new users to sign up"**. Indispensable — l'application n'a aucune

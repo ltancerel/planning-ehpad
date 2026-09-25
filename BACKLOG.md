@@ -2,6 +2,32 @@
 
 Suivi détaillé (source de vérité) — chaque Story a aussi une issue GitHub liée pour le suivi visuel.
 
+## Convention — Tests (ajoutée le 25/09/2026)
+
+Chaque changement fonctionnel s'accompagne désormais des tests
+correspondants, dans le même commit — cf. `AGENTS.md` § Tests pour le
+détail. Deux suites, indépendantes :
+
+- **`supabase/tests/`** (`npm run test:db`) : tests unitaires SQL contre
+  un Postgres local ordinaire (contraintes, triggers, RLS), sans dépendre
+  d'un projet Supabase de DEV — cf. `supabase/tests/README.md`.
+- **`e2e/`** (`npm run test:e2e`, Playwright) : tests système qui
+  reproduisent les parcours du front (grille Planning, Émargement…).
+
+Mise en place initiale : infrastructure des deux suites (mini-framework
+SQL maison faute de pgTAP disponible, config Playwright sur le Chromium
+pré-installé) + 3 specs Playwright et 25 assertions SQL couvrant les
+fonctionnalités les plus récentes (jours fériés, semaines chargées, vue
+mensuelle 4/6 semaines) comme preuve de fonctionnement — pas une
+couverture exhaustive de l'existant, qui reste à construire au fil des
+prochains changements, conformément à la convention.
+_Bug trouvé en écrivant les tests eux-mêmes, sans rapport avec les
+migrations_ : le nettoyage d'un test de cascade (désactivation d'un EHPAD)
+ne réactivait qu'un des 3 comptes de test désactivés par le trigger,
+laissant les 2 autres désactivés pour les tests suivants — symptôme
+trompeur (RLS semblant bloquer une lecture légitime). Corrigé, détail dans
+`supabase/tests/README.md`.
+
 ## Extension au cahier des charges — Multi-EHPAD (ajout du 15/09/2026)
 
 Non prévu dans le CDC initial, ajouté à la demande du client : l'application doit
