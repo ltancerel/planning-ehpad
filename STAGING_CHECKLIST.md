@@ -46,6 +46,12 @@ et à mesure d'une exécution ; remettre à zéro pour la suivante.
       `compte` (type `administrateur`) sont créés pour cet EHPAD.
       Nécessite `SUPABASE_SERVICE_ROLE_KEY` côté serveur (pas testable
       sans, ni en local ni en e2e automatisé).
+- [ ] Se connecter avec cet Administrateur d'EHPAD (pas l'Administrateur
+      Système) sur `/login` → atterrit sur `/compte`, mais voit un écran
+      « zone réservée à l'Administrateur Système », PAS le badge
+      « Administrateur Système » ni le lien « Gérer les EHPAD » (bug
+      corrigé le 25/09, repéré après un test réel avec le compte
+      `ltancerel@gmail.com`).
 - [ ] Vérifier que ce nouvel Administrateur peut se connecter sur `/login`
       avec l'email et le mot de passe saisis à la création.
 - [ ] Tenter de créer un EHPAD avec un nom vide → message d'erreur, aucune
