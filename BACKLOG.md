@@ -1122,6 +1122,12 @@ mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
   Un déploiement de bout en bout (staging → main → PROD) et une
   restauration testée, pour confirmer que la chaîne fonctionne avant de la
   considérer opérationnelle.
+  _Ajouté le 25/09 : `STAGING_CHECKLIST.md`, liste des vérifications
+  manuelles à faire sur STAGING (parcours qui exigent une connexion
+  réussie, donc pas automatisables sans committer un mot de passe réel —
+  cf. `e2e/connexion.spec.ts`). Démarré avec l'authentification et la
+  gestion des EHPAD par l'Administrateur Système (stories #33/#34), à
+  compléter au même rythme que ces stories avancent._
 
 - [ ] **7. Mettre en place la politique RGPD de l'éditeur** _(issue #45)_
   Ajoutée le 17/09. Recentrée le 17/09 : la relation EHPAD ↔ salariés (dont
