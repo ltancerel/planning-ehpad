@@ -40,9 +40,27 @@ et à mesure d'une exécution ; remettre à zéro pour la suivante.
 
 - [ ] Depuis `/compte`, cliquer « Gérer les EHPAD » → liste (vide ou
       existante) affichée.
-- [ ] Créer un EHPAD avec un nom → apparaît immédiatement dans la liste.
+- [ ] Créer un EHPAD en renseignant aussi le premier Administrateur (nom,
+      prénom, identifiant 3 lettres, email, mot de passe) → l'EHPAD
+      apparaît dans la liste, ET un utilisateur Supabase Auth + une ligne
+      `compte` (type `administrateur`) sont créés pour cet EHPAD.
+      Nécessite `SUPABASE_SERVICE_ROLE_KEY` côté serveur (pas testable
+      sans, ni en local ni en e2e automatisé).
+- [ ] Vérifier que ce nouvel Administrateur peut se connecter sur `/login`
+      avec l'email et le mot de passe saisis à la création.
 - [ ] Tenter de créer un EHPAD avec un nom vide → message d'erreur, aucune
       création.
+- [ ] Tenter un mot de passe faible pour l'administrateur (ex.
+      `12345678!`) → jauge de robustesse rouge, bouton de création non
+      bloqué côté client mais refus côté serveur avec message clair (la
+      validation cliente n'est qu'un confort, la règle réelle est
+      appliquée côté serveur).
+- [ ] Tenter un identifiant administrateur déjà utilisé par un autre
+      compte ou administrateur système → erreur claire, ET vérifier que
+      l'EHPAD nouvellement créé et l'utilisateur Auth ont bien été
+      nettoyés (pas de ligne orpheline) — la création n'étant pas une
+      vraie transaction cross Postgres/Auth, ce nettoyage est fait à la
+      main par le code, pas garanti par la base.
 - [ ] Cliquer « Supprimer » sur un EHPAD → le bloc de confirmation
       apparaît, le bouton reste désactivé tant que le nom saisi ne
       correspond pas exactement.

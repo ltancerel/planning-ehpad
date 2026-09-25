@@ -1072,6 +1072,25 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   e2e, tous verts. Le reste de la story (comptes/utilisateurs, salariés,
   codes horaires, roulements, années/jours fériés, identité EHPAD, profil
   utilisateur) n'est pas commencé._
+  _Précisé le 25/09 : la création d'EHPAD initiale n'incluait pas la
+  création du premier Administrateur — repéré après un premier test réel
+  sur PROD (EHPAD « Les Jardins de Rambam » créé sans personne pour le
+  gérer). Corrigé pour suivre la spec API déjà conçue (`POST
+  /api/admin/ehpad`, issue #26) : création atomique EHPAD + premier
+  compte Administrateur, implémentée en Server Action (plutôt qu'une
+  route `/api/` séparée — équivalent côté exécution serverless, évite un
+  aller-retour HTTP interne inutile) dans `src/lib/supabase/admin.ts`
+  (client `service_role`, jamais exposé client) et
+  `src/app/compte/ehpads/actions.ts`. Nettoyage best-effort en cas
+  d'échec partiel (pas de vraie transaction cross Postgres/Auth). Règles
+  de mot de passe de la story #24 (8 caractères min., un caractère
+  spécial, jauge de robustesse qui doit être au vert) portées dans
+  `src/lib/mot-de-passe.ts`, avec jauge visuelle sur le formulaire et
+  application réelle côté serveur (jamais seulement côté client).
+  Nécessite `SUPABASE_SERVICE_ROLE_KEY` en variable d'environnement
+  serveur (jamais `NEXT_PUBLIC_`) — pas testable en e2e automatisé ni en
+  local sans cette clé, donc pas de nouveau test automatisé pour ce
+  parcours précis, ajouté à `STAGING_CHECKLIST.md` à la place._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,
