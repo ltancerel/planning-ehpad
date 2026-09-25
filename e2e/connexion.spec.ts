@@ -21,6 +21,14 @@ test("redirige vers /login quand on visite / (Planning) sans session", async ({ 
   await expect(page).toHaveURL(/\/login$/);
 });
 
+test("redirige vers /login quand on visite /emargement sans session", async ({ page }) => {
+  // Depuis le 25/09, l'Émargement est branché sur les vraies données
+  // (salarié, jours fériés et validations réels de l'EHPAD) — nécessite
+  // donc une session comme /, /compte et /admin.
+  await page.goto("/emargement");
+  await expect(page).toHaveURL(/\/login$/);
+});
+
 test("email inconnu : message générique, reste sur /login", async ({ page }) => {
   await page.goto("/login");
   await page.fill("#email", "email-qui-nexiste-pas@test.local");

@@ -1,14 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Routes qui exigent une session : l'Émargement tourne encore sur des
-// données mock, pas branchée sur le vrai backend (story #35, reste).
-// Étendre cette liste au fur et à mesure du branchement des écrans. La
-// vérification de rôle fine (administrateur_systeme pour /compte,
-// administrateur pour /admin) reste faite dans chaque layout/page — ceci
-// n'est qu'une redirection optimiste, cf. doc Next.js (pas d'accès base
-// dans le proxy).
-const PREFIXES_PROTEGES = ["/compte", "/admin"];
+// Routes qui exigent une session — étendue au fur et à mesure du
+// branchement des écrans sur le vrai backend (story #35). La vérification
+// de rôle fine (administrateur_systeme pour /compte, administrateur pour
+// /admin) reste faite dans chaque layout/page — ceci n'est qu'une
+// redirection optimiste, cf. doc Next.js (pas d'accès base dans le proxy).
+const PREFIXES_PROTEGES = ["/compte", "/admin", "/emargement"];
 
 function routeProtegee(pathname: string): boolean {
   return pathname === "/" || PREFIXES_PROTEGES.some((prefixe) => pathname.startsWith(prefixe));

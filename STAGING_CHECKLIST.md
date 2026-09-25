@@ -232,12 +232,55 @@ avec un EHPAD vide :
 - [ ] Avec un compte `manager` ou `utilisateur` connecté : `/admin/annees`
       affiche l'écran « zone réservée », pas le formulaire.
 
+## Émargement (story #35, écran /emargement — 25/09)
+
+`/emargement` exige désormais une session (comme `/`, `/compte` et
+`/admin`) et récupère un vrai salarié réel de l'EHPAD connecté, les vrais
+jours fériés actifs (planifiés via `/admin/annees`) et le vrai statut de
+validation (`validation_emargement`). Le contenu des cases
+(`PLANNING_DEMO`) reste en mock — n'a pas d'effet visible tant qu'il n'y a
+aucune donnée réelle dans `journee`, à brancher avec l'édition des cases du
+Planning (dernière pièce de la story #35). Les scénarios suivants ont dû
+être retirés de la suite e2e automatisée (nécessitent une session réelle) —
+à revérifier manuellement :
+
+- [ ] Connecté, visiter `/emargement` sans salarié dans l'EHPAD → message
+      « Aucun salarié », pas d'erreur.
+- [ ] Connecté avec un salarié réel (lien depuis la grille Planning, qui
+      passe déjà le vrai id) : départ par défaut = lundi le plus proche du
+      milieu du mois passé en paramètre (ex. `mois=2026-09` → 14/09).
+- [ ] Bascule 4 ↔ 6 semaines : garde le même départ, prolonge/réduit la fin
+      (6 semaines = 6 lignes complètes, sans ascenseur).
+- [ ] Navigation semaine par semaine (← / →) : le libellé de période avance
+      par pas de 7 jours.
+- [ ] Le lundi est toujours en première colonne.
+- [ ] Un jour férié planifié pour l'année concernée (via `/admin/annees`)
+      apparaît en case ambre sur la vue mensuelle ; un jour férié désactivé
+      ou une année non planifiée n'affiche aucune case ambre.
+- [ ] Cliquer « Valider la période » → persiste réellement
+      (`validation_emargement`), le message « ✓ Planning validé… »
+      s'affiche même après rechargement de la page. Une fenêtre affichée
+      chevauchant deux mois calendaires valide le mois du premier jour
+      affiché (limite connue, pas de découpage par mois du bouton).
+- [ ] Retenter de valider la même période (même salarié/année/mois, ex. en
+      rechargeant juste avant que l'écran ne se mette à jour) → message
+      d'erreur clair, pas de doublon en base (contrainte unique déjà en
+      place).
+- [ ] Avec un compte `utilisateur` (pas `administrateur`/`manager`)
+      connecté : tenter de valider une période → refusé par la RLS
+      (`insufficient_privilege`), message d'erreur affiché plutôt qu'un
+      succès silencieux.
+- [ ] Se déconnecter puis revisiter `/emargement` sans session →
+      redirection vers `/login` (couvert par e2e, à revérifier une fois en
+      conditions réelles).
+
 ## Régression — écrans encore non branchés
 
-- [ ] L'Émargement (`/emargement`) continue d'afficher les données mock,
-      sans exiger de connexion — comportement attendu tant que le reste
-      de la story #35 n'est pas fait.
 - [ ] Sur l'écran Salariés lui-même, la section « Roulement » (assigner un
       roulement à un salarié) reste sur données mock — dépend de
       `affectation_roulement`, pas encore branché (l'écran Roulements
       lui-même l'est désormais).
+- [ ] Le contenu des cases sur `/emargement` et sur la grille Planning
+      (`/`) reste sur données mock (`PLANNING_DEMO`) — dépend de l'édition
+      des cases du Planning (RPC `appliquer_roulement`, dernière pièce de
+      la story #35), pas encore branché.

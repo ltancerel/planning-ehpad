@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Salarie } from "@/lib/mock-data";
-import { JOURS_FERIES_2026, PLANNING_DEMO } from "@/lib/mock-data";
+import { PLANNING_DEMO } from "@/lib/mock-data";
 import {
   HORAIRE_CODES_PAR_CODE,
   heuresDuCode,
@@ -20,6 +20,7 @@ import {
   lundiDeLaSemaine,
   lundiLePlusProche,
 } from "@/lib/dates";
+import { validerPeriode } from "@/app/emargement/actions";
 
 type NbSemaines = 4 | 6;
 const NB_SEMAINES_DEFAUT: NbSemaines = 4;
@@ -30,20 +31,33 @@ const JOURS_SEMAINE = ["L", "Ma", "M", "J", "V", "S", "D"];
 // jour férié tombant un week-end reste marqué férié (priorité), pas juste
 // grisé comme un week-end ordinaire.
 type ClasseJour = "ferie" | "weekend" | "normal";
-function classeJour(date: Date): ClasseJour {
-  if (JOURS_FERIES_2026.has(formatDateISO(date))) return "ferie";
-  if (estWeekend(date)) return "weekend";
-  return "normal";
-}
 
 function formatPlages(plages?: Plage[]): string {
   if (!plages?.length) return "";
   return plages.map((p) => `${p.debut}–${p.fin}`).join(", ");
 }
 
-export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
+export default function EmargementMensuel({
+  salarie,
+  joursFeries,
+  validations,
+}: {
+  salarie: Salarie;
+  joursFeries: string[];
+  validations: string[];
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const [validationsLocales, setValidationsLocales] = useState(validations);
+  const [erreurValidation, setErreurValidation] = useState<string | null>(null);
+  const [validationEnCours, demarrerValidation] = useTransition();
+
+  const joursFeriesSet = useMemo(() => new Set(joursFeries), [joursFeries]);
+  function classeJour(date: Date): ClasseJour {
+    if (joursFeriesSet.has(formatDateISO(date))) return "ferie";
+    if (estWeekend(date)) return "weekend";
+    return "normal";
+  }
 
   // "mois" ne sert qu'à calculer le départ par défaut (milieu de mois, cf.
   // lundiLePlusProche ci-dessous) — c'est le paramètre transmis par le lien
@@ -54,13 +68,33 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
   const debutParam = searchParams.get("debut");
   const semainesParam = searchParams.get("semaines");
   const nbSemaines: NbSemaines = semainesParam === "6" ? 6 : NB_SEMAINES_DEFAUT;
-  const [valide, setValide] = useState(false);
 
   const debutFenetre = useMemo(() => {
     if (debutParam) return lundiDeLaSemaine(parseDateISO(debutParam));
     const dateReference = moisParam ? parseDateISO(`${moisParam}-01`) : new Date(2026, 8, 1);
     return lundiLePlusProche(new Date(dateReference.getFullYear(), dateReference.getMonth(), 15));
   }, [debutParam, moisParam]);
+
+  // validation_emargement est mensuelle (salarie_id, annee, mois) alors que
+  // la fenêtre affichée est glissante (4/6 semaines) et peut chevaucher deux
+  // mois — la validation porte sur le mois du premier jour affiché, limite
+  // assumée pour cet écran plutôt qu'un découpage par mois du bouton.
+  const anneeCible = debutFenetre.getFullYear();
+  const moisCible = debutFenetre.getMonth() + 1;
+  const cleValidation = `${anneeCible}-${moisCible}`;
+  const valide = validationsLocales.includes(cleValidation);
+
+  function valider() {
+    setErreurValidation(null);
+    demarrerValidation(async () => {
+      const resultat = await validerPeriode(salarie.id, anneeCible, moisCible);
+      if (resultat?.error) {
+        setErreurValidation(resultat.error);
+        return;
+      }
+      setValidationsLocales((prev) => [...prev, cleValidation]);
+    });
+  }
 
   const jours = useMemo(() => genererPeriode(debutFenetre, nbSemaines * 7), [debutFenetre, nbSemaines]);
   const semaines = useMemo(() => {
@@ -96,7 +130,6 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
       semaines: String(nouveauNbSemaines),
     });
     router.push(`/emargement?${params.toString()}`);
-    setValide(false);
   }
 
   function allerSemaine(delta: number) {
@@ -321,11 +354,15 @@ export default function EmargementMensuel({ salarie }: { salarie: Salarie }) {
               En validant, {salarie.prenom} {salarie.nom} confirme que ce planning correspond aux heures
               réellement effectuées sur la période affichée.
             </p>
+            {erreurValidation && (
+              <p className="mb-2 text-xs font-medium text-red-600">{erreurValidation}</p>
+            )}
             <button
-              onClick={() => setValide(true)}
-              className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700"
+              onClick={valider}
+              disabled={validationEnCours}
+              className="rounded bg-green-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50"
             >
-              Valider la période
+              {validationEnCours ? "Validation…" : "Valider la période"}
             </button>
           </>
         )}

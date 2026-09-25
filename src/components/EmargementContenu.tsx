@@ -2,18 +2,24 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { SALARIES } from "@/lib/mock-data";
+import type { Salarie } from "@/lib/mock-data";
 import EmargementMensuel from "./EmargementMensuel";
 import EmargementAnnuel from "./EmargementAnnuel";
 
 type Vue = "mensuel" | "annuel";
 
-export default function EmargementContenu() {
+export default function EmargementContenu({
+  salarie,
+  joursFeries,
+  validations,
+}: {
+  salarie: Salarie;
+  joursFeries: string[];
+  validations: string[];
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const salarieId = searchParams.get("salarie") ?? SALARIES[0]?.id;
-  const salarie = SALARIES.find((s) => s.id === salarieId) ?? SALARIES[0];
   const vue: Vue = searchParams.get("vue") === "annuel" ? "annuel" : "mensuel";
 
   function changerVue(nouvelleVue: Vue) {
@@ -72,7 +78,11 @@ export default function EmargementContenu() {
           </h1>
         </div>
 
-        {vue === "mensuel" ? <EmargementMensuel salarie={salarie} /> : <EmargementAnnuel salarie={salarie} />}
+        {vue === "mensuel" ? (
+          <EmargementMensuel salarie={salarie} joursFeries={joursFeries} validations={validations} />
+        ) : (
+          <EmargementAnnuel salarie={salarie} />
+        )}
       </div>
     </div>
   );

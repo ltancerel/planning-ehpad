@@ -1229,6 +1229,33 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   `STAGING_CHECKLIST.md`, aucun des deux comportements ne dépendant en
   réalité de salariés réels, seulement d'une session. Émargement (écran
   distinct) pas encore touché, reste en mock._
+  _**Émargement** (`/emargement`) branché, à l'exception du contenu des
+  cases (reste mock, comme la grille Planning — dépend de la même pièce
+  finale, l'édition des cases). `/emargement` exige désormais une session
+  (comme `/`, `/compte` et `/admin`) ; la résolution du salarié affiché
+  passe du client (`SALARIES.find`) au serveur (`page.tsx`, RLS), avec
+  repli sur le premier salarié par ordre alphabétique si l'id du paramètre
+  `salarie` est absent ou introuvable, et un message « Aucun salarié »
+  explicite pour un EHPAD encore vide plutôt qu'un crash. Jours fériés
+  (case ambre) désormais réels (`jour_ferie` actifs, via `/admin/annees`
+  juste branché) au lieu du set mock `JOURS_FERIES_2026` (qui reste
+  utilisé par `PlanningGrid`, pas encore branché). Bouton « Valider la
+  période » : désormais un vrai `insert` dans `validation_emargement`
+  (RLS ouverte à administrateur ET manager, contrairement au groupe
+  générique réservé à l'administrateur), message clair si déjà validé
+  (contrainte unique). Limite assumée et documentée :
+  `validation_emargement` est mensuelle (`salarie_id`, `annee`, `mois`)
+  alors que la fenêtre affichée est glissante (4/6 semaines) et peut
+  chevaucher deux mois — la validation porte sur le mois du premier jour
+  affiché, pas de découpage par mois du bouton pour l'instant. 4 nouveaux
+  tests DB (validation par administrateur et par manager, refus pour un
+  utilisateur, refus d'une double validation de la même période). Effet de
+  bord assumé, même nature que pour `/` : 5 tests e2e qui naviguaient vers
+  `/emargement` sans session ne sont plus automatisables (fenêtre 4/6
+  semaines, navigation, jour férié ambre) — déplacés vers
+  `STAGING_CHECKLIST.md`, aucun ne dépendant en réalité de données de
+  cellule réelles, seulement d'une session et d'une année planifiée. 70
+  tests DB, 7 e2e, tous verts._
 
 - [ ] **5. Déployer en production** _(issue #36)_
   Projet Vercel connecté à `main`, domaine Vercel par défaut, variables
