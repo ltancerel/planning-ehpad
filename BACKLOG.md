@@ -989,6 +989,31 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   _Guide de mise en route (création du projet, réglages de sécurité,
   application des migrations, amorçage du premier compte) dans
   `supabase/README.md`._
+  _Mise à jour du 25/09 : projet `planning-ehpad-prod` créé par le client
+  (région Paris, `eu-west-3` — préféré à Francfort en cours de route,
+  latence et hébergement France pour un client français, RGPD identique
+  entre les deux), connecté via le serveur MCP Supabase (accès donné par
+  le client depuis son profil Claude, contourne un blocage réseau
+  spécifique à cet environnement d'exécution vers les domaines Supabase).
+  Les 9 migrations appliquées sur PROD via ce MCP, puis une 10e
+  (`rls_hardening`) suite à l'installation des agent skills officielles
+  Supabase (`npx skills add supabase/agent-skills`, recommandé par les
+  instructions du serveur MCP) et à l'audit `get_advisors` du projet :
+  toutes les policies enveloppent désormais leurs appels de fonction dans
+  `(select ...)` (Postgres les ré-évaluait à chaque ligne sinon — gain
+  annoncé 5-10x, la vraie étendue du problème n'avait été que
+  partiellement détectée par l'audit initial), `to authenticated` explicite
+  sur chaque policy, les policies `for all` scindées en insert/update/
+  delete pour ne plus chevaucher le select séparé (9 tables), et 4 index
+  ajoutés sur clés étrangères des tables d'audit. Revoke des `EXECUTE`
+  RPC directs sur les fonctions utilitaires/de trigger : incomplet dans
+  cette migration (oubli du `revoke ... from public`, qui accorde
+  `EXECUTE` par défaut à la création d'une fonction et n'est pas retiré
+  par un simple `revoke ... from anon/authenticated`), corrigé dans la
+  migration suivante. Testé localement (25/25) avant chaque application,
+  conformément à la convention actée le 25/09 (`AGENTS.md` § Base de
+  données) : migrations pilotées à la demande sur PROD, aucune donnée
+  créée hors contenu des migrations elles-mêmes._
 
 - [x] **2. Implémenter l'authentification et les comptes** _(issue #33)_
   Les 4 fonctions Vercel (connexion par identifiant, création EHPAD,
