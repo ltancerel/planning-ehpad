@@ -166,13 +166,33 @@ avec un EHPAD vide :
 - [ ] Avec un compte `manager` ou `utilisateur` connecté : `/admin/horaires`
       affiche l'écran « zone réservée », pas le formulaire.
 
+## Utilisateurs (story #34, écran /admin/utilisateurs — 25/09)
+
+- [ ] Créer un utilisateur (identifiant 3 lettres, nom, prénom, email,
+      type, service, poste) → un email d'invitation Supabase Auth part
+      réellement à cette adresse (SMTP intégré Supabase — limite connue :
+      2 emails/heure par projet, pas de garantie de délivrabilité, cf.
+      story #24). Le compte apparaît dans le tableau.
+- [ ] Suivre le lien de l'email reçu → permet de définir un mot de passe
+      et de se connecter avec l'identité créée.
+- [ ] Modifier un utilisateur existant (nom, type, service, poste) →
+      persiste réellement, aucun nouvel email envoyé (mise à jour simple).
+- [ ] Supprimer un utilisateur → disparaît du tableau ; vérifier qu'aucun
+      compte Supabase Auth "fantôme" ne subsiste (email réutilisable pour
+      une nouvelle création).
+- [ ] Tenter de se supprimer soi-même depuis cet écran → refusé
+      explicitement.
+- [ ] Avec un compte `manager` ou `utilisateur` connecté :
+      `/admin/utilisateurs` affiche l'écran « zone réservée », pas le
+      formulaire.
+
 ## Régression — écrans encore non branchés
 
 - [ ] L'Émargement (`/emargement`) continue d'afficher les données mock,
       sans exiger de connexion — comportement attendu tant que le reste
       de la story #35 n'est pas fait.
-- [ ] Les 3 autres écrans `/admin/*` (Utilisateurs, Roulements, Années)
-      exigent maintenant une session et le rôle `administrateur` (layout
+- [ ] Les 2 autres écrans `/admin/*` (Roulements, Années) exigent
+      maintenant une session et le rôle `administrateur` (layout
       partagé), mais leur contenu reste encore en données mock — à retirer
       de cette section un par un au fur et à mesure de leur branchement,
       et à transformer en scénario de vérification des données réelles à

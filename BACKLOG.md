@@ -1146,6 +1146,24 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   categorie/type_evenement/duree_heures restent la garantie réelle,
   laissés à la base plutôt que redupliqués côté action. 4 nouveaux tests
   DB. 49 tests DB, 11 e2e, tous verts._
+  _**Utilisateurs** (`/admin/utilisateurs`) branché — création réelle d'un
+  utilisateur Supabase Auth via `service_role` (`auth.admin.inviteUserByEmail`,
+  même client que pour le premier Administrateur d'EHPAD), sans champ mot
+  de passe dans le formulaire : un email d'invitation permet au nouvel
+  utilisateur de définir lui-même son mot de passe — fidèle au mock
+  d'origine (« un email sera envoyé... ») et au flux libre-service déjà
+  décidé (story #24, limites SMTP Supabase connues et acceptées).
+  Suppression via `auth.admin.deleteUser` plutôt qu'un DELETE RLS sur
+  `compte` seul : `compte.id` référence `auth.users.id` avec la cascade
+  dans ce sens uniquement (utilisateur Auth supprimé → compte supprimé,
+  pas l'inverse), un simple DELETE sur `compte` aurait laissé un
+  utilisateur Auth fantôme (email bloqué pour une future recréation).
+  Garde-fou : impossible de se supprimer soi-même depuis cet écran.
+  Modification d'un compte existant : RLS directe, pas de `service_role`
+  nécessaire. 4 nouveaux tests DB (création/modification par
+  administrateur, refus pour un manager) — la création réelle via
+  `service_role`/email n'est pas testable en local (pas de vrai GoTrue),
+  ajoutée à `STAGING_CHECKLIST.md`. 53 tests DB, 11 e2e, tous verts._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,

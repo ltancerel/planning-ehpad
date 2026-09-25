@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import type { Utilisateur } from "@/lib/mock-data";
-import { SERVICES_ORDRE } from "@/lib/mock-data";
 
 const TYPES_UTILISATEUR: Utilisateur["typeUtilisateur"][] = ["Administrateur", "Manager", "Utilisateur"];
 
 type UtilisateurFormProps = {
   valeurInitiale?: Utilisateur;
   identifiantsExistants: string[];
+  services: string[];
   onValider: (utilisateur: Omit<Utilisateur, "id">) => void;
   onAnnuler: () => void;
 };
@@ -16,6 +16,7 @@ type UtilisateurFormProps = {
 export default function UtilisateurForm({
   valeurInitiale,
   identifiantsExistants,
+  services,
   onValider,
   onAnnuler,
 }: UtilisateurFormProps) {
@@ -27,7 +28,7 @@ export default function UtilisateurForm({
   const [typeUtilisateur, setTypeUtilisateur] = useState<Utilisateur["typeUtilisateur"]>(
     valeurInitiale?.typeUtilisateur ?? "Utilisateur"
   );
-  const [service, setService] = useState(valeurInitiale?.service ?? SERVICES_ORDRE[0]);
+  const [service, setService] = useState(valeurInitiale?.service ?? services[0] ?? "");
   const [poste, setPoste] = useState(valeurInitiale?.poste ?? "");
   const [erreur, setErreur] = useState<string | null>(null);
 
@@ -149,7 +150,7 @@ export default function UtilisateurForm({
             onChange={(e) => setService(e.target.value)}
             className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
           >
-            {SERVICES_ORDRE.map((s) => (
+            {services.map((s) => (
               <option key={s} value={s}>
                 {s}
               </option>
