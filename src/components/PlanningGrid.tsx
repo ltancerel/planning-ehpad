@@ -1,12 +1,10 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   MANAGERS,
   GROUPES_ROULEMENT,
-  JOURS_FERIES_2026,
-  PLANNING_DEMO,
   ROULEMENTS_DEMO,
   AFFECTATIONS_ROULEMENT_DEMO,
   CORRESPONDANCE_SALARIE_FICHE_DEMO,
@@ -23,10 +21,10 @@ import {
   type FiltresAvances,
 } from "@/components/FiltreSalariesAvance";
 import {
-  HORAIRE_CODES_PAR_CODE,
   estCodeSuperposable,
   heuresReellesCellule,
   deltaEvenementielCellule,
+  type HoraireCode,
   type ValeurCellule,
   type Plage,
 } from "@/lib/horaire-codes";
@@ -42,6 +40,7 @@ import {
 } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
+import { chargerPlanningReel, enregistrerJournees, effacerJournees } from "@/app/planning-actions";
 
 // Fenêtre visible toujours à 4 semaines (retour client du 24/09) ; le
 // nombre de semaines chargées (au-delà, avec ascenseur horizontal) est lui
@@ -69,32 +68,48 @@ const PERIODE_PAR_DEFAUT = new Date(2026, 8, 1);
 // jour férié tombant un week-end reste marqué férié (priorité), pas juste
 // grisé comme un week-end ordinaire.
 type ClasseJour = "ferie" | "weekend" | "normal";
-function classeEnTeteJour(date: Date): ClasseJour {
-  if (JOURS_FERIES_2026.has(formatDateISO(date))) return "ferie";
-  if (estWeekend(date)) return "weekend";
-  return "normal";
-}
 
-// Branché sur le vrai backend le 25/09 (story #35, démarrage) : salariés,
-// services, identité EHPAD et utilisateur connecté viennent maintenant de
-// la vraie base (via le Server Component src/app/page.tsx), scopés par RLS
-// à l'établissement de l'utilisateur — un EHPAD tout juste créé affiche
-// donc une grille vide, sans salarié, plutôt que la démo mock. Le reste
-// (codes horaires, roulements, édition des cases) tourne encore sur les
-// données de démo (`PLANNING_DEMO` et dérivés) : avec zéro salarié réel
-// pour l'instant, cette partie ne s'exerce pas — à brancher à son tour
-// quand de vrais salariés existeront.
+// Branché sur le vrai backend le 25/09 (story #35) : salariés, services,
+// identité EHPAD, utilisateur connecté, codes horaires et jours fériés
+// viennent maintenant de la vraie base (via le Server Component
+// src/app/page.tsx), scopés par RLS à l'établissement de l'utilisateur — un
+// EHPAD tout juste créé affiche donc une grille vide, sans salarié, plutôt
+// que la démo mock. Le contenu des cases (édition/lecture) est branché sur
+// la table journee (chargement client via chargerPlanningReel, écriture via
+// enregistrerJournees/effacerJournees, cf. src/app/planning-actions.ts —
+// nécessairement client, pas côté serveur au premier rendu : la période
+// affichée par défaut dépend de préférences mémorisées en localStorage,
+// jamais connues avant l'hydratation). Seule l'application d'un roulement
+// (raccourci sur une case vide, action groupée) tourne encore sur les
+// données de démo (`ROULEMENTS_DEMO`/`AFFECTATIONS_ROULEMENT_DEMO`) : dépend
+// de l'assignation réelle d'un roulement à un salarié, pas encore branchée
+// (écran Salariés), et d'une nouvelle RPC `appliquer_roulement` à écrire —
+// incrément suivant.
 export default function PlanningGrid({
   salaries,
   servicesOrdre,
+  codesHoraires,
+  joursFeries,
   ehpad,
   utilisateur,
 }: {
   salaries: Salarie[];
   servicesOrdre: string[];
+  codesHoraires: HoraireCode[];
+  joursFeries: string[];
   ehpad: { nom: string; logo: string | null };
   utilisateur: ProfilUtilisateur;
 }) {
+  const codesParCode = useMemo(
+    () => Object.fromEntries(codesHoraires.map((h) => [h.code.toUpperCase(), h])),
+    [codesHoraires]
+  );
+  const joursFeriesSet = useMemo(() => new Set(joursFeries), [joursFeries]);
+  function classeEnTeteJour(date: Date): ClasseJour {
+    if (joursFeriesSet.has(formatDateISO(date))) return "ferie";
+    if (estWeekend(date)) return "weekend";
+    return "normal";
+  }
   const [debutPeriode, setDebutPeriode] = useState(() => lundiDeLaSemaine(PERIODE_PAR_DEFAUT));
   // Nombre de semaines chargées d'un coup (≥ semaines visibles) — réglable
   // de 4 à n, cf. NB_SEMAINES_CHARGEES_MIN/MAX. Par défaut égal aux semaines
@@ -105,6 +120,37 @@ export default function PlanningGrid({
     () => genererPeriode(debutPeriode, nbSemainesChargees * 7),
     [debutPeriode, nbSemainesChargees]
   );
+
+  // Contenu réel des cases (table journee), chargé par fenêtre affichée —
+  // jamais côté serveur au premier rendu (cf. commentaire plus haut). Un
+  // Map de fenêtres déjà chargées évite de recharger deux fois la même
+  // période en naviguant dans les deux sens ; ne grandit jamais au-delà de
+  // la session, mais reste borné par le nombre de périodes réellement
+  // visitées.
+  const [planningBase, setPlanningBase] = useState<Record<string, ValeurCellule>>({});
+  const fenetresChargeesRef = useRef<Set<string>>(new Set());
+  const [chargementPlanning, setChargementPlanning] = useState(false);
+  const [erreurPersistance, setErreurPersistance] = useState<string | null>(null);
+  const [, demarrerPersistance] = useTransition();
+
+  useEffect(() => {
+    const cleFenetre = `${formatDateISO(debutPeriode)}_${nbSemainesChargees}`;
+    if (fenetresChargeesRef.current.has(cleFenetre)) return;
+    fenetresChargeesRef.current.add(cleFenetre);
+    const debut = formatDateISO(debutPeriode);
+    const fin = formatDateISO(genererPeriode(debutPeriode, nbSemainesChargees * 7).at(-1)!);
+    setChargementPlanning(true);
+    chargerPlanningReel(debut, fin)
+      .then((resultat) => {
+        if (resultat.planning) {
+          setPlanningBase((prev) => ({ ...prev, ...resultat.planning }));
+        } else if (resultat.error) {
+          setErreurPersistance(resultat.error);
+        }
+      })
+      .finally(() => setChargementPlanning(false));
+  }, [debutPeriode, nbSemainesChargees]);
+
   // Conteneur scrollable horizontalement : les flèches de navigation
   // avancent/reculent d'une semaine dans le lot déjà chargé (gratuit, pas de
   // rechargement) tant que c'est possible, et ne déclenchent un changement
@@ -206,7 +252,7 @@ export default function PlanningGrid({
   function salarieAUnPlanningSurPeriode(salarieId: string): boolean {
     return jours.some((jour) => {
       const cle = `${salarieId}__${formatDateISO(jour)}`;
-      const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
+      const valeur = cle in editions ? editions[cle] : planningBase[cle];
       return valeur !== undefined;
     });
   }
@@ -302,27 +348,48 @@ export default function PlanningGrid({
   // partagée entre l'édition d'une seule case et l'application groupée sur
   // une sélection multiple (retour client du 23/09).
   function fusionnerCode(actuelle: ValeurCellule, codeChoisi: string): ValeurCellule {
-    const horaireChoisi = HORAIRE_CODES_PAR_CODE[codeChoisi.toUpperCase()];
+    const horaireChoisi = codesParCode[codeChoisi.toUpperCase()];
     if (horaireChoisi?.categorie === "informatif") {
       return { ...actuelle, informatif: codeChoisi };
     }
-    if (estCodeSuperposable(codeChoisi)) {
+    if (estCodeSuperposable(codeChoisi, codesParCode)) {
       return { ...actuelle, evenementiel: codeChoisi, evenementielPlages: undefined };
     }
     return { travail: codeChoisi }; // code travail : remplace tout (travail, informatif, évènementiel)
   }
 
+  // Écriture optimiste : la case change à l'écran immédiatement, la
+  // persistance réelle part en tâche de fond ; en cas d'échec (droits
+  // insuffisants, erreur réseau...) la case revient à sa valeur d'avant
+  // l'édition et un message d'erreur s'affiche — jamais d'état affiché qui
+  // ne reflète pas, à terme, ce qui est réellement en base.
   function choisirCode(cle: string, codeChoisi: string | null) {
+    const [salarieId, dateISO] = cle.split("__");
+    let precedente: ValeurCellule | undefined;
+    let nouvelle: ValeurCellule | undefined;
     setEditions((prev) => {
+      precedente = cle in prev ? prev[cle] : planningBase[cle];
       if (codeChoisi === null) {
         // Remet la case en hachurée (jamais remplie) plutôt que "vidée" :
         // l'effacement doit rendre la case disponible pour la planification.
+        nouvelle = undefined;
         return { ...prev, [cle]: undefined };
       }
-      const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
-      return { ...prev, [cle]: fusionnerCode(actuelle, codeChoisi) };
+      const actuelle = precedente ?? {};
+      nouvelle = fusionnerCode(actuelle, codeChoisi);
+      return { ...prev, [cle]: nouvelle };
     });
     fermerEdition();
+    demarrerPersistance(async () => {
+      const resultat =
+        nouvelle === undefined
+          ? await effacerJournees([{ salarieId, dateISO }])
+          : await enregistrerJournees([{ salarieId, dateISO, valeur: nouvelle }]);
+      if (resultat.error) {
+        setErreurPersistance(resultat.error);
+        setEditions((prev) => ({ ...prev, [cle]: precedente }));
+      }
+    });
   }
 
   // Évènement "complement" (à la volée) : la ou les plages horaires
@@ -330,12 +397,23 @@ export default function PlanningGrid({
   // retour client du 17/09 (une plage), étendu le 22/09 (plusieurs plages
   // possibles le même jour, ex. arrivée anticipée + départ tardif).
   function choisirCodeComplement(cle: string, codeChoisi: string, plages: Plage[]) {
+    const [salarieId, dateISO] = cle.split("__");
+    let precedente: ValeurCellule | undefined;
+    let nouvelle!: ValeurCellule;
     setEditions((prev) => {
-      const actuelle = (cle in prev ? prev[cle] : PLANNING_DEMO[cle]) ?? {};
-      const nouvelle: ValeurCellule = { ...actuelle, evenementiel: codeChoisi, evenementielPlages: plages };
+      precedente = cle in prev ? prev[cle] : planningBase[cle];
+      const actuelle = precedente ?? {};
+      nouvelle = { ...actuelle, evenementiel: codeChoisi, evenementielPlages: plages };
       return { ...prev, [cle]: nouvelle };
     });
     fermerEdition();
+    demarrerPersistance(async () => {
+      const resultat = await enregistrerJournees([{ salarieId, dateISO, valeur: nouvelle }]);
+      if (resultat.error) {
+        setErreurPersistance(resultat.error);
+        setEditions((prev) => ({ ...prev, [cle]: precedente }));
+      }
+    });
   }
 
   function roulementActuelDuSalarie(salarieId: string): Roulement | undefined {
@@ -377,7 +455,7 @@ export default function PlanningGrid({
 
     const valeurDe = (jour: Date) => {
       const cle = `${salarieId}__${formatDateISO(jour)}`;
-      return cle in editionsBase ? editionsBase[cle] : PLANNING_DEMO[cle];
+      return cle in editionsBase ? editionsBase[cle] : planningBase[cle];
     };
 
     const semaines: Date[][] = [];
@@ -473,7 +551,7 @@ export default function PlanningGrid({
 
   function valeurActuelleDe(salarieId: string, dateISO: string): ValeurCellule {
     const cle = `${salarieId}__${dateISO}`;
-    return (cle in editions ? editions[cle] : PLANNING_DEMO[cle]) ?? {};
+    return (cle in editions ? editions[cle] : planningBase[cle]) ?? {};
   }
 
   // Applique un même code à toutes les cases de la sélection — logique de
@@ -483,16 +561,28 @@ export default function PlanningGrid({
   // n'est pas homogène), donc cette fonction peut fusionner sans reste de
   // contrôle à faire ici.
   function appliquerCodeSelectionMultiple(codeChoisi: string) {
+    const precedentes: Record<string, ValeurCellule | undefined> = {};
+    const lignes: { salarieId: string; dateISO: string; valeur: ValeurCellule }[] = [];
     setEditions((prev) => {
       let nouvelles = prev;
       for (const { salarieId, dateISO } of celluleEnSelection()) {
         const cle = `${salarieId}__${dateISO}`;
-        const actuelle = (cle in nouvelles ? nouvelles[cle] : PLANNING_DEMO[cle]) ?? {};
-        nouvelles = { ...nouvelles, [cle]: fusionnerCode(actuelle, codeChoisi) };
+        precedentes[cle] = cle in nouvelles ? nouvelles[cle] : planningBase[cle];
+        const actuelle = precedentes[cle] ?? {};
+        const nouvelle = fusionnerCode(actuelle, codeChoisi);
+        lignes.push({ salarieId, dateISO, valeur: nouvelle });
+        nouvelles = { ...nouvelles, [cle]: nouvelle };
       }
       return nouvelles;
     });
     annulerSelection();
+    demarrerPersistance(async () => {
+      const resultat = await enregistrerJournees(lignes);
+      if (resultat.error) {
+        setErreurPersistance(resultat.error);
+        setEditions((prev) => ({ ...prev, ...precedentes }));
+      }
+    });
   }
 
   // N'a de sens que si la sélection ne porte que sur un seul jour (plusieurs
@@ -529,18 +619,28 @@ export default function PlanningGrid({
     // plage effacée, plutôt que de rester blanc (retour client du 17/09).
     const remplies = cellules.filter(({ salarieId, dateISO }) => {
       const cle = `${salarieId}__${dateISO}`;
-      const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
+      const valeur = cle in editions ? editions[cle] : planningBase[cle];
       return valeur !== undefined;
     });
     if (remplies.length > 0) {
+      const precedentes: Record<string, ValeurCellule | undefined> = {};
       setEditions((prev) => {
         const nouvelles = { ...prev };
         for (const { salarieId, dateISO } of remplies) {
+          const cle = `${salarieId}__${dateISO}`;
+          precedentes[cle] = cle in nouvelles ? nouvelles[cle] : planningBase[cle];
           // Remet la case en hachurée (jamais remplie), disponible pour la
           // planification — retour client du 17/09.
-          nouvelles[`${salarieId}__${dateISO}`] = undefined;
+          nouvelles[cle] = undefined;
         }
         return nouvelles;
+      });
+      demarrerPersistance(async () => {
+        const resultat = await effacerJournees(remplies);
+        if (resultat.error) {
+          setErreurPersistance(resultat.error);
+          setEditions((prev) => ({ ...prev, ...precedentes }));
+        }
       });
     }
     annulerSelection();
@@ -630,13 +730,13 @@ export default function PlanningGrid({
   const premierJour = jours[0];
   const dernierJour = jours[jours.length - 1];
   const valeurActuelleEdition: ValeurCellule | undefined = cellEnEdition
-    ? (cellEnEdition in editions ? editions[cellEnEdition] : PLANNING_DEMO[cellEnEdition])
+    ? (cellEnEdition in editions ? editions[cellEnEdition] : planningBase[cellEnEdition])
     : undefined;
   const editionAUneValeur = Boolean(
     valeurActuelleEdition?.travail || valeurActuelleEdition?.evenementiel || valeurActuelleEdition?.informatif
   );
   const plagesTravailEdition = valeurActuelleEdition?.travail
-    ? (HORAIRE_CODES_PAR_CODE[valeurActuelleEdition.travail.toUpperCase()]?.plages ?? [])
+    ? (codesParCode[valeurActuelleEdition.travail.toUpperCase()]?.plages ?? [])
     : [];
   // Cellule jamais remplie dont le salarié a un roulement actuel : proposer de
   // l'appliquer directement depuis le sélecteur de code, sans bloquer la saisie
@@ -661,7 +761,9 @@ export default function PlanningGrid({
             )}
             <div className="leading-tight">
               <h1 className="font-semibold text-zinc-800">{ehpad.nom}</h1>
-              <p className="text-[10px] text-zinc-400">Planning</p>
+              <p className="text-[10px] text-zinc-400">
+                {chargementPlanning ? "Planning — chargement…" : "Planning"}
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -755,6 +857,21 @@ export default function PlanningGrid({
         </div>
         <FiltresActifsChips filtres={filtres} onChange={setFiltres} />
       </header>
+
+      {erreurPersistance && (
+        <div className="fixed right-4 top-4 z-50 max-w-sm rounded border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 shadow-lg">
+          <div className="flex items-start justify-between gap-2">
+            <span>{erreurPersistance}</span>
+            <button
+              onClick={() => setErreurPersistance(null)}
+              className="shrink-0 text-red-400 hover:text-red-600"
+              aria-label="Fermer"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
 
       <div ref={conteneurScrollRef} className="flex-1 overflow-auto" style={{ maxWidth: LARGEUR_VISIBLE }}>
         <table
@@ -858,14 +975,14 @@ export default function PlanningGrid({
                       // code n'est planifié — jamais rempli, ou effacé par l'utilisateur
                       // (Vider la cellule / suppression d'une plage), qui redevient hachurée
                       // plutôt que "vidée" pour rester disponible à la planification.
-                      const valeur = cle in editions ? editions[cle] : PLANNING_DEMO[cle];
+                      const valeur = cle in editions ? editions[cle] : planningBase[cle];
                       const jamaisRemplie = valeur === undefined;
-                      const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
+                      const horaireTravail = valeur?.travail ? codesParCode[valeur.travail] : undefined;
                       const horaireInformatif = valeur?.informatif
-                        ? HORAIRE_CODES_PAR_CODE[valeur.informatif]
+                        ? codesParCode[valeur.informatif]
                         : undefined;
                       const horaireEvenementiel = valeur?.evenementiel
-                        ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel]
+                        ? codesParCode[valeur.evenementiel]
                         : undefined;
                       // Type "special" : le travail est effacé de l'affichage (pleine
                       // cellule), ses heures restent comptées. Type "normal" : le travail
@@ -874,7 +991,7 @@ export default function PlanningGrid({
                       // (+/-) est calculé depuis la ou les plages saisies à la volée.
                       const evenementielSpecial = horaireEvenementiel?.typeEvenement === "special";
                       const travailBarre = horaireEvenementiel?.typeEvenement === "normal";
-                      const deltaComplement = valeur ? deltaEvenementielCellule(valeur) : undefined;
+                      const deltaComplement = valeur ? deltaEvenementielCellule(valeur, codesParCode) : undefined;
                       // Couleur de fond/texte de la cellule : le spécial prend le dessus
                       // sur le travail (qu'il efface visuellement) ; à défaut de travail,
                       // l'informatif porte la couleur (cellule sans code de travail).
@@ -914,7 +1031,7 @@ export default function PlanningGrid({
                             deltaComplement !== undefined
                               ? ` (${deltaComplement >= 0 ? "+" : ""}${deltaComplement}h)`
                               : ""
-                          } — ${heuresReellesCellule(valeur)}h`
+                          } — ${heuresReellesCellule(valeur, codesParCode)}h`
                         : jamaisRemplie && estAdministrateur
                           ? "Jamais planifiée — cliquer-glisser pour sélectionner plusieurs cases (appliquer un code, un roulement, ou effacer)"
                           : undefined;

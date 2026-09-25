@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Salarie } from "@/lib/mock-data";
+import type { HoraireCode, ValeurCellule } from "@/lib/horaire-codes";
 import EmargementMensuel from "./EmargementMensuel";
 import EmargementAnnuel from "./EmargementAnnuel";
 
@@ -10,10 +11,16 @@ type Vue = "mensuel" | "annuel";
 
 export default function EmargementContenu({
   salarie,
+  codesHoraires,
+  planning,
+  erreurPlanning,
   joursFeries,
   validations,
 }: {
   salarie: Salarie;
+  codesHoraires: HoraireCode[];
+  planning: Record<string, ValeurCellule>;
+  erreurPlanning?: string;
   joursFeries: string[];
   validations: string[];
 }) {
@@ -78,10 +85,22 @@ export default function EmargementContenu({
           </h1>
         </div>
 
+        {erreurPlanning && (
+          <div className="mb-3 max-w-5xl rounded border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 print:hidden">
+            {erreurPlanning}
+          </div>
+        )}
+
         {vue === "mensuel" ? (
-          <EmargementMensuel salarie={salarie} joursFeries={joursFeries} validations={validations} />
+          <EmargementMensuel
+            salarie={salarie}
+            codesHoraires={codesHoraires}
+            planning={planning}
+            joursFeries={joursFeries}
+            validations={validations}
+          />
         ) : (
-          <EmargementAnnuel salarie={salarie} />
+          <EmargementAnnuel salarie={salarie} codesHoraires={codesHoraires} planning={planning} />
         )}
       </div>
     </div>

@@ -3,13 +3,13 @@
 import { useMemo, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Salarie } from "@/lib/mock-data";
-import { PLANNING_DEMO } from "@/lib/mock-data";
 import {
-  HORAIRE_CODES_PAR_CODE,
   heuresDuCode,
   heuresReellesCellule,
   deltaEvenementielCellule,
+  type HoraireCode,
   type Plage,
+  type ValeurCellule,
 } from "@/lib/horaire-codes";
 import {
   formatDateISO,
@@ -39,10 +39,14 @@ function formatPlages(plages?: Plage[]): string {
 
 export default function EmargementMensuel({
   salarie,
+  codesHoraires,
+  planning,
   joursFeries,
   validations,
 }: {
   salarie: Salarie;
+  codesHoraires: HoraireCode[];
+  planning: Record<string, ValeurCellule>;
   joursFeries: string[];
   validations: string[];
 }) {
@@ -51,6 +55,11 @@ export default function EmargementMensuel({
   const [validationsLocales, setValidationsLocales] = useState(validations);
   const [erreurValidation, setErreurValidation] = useState<string | null>(null);
   const [validationEnCours, demarrerValidation] = useTransition();
+
+  const codesParCode = useMemo(
+    () => Object.fromEntries(codesHoraires.map((h) => [h.code.toUpperCase(), h])),
+    [codesHoraires]
+  );
 
   const joursFeriesSet = useMemo(() => new Set(joursFeries), [joursFeries]);
   function classeJour(date: Date): ClasseJour {
@@ -106,18 +115,18 @@ export default function EmargementMensuel({
 
   function valeurDuJour(jour: Date) {
     const dateISO = formatDateISO(jour);
-    const valeur = PLANNING_DEMO[`${salarie.id}__${dateISO}`];
-    const horaireTravail = valeur?.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
-    const horaireInformatif = valeur?.informatif ? HORAIRE_CODES_PAR_CODE[valeur.informatif] : undefined;
-    const horaireEvenementiel = valeur?.evenementiel ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel] : undefined;
-    const heuresBase = valeur?.travail ? heuresDuCode(valeur.travail) : 0;
-    const heures = valeur ? heuresReellesCellule(valeur) : 0;
+    const valeur = planning[`${salarie.id}__${dateISO}`];
+    const horaireTravail = valeur?.travail ? codesParCode[valeur.travail] : undefined;
+    const horaireInformatif = valeur?.informatif ? codesParCode[valeur.informatif] : undefined;
+    const horaireEvenementiel = valeur?.evenementiel ? codesParCode[valeur.evenementiel] : undefined;
+    const heuresBase = valeur?.travail ? heuresDuCode(valeur.travail, codesParCode) : 0;
+    const heures = valeur ? heuresReellesCellule(valeur, codesParCode) : 0;
     // Type "normal" : le code travail est barré (décompte écrasé) et
     // remplacé par le décompte du code évènement. Type "partiel" : le
     // delta (+/-) doit être explicitement visible, sans barrer le travail.
     // Type "special" : traité séparément (affichage plein, pas de barré).
     const travailBarre = horaireEvenementiel?.typeEvenement === "normal";
-    const delta = valeur ? deltaEvenementielCellule(valeur) : undefined;
+    const delta = valeur ? deltaEvenementielCellule(valeur, codesParCode) : undefined;
     return { valeur, horaireTravail, horaireInformatif, horaireEvenementiel, heuresBase, heures, travailBarre, delta };
   }
 

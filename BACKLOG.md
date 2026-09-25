@@ -1256,6 +1256,52 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   `STAGING_CHECKLIST.md`, aucun ne dépendant en réalité de données de
   cellule réelles, seulement d'une session et d'une année planifiée. 70
   tests DB, 7 e2e, tous verts._
+  _**Édition des cases du Planning** branchée (`/`, écriture directe et
+  sélection multiple — cf. point de passage du 25/09 avant de s'y lancer,
+  client d'accord pour continuer, précisant qu'il saisira lui-même le
+  planning réel pour tester). Écritures réelles sur `journee` +
+  `journee_evenementiel_plage` (RLS déjà correcte, administrateur ET
+  manager — déjà testée à l'écriture pour `journee` dans `04_rls.sql`,
+  traçabilité déjà testée dans `03_triggers.sql` ; seule
+  `journee_evenementiel_plage` n'avait encore aucune assertion à
+  l'écriture, 4 nouveaux tests DB). Toute la logique de fusion de case
+  (poser un code, code évènementiel superposé avec ses plages à la volée,
+  sélection rectangulaire, effacement) reste inchangée côté client — seule
+  la source de vérité change : les fonctions utilitaires partagées
+  (`heuresDuCode`, `estCodeSuperposable`, `estCodePartiel`,
+  `deltaEvenementielCellule`, `heuresReellesCellule`, dans
+  `src/lib/horaire-codes.ts`) ont été rendues paramétrables (un
+  `codesParCode` optionnel, replié sur la liste de démo par défaut) plutôt
+  que câblées en dur sur le catalogue mock — nécessaire puisque les vrais
+  codes horaires d'un EHPAD diffèrent du catalogue de démo. Écriture
+  optimiste : la case change à l'écran immédiatement, la persistance part
+  en tâche de fond (`src/app/planning-actions.ts`,
+  `enregistrerJournees`/`effacerJournees`), et revient à sa valeur d'avant
+  l'édition avec un message d'erreur affiché en cas d'échec (droits
+  insuffisants, réseau…) — jamais d'état affiché durablement incohérent
+  avec la base. Chargement des données réelles nécessairement côté client
+  (`chargerPlanningReel`, appelée à chaque changement de fenêtre affichée,
+  avec un cache des fenêtres déjà chargées pour ne pas re-charger deux fois
+  la même période) : la période par défaut de la grille dépend de
+  préférences mémorisées en `localStorage`, jamais connue avant
+  l'hydratation côté client (contrainte déjà documentée dans
+  `PlanningGrid` avant même le début du branchement). Jours fériés de
+  l'en-tête également branchés sur les vrais `jour_ferie` actifs (au lieu
+  du set mock `JOURS_FERIES_2026`), cohérent avec l'écran Années juste
+  avant. Par cohérence — éviter qu'un salarié planifié depuis la grille
+  n'apparaisse pas dans sa propre vue Émargement — les vues mensuelle ET
+  annuelle de l'Émargement sont branchées sur les mêmes vraies données
+  (`chargerPlanningReel` réutilisée côté serveur pour Émargement, dont la
+  navigation passe par de vraies URLs contrairement à la grille Planning,
+  d'où un préchargement serveur possible là où la grille doit charger
+  côté client). Reste explicitement en mock, incrément suivant : l'
+  application d'un roulement (raccourci sur une case vide, action groupée
+  sur une sélection mono-jour) — dépend de l'assignation réelle d'un
+  roulement à un salarié (`affectation_roulement`, pas encore branché,
+  prévu à l'origine dans l'écran Salariés) et d'une nouvelle RPC
+  `appliquer_roulement` à concevoir et écrire. 4 nouveaux tests DB. 74
+  tests DB, 7 e2e (rien de nouveau automatisable sans session réelle, cf.
+  `STAGING_CHECKLIST.md`), tous verts._
 
 - [ ] **5. Déployer en production** _(issue #36)_
   Projet Vercel connecté à `main`, domaine Vercel par défaut, variables

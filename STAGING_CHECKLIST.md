@@ -274,13 +274,65 @@ Planning (dernière pièce de la story #35). Les scénarios suivants ont dû
       redirection vers `/login` (couvert par e2e, à revérifier une fois en
       conditions réelles).
 
+## Édition des cases du Planning (story #35, écran / et /emargement — 25/09)
+
+Le contenu des cases (poser/effacer un code, code évènementiel avec plage à
+la volée, sélection multiple) est désormais réel (`journee` +
+`journee_evenementiel_plage`), sur la grille Planning ET sur l'Émargement
+(mensuel et annuel), qui partagent la même donnée. Client saisira lui-même
+un planning réel pour tester — rien n'a été amorcé côté agent.
+
+- [ ] Sur une case jamais planifiée, cliquer et choisir un code de travail
+      → la case se remplit immédiatement, persiste après rechargement de la
+      page.
+- [ ] Sur une case avec un code de travail, ajouter un code informatif puis
+      un code évènementiel (superposé, ex. « Congés ») → les 3 se combinent
+      comme prévu (informatif sous le travail, évènementiel superposé selon
+      son type), persistent après rechargement.
+- [ ] Poser un code évènementiel de type « partiel » (ex. « Heures
+      supplémentaires ») avec une ou plusieurs plages saisies à la volée →
+      les plages persistent, le delta d'heures affiché (+/-) est correct
+      après rechargement.
+- [ ] Cliquer « Vider la cellule » sur une case remplie → redevient
+      hachurée (jamais planifiée, pas juste vidée), persiste après
+      rechargement.
+- [ ] Avec un compte `administrateur` connecté : sélectionner plusieurs
+      cases (cliquer-glisser), « Appliquer un code… » → toutes les cases de
+      la sélection prennent le code (fusionné avec leur contenu existant),
+      persistent après rechargement.
+- [ ] Même sélection multiple, « Effacer » (ou touche Suppr/Retour
+      arrière) → toutes les cases remplies de la sélection redeviennent
+      hachurées, persistent après rechargement.
+- [ ] Avec un compte `manager` connecté : peut éditer une case (poser/
+      effacer un code) mais ne voit pas la sélection multiple par
+      glisser-déposer (réservée à l'administrateur, comme avant le
+      branchement).
+- [ ] Avec un compte `utilisateur` connecté : aucune case n'est cliquable
+      (lecture seule), comme avant le branchement.
+- [ ] Naviguer vers une période jamais visitée (flèches, ou choix direct
+      d'une date de début) → un court indicateur « chargement » apparaît
+      dans l'en-tête pendant le chargement des vraies données de cette
+      fenêtre, puis les cases se remplissent normalement. Revenir sur une
+      période déjà visitée pendant la session → pas de rechargement (cache
+      client).
+- [ ] Provoquer un échec (ex. couper la connexion réseau juste après avoir
+      cliqué un code) → un message d'erreur apparaît en haut à droite, la
+      case revient à sa valeur d'avant l'édition (pas d'état affiché
+      incohérent avec la base).
+- [ ] Un jour férié planifié (via `/admin/annees`) apparaît en case ambre
+      dans l'en-tête de la grille Planning (comme déjà vérifié pour
+      l'Émargement).
+- [ ] Un salarié dont une case a été planifiée depuis la grille Planning
+      apparaît avec le même contenu en visitant sa vue Émargement
+      (mensuelle ET annuelle) — même donnée, deux affichages.
+
 ## Régression — écrans encore non branchés
 
 - [ ] Sur l'écran Salariés lui-même, la section « Roulement » (assigner un
       roulement à un salarié) reste sur données mock — dépend de
       `affectation_roulement`, pas encore branché (l'écran Roulements
       lui-même l'est désormais).
-- [ ] Le contenu des cases sur `/emargement` et sur la grille Planning
-      (`/`) reste sur données mock (`PLANNING_DEMO`) — dépend de l'édition
-      des cases du Planning (RPC `appliquer_roulement`, dernière pièce de
-      la story #35), pas encore branché.
+- [ ] Le raccourci « Appliquer le roulement » (case vide, ou action groupée
+      sur une sélection mono-jour) reste sur données mock — dépend de
+      l'assignation réelle d'un roulement à un salarié (ci-dessus) et d'une
+      nouvelle RPC `appliquer_roulement`, pas encore écrite.

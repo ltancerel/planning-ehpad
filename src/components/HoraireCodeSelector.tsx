@@ -127,6 +127,11 @@ export default function HoraireCodeSelector({
     ? valeursActuelles.length > 0 && valeursActuelles.every(peutAjouterEvenementiel)
     : Boolean(valeurActuelle) && peutAjouterEvenementiel(valeurActuelle!);
 
+  const codesParCode = useMemo(
+    () => Object.fromEntries(codes.map((h) => [h.code.toUpperCase(), h])),
+    [codes]
+  );
+
   const codesDisponibles = useMemo(
     () =>
       codes.filter((h) => {
@@ -178,7 +183,7 @@ export default function HoraireCodeSelector({
   }
 
   function surChoixCode(code: string) {
-    if (onChoisirComplement && estCodePartiel(code)) {
+    if (onChoisirComplement && estCodePartiel(code, codesParCode)) {
       setCodeComplementEnSaisie(code);
       return;
     }

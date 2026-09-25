@@ -257,8 +257,8 @@ export const HORAIRE_CODES_PAR_CODE: Record<string, HoraireCode> = Object.fromEn
   HORAIRE_CODES.map((h) => [h.code.toUpperCase(), h])
 );
 
-export function heuresDuCode(code: string): number {
-  const horaire = HORAIRE_CODES_PAR_CODE[code.toUpperCase()];
+export function heuresDuCode(code: string, codesParCode: Record<string, HoraireCode> = HORAIRE_CODES_PAR_CODE): number {
+  const horaire = codesParCode[code.toUpperCase()];
   if (!horaire?.plages) return 0;
   return dureeHeures(horaire.plages);
 }
@@ -283,13 +283,19 @@ export type ValeurCellule = {
 // Un code se superpose visuellement au travail (types "special"/"normal") —
 // se distingue du type "partiel", qui ouvre un formulaire de plage(s) plutôt
 // que de s'appliquer directement.
-export function estCodeSuperposable(code: string): boolean {
-  const horaire = HORAIRE_CODES_PAR_CODE[code.toUpperCase()];
+export function estCodeSuperposable(
+  code: string,
+  codesParCode: Record<string, HoraireCode> = HORAIRE_CODES_PAR_CODE
+): boolean {
+  const horaire = codesParCode[code.toUpperCase()];
   return horaire?.categorie === "evenementiel" && (horaire.typeEvenement === "special" || horaire.typeEvenement === "normal");
 }
 
-export function estCodePartiel(code: string): boolean {
-  return HORAIRE_CODES_PAR_CODE[code.toUpperCase()]?.typeEvenement === "partiel";
+export function estCodePartiel(
+  code: string,
+  codesParCode: Record<string, HoraireCode> = HORAIRE_CODES_PAR_CODE
+): boolean {
+  return codesParCode[code.toUpperCase()]?.typeEvenement === "partiel";
 }
 
 // Un informatif peut s'ajouter tant que la cellule n'a pas déjà un travail ET
@@ -307,21 +313,27 @@ export function peutAjouterEvenementiel(valeur: ValeurCellule): boolean {
 // Delta (en heures, signé) apporté par un évènement "partiel" sur une
 // cellule, ou undefined si non applicable — pour l'afficher explicitement
 // (+/-) dans l'émargement mensuel, cf. retour client du 17/09.
-export function deltaEvenementielCellule(valeur: ValeurCellule): number | undefined {
+export function deltaEvenementielCellule(
+  valeur: ValeurCellule,
+  codesParCode: Record<string, HoraireCode> = HORAIRE_CODES_PAR_CODE
+): number | undefined {
   if (!valeur.evenementiel || !valeur.evenementielPlages?.length) return undefined;
-  const horaireEvenementiel = HORAIRE_CODES_PAR_CODE[valeur.evenementiel.toUpperCase()];
+  const horaireEvenementiel = codesParCode[valeur.evenementiel.toUpperCase()];
   if (horaireEvenementiel?.typeEvenement !== "partiel") return undefined;
-  const plagesTravail = valeur.travail ? (HORAIRE_CODES_PAR_CODE[valeur.travail.toUpperCase()]?.plages ?? []) : [];
+  const plagesTravail = valeur.travail ? (codesParCode[valeur.travail.toUpperCase()]?.plages ?? []) : [];
   return deltaComplementHeuresMulti(valeur.evenementielPlages, plagesTravail);
 }
 
-export function heuresReellesCellule(valeur: ValeurCellule): number {
-  const heuresBase = valeur.travail ? heuresDuCode(valeur.travail) : 0;
+export function heuresReellesCellule(
+  valeur: ValeurCellule,
+  codesParCode: Record<string, HoraireCode> = HORAIRE_CODES_PAR_CODE
+): number {
+  const heuresBase = valeur.travail ? heuresDuCode(valeur.travail, codesParCode) : 0;
   if (!valeur.evenementiel) return heuresBase;
-  const horaireEvenementiel = HORAIRE_CODES_PAR_CODE[valeur.evenementiel.toUpperCase()];
+  const horaireEvenementiel = codesParCode[valeur.evenementiel.toUpperCase()];
   switch (horaireEvenementiel?.typeEvenement) {
     case "partiel": {
-      const delta = deltaEvenementielCellule(valeur) ?? 0;
+      const delta = deltaEvenementielCellule(valeur, codesParCode) ?? 0;
       return Math.max(0, heuresBase + delta);
     }
     case "normal":

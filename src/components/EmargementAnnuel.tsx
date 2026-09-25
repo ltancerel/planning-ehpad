@@ -3,36 +3,48 @@
 import { useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { Salarie } from "@/lib/mock-data";
-import { PLANNING_DEMO } from "@/lib/mock-data";
-import { HORAIRE_CODES, HORAIRE_CODES_PAR_CODE, type HoraireCode } from "@/lib/horaire-codes";
+import type { HoraireCode, ValeurCellule } from "@/lib/horaire-codes";
 import { formatDateISO, genererMois } from "@/lib/dates";
 
 const MOIS_ABREGE = ["Jan", "Fév", "Mar", "Avr", "Mai", "Juin", "Juil", "Août", "Sep", "Oct", "Nov", "Déc"];
 const NB_JOURS_MAX = 31;
 
-// Priorité au code évènementiel sur le code travail si les deux sont
-// configurés pour la vue annuelle (cf. retour client du 17/09) — en
-// pratique, seuls les codes évènementiels d'absence sont cochés par défaut,
-// mais un code travail reste éligible.
-function codeAnnuelDuJour(salarieId: string, jour: Date): HoraireCode | undefined {
-  const valeur = PLANNING_DEMO[`${salarieId}__${formatDateISO(jour)}`];
-  if (!valeur) return undefined;
-  const horaireEvenementiel = valeur.evenementiel ? HORAIRE_CODES_PAR_CODE[valeur.evenementiel] : undefined;
-  if (horaireEvenementiel?.afficherVueAnnuelle) return horaireEvenementiel;
-  const horaireTravail = valeur.travail ? HORAIRE_CODES_PAR_CODE[valeur.travail] : undefined;
-  if (horaireTravail?.afficherVueAnnuelle) return horaireTravail;
-  return undefined;
-}
-
-export default function EmargementAnnuel({ salarie }: { salarie: Salarie }) {
+export default function EmargementAnnuel({
+  salarie,
+  codesHoraires,
+  planning,
+}: {
+  salarie: Salarie;
+  codesHoraires: HoraireCode[];
+  planning: Record<string, ValeurCellule>;
+}) {
   const searchParams = useSearchParams();
   const router = useRouter();
 
   const anneeParam = searchParams.get("annee");
   const annee = anneeParam ? Number(anneeParam) : 2026;
 
+  const codesParCode = useMemo(
+    () => Object.fromEntries(codesHoraires.map((h) => [h.code.toUpperCase(), h])),
+    [codesHoraires]
+  );
+
+  // Priorité au code évènementiel sur le code travail si les deux sont
+  // configurés pour la vue annuelle (cf. retour client du 17/09) — en
+  // pratique, seuls les codes évènementiels d'absence sont cochés par
+  // défaut, mais un code travail reste éligible.
+  function codeAnnuelDuJour(salarieId: string, jour: Date): HoraireCode | undefined {
+    const valeur = planning[`${salarieId}__${formatDateISO(jour)}`];
+    if (!valeur) return undefined;
+    const horaireEvenementiel = valeur.evenementiel ? codesParCode[valeur.evenementiel] : undefined;
+    if (horaireEvenementiel?.afficherVueAnnuelle) return horaireEvenementiel;
+    const horaireTravail = valeur.travail ? codesParCode[valeur.travail] : undefined;
+    if (horaireTravail?.afficherVueAnnuelle) return horaireTravail;
+    return undefined;
+  }
+
   const moisListe = useMemo(() => Array.from({ length: 12 }, (_, m) => genererMois(annee, m)), [annee]);
-  const legende = useMemo(() => HORAIRE_CODES.filter((h) => h.afficherVueAnnuelle), []);
+  const legende = useMemo(() => codesHoraires.filter((h) => h.afficherVueAnnuelle), [codesHoraires]);
 
   function changerAnnee(delta: number) {
     router.push(`/emargement?salarie=${salarie.id}&vue=annuel&annee=${annee + delta}`);
