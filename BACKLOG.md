@@ -1059,6 +1059,19 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   Comptes/utilisateurs, salariés, codes horaires, roulements, années/jours
   fériés, identité EHPAD, gestion des EHPAD par l'Administrateur Système,
   profil utilisateur.
+  _Statut : partiel (25/09), demandé pour un premier test sur PROD. Seule la
+  « gestion des EHPAD par l'Administrateur Système » est branchée — écran
+  `/compte/ehpads` (création, suppression avec confirmation par saisie du
+  nom vu l'absence de sauvegarde/restauration à ce stade, cf. EPIC #38).
+  Contrairement à l'écran de connexion, aucune maquette n'existait pour cet
+  écran précis : conçu directement ici, minimal. RLS déjà posée en
+  migration 0008/hardening (aucune migration nécessaire), seulement jamais
+  testée à l'écriture jusqu'ici — 4 nouveaux tests DB (administrateur
+  système peut créer/supprimer, un compte administrateur simple ne peut
+  ni l'un ni l'autre) + 1 e2e (redirection sans session). 29 tests DB + 13
+  e2e, tous verts. Le reste de la story (comptes/utilisateurs, salariés,
+  codes horaires, roulements, années/jours fériés, identité EHPAD, profil
+  utilisateur) n'est pas commencé._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,

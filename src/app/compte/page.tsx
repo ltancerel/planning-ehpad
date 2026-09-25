@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "./actions";
@@ -28,6 +29,12 @@ export default async function ComptePage() {
         <p className="mt-1 text-xs text-gray-500">
           Administrateur Système{admin?.email ? ` · ${admin.email}` : ""}
         </p>
+        <Link
+          href="/compte/ehpads"
+          className="mt-4 block rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+        >
+          Gérer les EHPAD →
+        </Link>
         <form action={logout} className="mt-4">
           <button type="submit" className="text-sm font-medium text-amber-900 hover:underline">
             Se déconnecter
