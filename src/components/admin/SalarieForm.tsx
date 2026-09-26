@@ -105,16 +105,32 @@ export default function SalarieForm({
       </div>
 
       <div className="flex-1 space-y-4 overflow-auto px-4 py-4">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-700">
-            Matricule (4 lettres majuscules)
-          </label>
-          <input
-            value={matricule}
-            onChange={(e) => changerMatricule(e.target.value)}
-            className="w-24 rounded border border-zinc-300 px-2 py-1.5 text-sm font-semibold uppercase"
-            placeholder="ABCD"
-          />
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <label className="mb-1 block text-xs font-medium text-zinc-700">Service</label>
+            <select
+              value={serviceId}
+              onChange={(e) => setServiceId(e.target.value)}
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+            >
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.nom}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-700">
+              Matricule (4 lettres)
+            </label>
+            <input
+              value={matricule}
+              onChange={(e) => changerMatricule(e.target.value)}
+              className="w-24 rounded border border-zinc-300 px-2 py-1.5 text-sm font-semibold uppercase"
+              placeholder="ABCD"
+            />
+          </div>
         </div>
 
         <div className="flex gap-3">
@@ -134,21 +150,6 @@ export default function SalarieForm({
               className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
             />
           </div>
-        </div>
-
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-700">Service</label>
-          <select
-            value={serviceId}
-            onChange={(e) => setServiceId(e.target.value)}
-            className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-          >
-            {services.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.nom}
-              </option>
-            ))}
-          </select>
         </div>
 
         <div className="flex gap-3">

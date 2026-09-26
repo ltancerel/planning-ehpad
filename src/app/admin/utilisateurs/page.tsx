@@ -27,7 +27,7 @@ export default async function UtilisateursAdminPage() {
     poste: c.poste ?? "",
   }));
 
-  const { data: services } = await supabase.from("service").select("nom").order("ordre");
+  const { data: services } = await supabase.from("service").select("id, nom").order("ordre");
 
-  return <UtilisateursAdminClient utilisateurs={utilisateurs} services={(services ?? []).map((s) => s.nom)} />;
+  return <UtilisateursAdminClient utilisateurs={utilisateurs} services={services ?? []} />;
 }

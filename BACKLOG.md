@@ -1164,6 +1164,18 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   administrateur, refus pour un manager) — la création réelle via
   `service_role`/email n'est pas testable en local (pas de vrai GoTrue),
   ajoutée à `STAGING_CHECKLIST.md`. 53 tests DB, 11 e2e, tous verts._
+  _Déplacé le 26/09, retour client (« les Services correspondent plutôt
+  aux Utilisateurs ») : la création de service (section compacte ajoutée
+  le 25/09 dans l'écran Salariés faute d'écran dédié) migre vers l'écran
+  Utilisateurs — même action serveur (`creerService`, désormais dans
+  `src/app/admin/utilisateurs/actions.ts`), même RLS, juste déplacée
+  d'écran et rendue plus visible (titre de section, bouton bleu au même
+  gabarit que « + Nouvel utilisateur », au lieu d'un simple champ +
+  bouton discret). L'écran Salariés continue de lire la liste des
+  services (toujours nécessaire pour le formulaire Salarié) mais ne peut
+  plus en créer. Au passage, dans le formulaire Salarié : le champ
+  Service passe en premier, à gauche, apparié au Matricule (retour client
+  du 26/09), plus facile à repérer qu'auparavant en bas de formulaire._
   _**Roulements** (`/admin/roulements`) branché — CRUD réel sur
   `roulement`/`roulement_jour` (RLS déjà correcte pour les deux, jamais
   testée à l'écriture ; cohérence catégorie du code référencé — doit être

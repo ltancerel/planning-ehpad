@@ -9,7 +9,7 @@ import {
 } from "@/lib/mock-data";
 import SalariesTable from "@/components/admin/SalariesTable";
 import SalarieForm, { type ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
-import { creerService, enregistrerSalarie, supprimerSalarie, type ChampsSalarie } from "./actions";
+import { enregistrerSalarie, supprimerSalarie, type ChampsSalarie } from "./actions";
 
 export default function SalariesAdminClient({
   salaries,
@@ -25,8 +25,7 @@ export default function SalariesAdminClient({
   const [affectationsParSalarie, setAffectationsParSalarie] = useState<
     Record<string, AffectationRoulement[]>
   >(AFFECTATIONS_ROULEMENT_DEMO);
-  const [nouveauService, setNouveauService] = useState("");
-  const [pending, demarrer] = useTransition();
+  const [, demarrer] = useTransition();
 
   function ouvrirCreation() {
     setSalarieEnEdition(undefined);
@@ -67,17 +66,6 @@ export default function SalariesAdminClient({
     });
   }
 
-  function ajouterService(nom: string) {
-    if (!nom.trim()) return;
-    demarrer(async () => {
-      const formData = new FormData();
-      formData.set("nom", nom.trim());
-      const resultat = await creerService(undefined, formData);
-      if (resultat?.error) setErreur(resultat.error);
-      else setNouveauService("");
-    });
-  }
-
   function assignerRoulement(salarieId: string, donnees: Omit<AffectationRoulement, "id">) {
     setAffectationsParSalarie((prev) => ({
       ...prev,
@@ -99,41 +87,10 @@ export default function SalariesAdminClient({
             onClick={ouvrirCreation}
             disabled={services.length === 0}
             className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
-            title={services.length === 0 ? "Créez d'abord un service ci-dessous" : undefined}
+            title={services.length === 0 ? "Créez d'abord un service (écran Utilisateurs)" : undefined}
           >
             + Nouveau salarié
           </button>
-        </div>
-
-        <div className="mb-4 flex flex-wrap items-center gap-2 rounded border border-zinc-200 bg-zinc-50 p-2">
-          <span className="text-xs font-medium text-zinc-500">Services :</span>
-          {services.map((s) => (
-            <span key={s.id} className="rounded bg-white px-2 py-0.5 text-xs text-zinc-700 shadow-sm">
-              {s.nom}
-            </span>
-          ))}
-          {services.length === 0 && <span className="text-xs italic text-zinc-400">aucun</span>}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              ajouterService(nouveauService);
-            }}
-            className="ml-auto flex items-center gap-1.5"
-          >
-            <input
-              value={nouveauService}
-              onChange={(e) => setNouveauService(e.target.value)}
-              placeholder="Nouveau service"
-              className="rounded border border-zinc-300 px-2 py-1 text-xs"
-            />
-            <button
-              type="submit"
-              disabled={pending || !nouveauService.trim()}
-              className="rounded border border-zinc-300 bg-white px-2 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-100 disabled:opacity-40"
-            >
-              + Ajouter
-            </button>
-          </form>
         </div>
 
         {messageConfirmation && (

@@ -4,20 +4,23 @@ import { useState, useTransition } from "react";
 import type { Utilisateur } from "@/lib/mock-data";
 import UtilisateursTable from "@/components/admin/UtilisateursTable";
 import UtilisateurForm from "@/components/admin/UtilisateurForm";
-import { creerUtilisateur, modifierUtilisateur, supprimerUtilisateur } from "./actions";
+import { creerService, creerUtilisateur, modifierUtilisateur, supprimerUtilisateur } from "./actions";
 
 export default function UtilisateursAdminClient({
   utilisateurs,
   services,
 }: {
   utilisateurs: Utilisateur[];
-  services: string[];
+  services: { id: string; nom: string }[];
 }) {
   const [panneau, setPanneau] = useState<"ferme" | "creation" | "edition">("ferme");
   const [utilisateurEnEdition, setUtilisateurEnEdition] = useState<Utilisateur | undefined>(undefined);
   const [erreur, setErreur] = useState<string | null>(null);
   const [messageConfirmation, setMessageConfirmation] = useState<string | null>(null);
+  const [nouveauService, setNouveauService] = useState("");
+  const [formulaireServiceOuvert, setFormulaireServiceOuvert] = useState(false);
   const [pending, demarrer] = useTransition();
+  const nomsServices = services.map((s) => s.nom);
 
   function ouvrirCreation() {
     setUtilisateurEnEdition(undefined);
@@ -69,6 +72,20 @@ export default function UtilisateursAdminClient({
     });
   }
 
+  function ajouterService(nom: string) {
+    if (!nom.trim()) return;
+    demarrer(async () => {
+      const formData = new FormData();
+      formData.set("nom", nom.trim());
+      const resultat = await creerService(undefined, formData);
+      if (resultat?.error) setErreur(resultat.error);
+      else {
+        setNouveauService("");
+        setFormulaireServiceOuvert(false);
+      }
+    });
+  }
+
   return (
     <div className="relative flex h-full">
       <div className="flex-1 overflow-auto p-4">
@@ -83,10 +100,68 @@ export default function UtilisateursAdminClient({
             onClick={ouvrirCreation}
             disabled={services.length === 0}
             className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
-            title={services.length === 0 ? "Créez d'abord un service (écran Salariés)" : undefined}
+            title={services.length === 0 ? "Créez d'abord un service ci-dessous" : undefined}
           >
             + Nouvel utilisateur
           </button>
+        </div>
+
+        <div className="mb-4 rounded border border-zinc-200 bg-zinc-50 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-zinc-800">Services</h2>
+            <button
+              onClick={() => setFormulaireServiceOuvert((v) => !v)}
+              className="rounded bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+            >
+              + Ajouter un service
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {services.map((s) => (
+              <span key={s.id} className="rounded bg-white px-2 py-0.5 text-xs text-zinc-700 shadow-sm">
+                {s.nom}
+              </span>
+            ))}
+            {services.length === 0 && (
+              <span className="text-xs italic text-zinc-400">Aucun service pour l&apos;instant.</span>
+            )}
+          </div>
+
+          {formulaireServiceOuvert && (
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                ajouterService(nouveauService);
+              }}
+              className="mt-2 flex items-center gap-1.5"
+            >
+              <input
+                autoFocus
+                value={nouveauService}
+                onChange={(e) => setNouveauService(e.target.value)}
+                placeholder="Nom du service"
+                className="rounded border border-zinc-300 px-2 py-1 text-xs"
+              />
+              <button
+                type="submit"
+                disabled={pending || !nouveauService.trim()}
+                className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+              >
+                Créer
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setFormulaireServiceOuvert(false);
+                  setNouveauService("");
+                }}
+                className="rounded border border-zinc-300 px-2 py-1 text-xs hover:bg-zinc-100"
+              >
+                Annuler
+              </button>
+            </form>
+          )}
         </div>
 
         {messageConfirmation && (
@@ -113,7 +188,7 @@ export default function UtilisateursAdminClient({
             <UtilisateurForm
               valeurInitiale={utilisateurEnEdition}
               identifiantsExistants={utilisateurs.map((u) => u.identifiant)}
-              services={services}
+              services={nomsServices}
               onValider={enregistrer}
               onAnnuler={fermerPanneau}
             />

@@ -5,39 +5,11 @@ import { createClient } from "@/lib/supabase/server";
 
 export type EtatAction = { error?: string } | undefined;
 
-// Aucun écran "Services" prévu dans la maquette d'origine, mais service_id
-// est une FK obligatoire sur salarie (on delete restrict) : sans un moyen
-// de créer un service, l'écran Salariés serait bloqué pour tout nouvel
-// EHPAD. Ajouté ici en section compacte plutôt qu'un nouvel écran dédié
-// (scope minimal, cf. échange du 25/09).
-export async function creerService(_etat: EtatAction, formData: FormData): Promise<EtatAction> {
-  const nom = String(formData.get("nom") ?? "").trim();
-  if (!nom) {
-    return { error: "Le nom du service est requis." };
-  }
-
-  const supabase = await createClient();
-  const { data: ehpadId } = await supabase.rpc("auth_ehpad_id");
-  if (!ehpadId) {
-    return { error: "Aucun établissement associé à ce compte." };
-  }
-
-  const { count } = await supabase.from("service").select("id", { count: "exact", head: true });
-  const ordre = (count ?? 0) + 1;
-
-  const { error } = await supabase
-    .from("service")
-    .insert({ ehpad_id: ehpadId, nom, ordre })
-    .select()
-    .single();
-
-  if (error) {
-    return { error: "Création du service impossible : " + error.message };
-  }
-
-  revalidatePath("/admin/salaries");
-  return undefined;
-}
+// La création de service se fait désormais depuis l'écran Utilisateurs
+// (retour client du 26/09 : « les Services correspondent plutôt aux
+// Utilisateurs »), cf. src/app/admin/utilisateurs/actions.ts. Cet écran
+// continue de lire la liste des services (FK obligatoire sur salarie),
+// juste sans pouvoir en créer.
 
 export type ChampsSalarie = {
   matricule: string;

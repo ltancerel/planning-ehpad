@@ -129,12 +129,16 @@ avec un EHPAD vide :
       `/login` (couvert par e2e, à revérifier une fois en conditions
       réelles).
 
-## Salariés (story #34, écran /admin/salaries — 25/09)
+## Salariés (story #34, écran /admin/salaries — 25/09, 26/09)
 
 - [ ] Sur un EHPAD sans service : le bouton « + Nouveau salarié » est
-      désactivé, la liste des services affiche « aucun ».
-- [ ] Créer un service via le champ dédié → apparaît immédiatement dans la
-      liste de chips.
+      désactivé, avec une infobulle renvoyant vers l'écran Utilisateurs
+      (la création de service s'y fait désormais, retour client du 26/09
+      — « les Services correspondent plutôt aux Utilisateurs »).
+- [ ] Un service créé depuis l'écran Utilisateurs apparaît bien dans le
+      sélecteur du formulaire Salarié, sans avoir à recharger la page.
+- [ ] Dans le formulaire Salarié, le champ Service apparaît en premier, à
+      gauche, à côté du Matricule (retour client du 26/09).
 - [ ] Créer un salarié (matricule 4 lettres, service, type de contrat,
       manager, alignement roulement, présence) → apparaît dans le tableau ;
       recharger la page confirme la persistance.
@@ -166,8 +170,14 @@ avec un EHPAD vide :
 - [ ] Avec un compte `manager` ou `utilisateur` connecté : `/admin/horaires`
       affiche l'écran « zone réservée », pas le formulaire.
 
-## Utilisateurs (story #34, écran /admin/utilisateurs — 25/09)
+## Utilisateurs (story #34, écran /admin/utilisateurs — 25/09, 26/09)
 
+- [ ] Sur un EHPAD sans service : la liste de chips affiche « Aucun
+      service pour l'instant », le bouton « + Nouvel utilisateur » est
+      désactivé.
+- [ ] Créer un service via le bouton bleu « + Ajouter un service »
+      (ouvre un petit formulaire inline) → apparaît immédiatement dans la
+      liste de chips, débloque le bouton « + Nouvel utilisateur ».
 - [ ] Créer un utilisateur (identifiant 3 lettres, nom, prénom, email,
       type, service, poste) → un email d'invitation Supabase Auth part
       réellement à cette adresse (SMTP intégré Supabase — limite connue :
