@@ -1312,7 +1312,22 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   Premier EHPAD, premier Administrateur, première saisie de référence
   (services, salariés, codes horaires), vérification du parcours complet.
 
-## EPIC — Environnements DEV/STAGING/PROD & sauvegarde _(issue #38)_
+- [ ] **7. Configurer une expiration de session Auth**
+  _Ajoutée le 26/09, suite à une question du client : après rechargement
+  de la session, aucun mot de passe redemandé._ Constaté : aucune
+  configuration personnalisée dans le dépôt (les 3 clients Supabase
+  utilisent les réglages par défaut) — le jeton d'accès expire au bout de
+  1h mais est renouvelé silencieusement via le jeton de rafraîchissement,
+  qui n'a par défaut aucune durée de vie fixe (session active
+  indéfiniment tant que les cookies persistent, sans déconnexion
+  explicite). Pas un problème dans l'immédiat (client explicite : « pas un
+  problème pour l'instant, mais il faudra le faire — pour tester ça me
+  simplifie la tâche »), mais à durcir avant un usage réel multi-compte :
+  activer et régler **Time-box user sessions** / **Inactivity timeout**
+  dans le dashboard Supabase (Authentication → Sessions, désactivé par
+  défaut) — pas un réglage accessible en base ni par les outils MCP
+  actuels, à faire depuis le dashboard. Décider de la durée avec le client
+  le moment venu.
 
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
