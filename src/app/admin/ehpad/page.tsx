@@ -9,7 +9,7 @@ export default async function IdentiteEhpadPage() {
 
   return (
     <div className="h-full overflow-auto p-4">
-      <h1 className="mb-1 text-lg font-semibold text-zinc-800">Identité de l&apos;EHPAD</h1>
+      <h1 className="mb-1 text-lg font-semibold text-zinc-800">Identité de l&apos;établissement</h1>
       <p className="mb-4 text-xs text-zinc-500">
         Titre et logo affichés en haut à gauche de l&apos;application.
       </p>

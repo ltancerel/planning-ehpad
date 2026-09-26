@@ -10,10 +10,10 @@ type EntreeNav = {
 };
 
 const SECTIONS: EntreeNav[] = [
-  { label: "Identité EHPAD", href: "/admin/ehpad", disponible: true },
-  { label: "Codes horaires", href: "/admin/horaires", disponible: true },
+  { label: "Identité établissement", href: "/admin/ehpad", disponible: true },
   { label: "Utilisateurs", href: "/admin/utilisateurs", disponible: true },
   { label: "Salariés", href: "/admin/salaries", disponible: true },
+  { label: "Codes horaires", href: "/admin/horaires", disponible: true },
   { label: "Roulements", href: "/admin/roulements", disponible: true },
   { label: "Années", href: "/admin/annees", disponible: true },
   { label: "Export", href: "/admin/export", disponible: false },

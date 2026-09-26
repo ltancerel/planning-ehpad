@@ -28,7 +28,7 @@ export default function IdentiteEhpadFormulaire({
       <input type="hidden" name="logo_base64" value={logo ?? ""} />
 
       <div>
-        <label className="mb-1 block text-xs font-medium text-zinc-700">Nom de l&apos;EHPAD</label>
+        <label className="mb-1 block text-xs font-medium text-zinc-700">Nom de l&apos;établissement</label>
         <input
           name="nom"
           value={nom}
