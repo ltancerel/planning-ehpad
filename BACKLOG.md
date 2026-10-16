@@ -1315,14 +1315,22 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   tests DB, 7 e2e (rien de nouveau automatisable sans session réelle, cf.
   `STAGING_CHECKLIST.md`), tous verts._
 
-- [ ] **5. Déployer en production** _(issue #36)_
+- [x] **5. Déployer en production** _(issue #36)_
   Projet Vercel connecté à `main`, domaine Vercel par défaut, variables
   d'environnement vers Supabase PROD, migrations appliquées avant le
   premier déploiement.
+  _Fait — case restée à cocher par oubli alors que le déploiement est en
+  usage réel depuis plusieurs semaines (sessions, création d'EHPAD, tests
+  client). URL de PROD, communiquée par le client le 16/10 :
+  https://planning-ehpad.vercel.app_
 
 - [ ] **6. Amorcer les données réelles** _(issue #37)_
   Premier EHPAD, premier Administrateur, première saisie de référence
   (services, salariés, codes horaires), vérification du parcours complet.
+  _En cours : 1 EHPAD, 2 comptes, 2 services créés par le client via
+  l'interface réelle (pas par l'agent, cf. principe de base vierge) ;
+  aucun salarié encore saisi au 16/10 — bloquant actuel du client, en
+  attente de données de sa part._
 
 - [ ] **7. Configurer une expiration de session Auth**
   _Ajoutée le 26/09, suite à une question du client : après rechargement
