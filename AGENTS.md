@@ -58,3 +58,21 @@ conformité de ce qui est livré.
   suivre : écrire la migration → tester localement → committer → fusionner
   la branche sur `main` (ou au moins ce commit) → appliquer depuis `main` →
   auditer (`get_advisors`).
+- **Toute nouvelle table** créée dans le schéma `public` doit recevoir ses
+  GRANT explicitement, dans la même migration que son `CREATE TABLE` —
+  convention actée le 21/10 suite à l'annonce Supabase : à partir du
+  30/10/2026, Supabase arrête d'accorder automatiquement l'accès Data API
+  (PostgREST/supabase-js/GraphQL) aux nouvelles tables de `public`. Les
+  tables déjà existantes au 21/10 ne sont pas concernées (droits conservés)
+  — ce projet les couvre déjà via le GRANT global de
+  `20260924000008_rls.sql` (`grant select, insert, update, delete on all
+  tables in schema public to authenticated`), qui ne s'applique qu'aux
+  tables déjà créées au moment où il s'exécute. Toute table future doit
+  donc porter, dans son propre fichier de migration :
+  ```sql
+  grant select, insert, update, delete on public.ma_table to authenticated;
+  grant select, insert, update, delete on public.ma_table to service_role;
+  -- grant select on public.ma_table to anon;  -- seulement si une lecture publique est voulue
+  ```
+  (la RLS reste la vraie barrière de sécurité ; ce GRANT est un
+  prérequis Postgres de base sans lequel la RLS ne s'applique même pas.)
