@@ -76,3 +76,13 @@ conformité de ce qui est livré.
   ```
   (la RLS reste la vraie barrière de sécurité ; ce GRANT est un
   prérequis Postgres de base sans lequel la RLS ne s'applique même pas.)
+- **Toute migration appliquée sur PROD qui change le schéma** (table,
+  colonne, contrainte ajoutée/supprimée/modifiée) s'accompagne d'une mise à
+  jour du
+  [Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  (MCD/MLD) — convention actée le 29/10, suite à un oubli constaté sur la
+  migration `type_paie` (remplacement de la table `contrat`, document resté
+  en l'état). Document de référence pour le modèle de données réel, pas
+  seulement de conception initiale (issue #25) : à tenir à jour en continu,
+  dans le même tour que la migration elle-même (schéma, note de conception
+  concernée, nombre d'entités dans l'en-tête si une table apparaît/disparaît).

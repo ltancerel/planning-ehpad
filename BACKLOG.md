@@ -1395,6 +1395,26 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   actuels, à faire depuis le dashboard. Décider de la durée avec le client
   le moment venu.
 
+- [x] **8. Remplacer le type de contrat par un type de paie sur le salarié**
+  _Story ajoutée a posteriori le 29/10, à la demande du client — le
+  changement avait déjà été livré (addendum à la story #3 ci-dessus) sans
+  story dédiée qui lui soit propre._ Retour client du 29/10 : le concept de
+  contrat (CDD/CDI, historisé dans une table `contrat` séparée, un seul
+  actif à la fois) ne correspondait pas au besoin réel — remplacé par un
+  champ `type_paie` simple (`25/M` / `30/M` / `Aucun`, défaut `Aucun`)
+  directement sur `salarie`.
+  _Statut : fait._ Migration `20261029000001_remplacer_contrat_par_type_paie.sql`
+  (table `contrat` supprimée — 0 ligne en PROD vérifiée avant la migration —
+  colonne `type_paie` ajoutée avec `CHECK`), appliquée sur PROD, auditée
+  (`get_advisors`, propre). Écran Salariés (formulaire + tableau), filtre
+  avancé de la grille Planning et données de démo mis à jour en
+  conséquence (voir aussi story « Brancher le filtre avancé... » plus bas).
+  Tests DB mis à jour (`02_contraintes.sql`, `08_salaries_gestion.sql`).
+  [Artifact Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  (domaine B) mis à jour en conséquence le 29/10 — convention actée le même
+  jour (cf. AGENTS.md) : toute modification de PROD s'accompagne désormais
+  d'une mise à jour de ce document.
+
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
