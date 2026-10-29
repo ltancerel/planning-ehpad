@@ -9,10 +9,34 @@ select test.doit_echouer(
   'compte.type_compte rejette une valeur hors administrateur/manager/utilisateur'
 );
 
+-- compte.identifiant : unique par établissement seulement depuis le 29/10
+-- (migration 20261029000002), plus globalement — la résolution
+-- identifiant→email qui justifiait l'unicité globale a disparu dès le
+-- 25/09 (login par email natif Supabase Auth, cf. migration
+-- 20260925000005_drop_resoudre_identifiant).
+insert into public.compte (id, ehpad_id, type_compte, nom, prenom, identifiant, email)
+values ('99999999-9999-9999-9999-999999999999', '33333333-3333-3333-3333-333333333333', 'administrateur', 'X', 'X', 'ltancerel', 'x2@test.local');
+select test.ok(
+  (select count(*) from public.compte where id = '99999999-9999-9999-9999-999999999999') = 1,
+  'compte.identifiant accepte désormais un identifiant déjà pris par administrateur_systeme'
+);
+delete from public.compte where id = '99999999-9999-9999-9999-999999999999';
+
+insert into auth.users (id, email) values ('99999999-9999-9999-9999-999999999998', 'x3@test.local');
+insert into public.ehpad (id, nom) values ('33333333-3333-3333-3333-333333333339', 'EHPAD Autre');
+insert into public.compte (id, ehpad_id, type_compte, nom, prenom, identifiant, email)
+values ('99999999-9999-9999-9999-999999999998', '33333333-3333-3333-3333-333333333339', 'administrateur', 'X', 'X', 'compte-test', 'x3@test.local');
+select test.ok(
+  (select count(*) from public.compte where id = '99999999-9999-9999-9999-999999999998') = 1,
+  'compte.identifiant accepte désormais un identifiant déjà pris dans un autre établissement'
+);
+delete from public.compte where id = '99999999-9999-9999-9999-999999999998';
+delete from public.ehpad where id = '33333333-3333-3333-3333-333333333339';
+
 select test.doit_echouer(
   $$insert into public.compte (id, ehpad_id, type_compte, nom, prenom, identifiant, email)
-    values ('99999999-9999-9999-9999-999999999999', '33333333-3333-3333-3333-333333333333', 'administrateur', 'X', 'X', 'ltancerel', 'x2@test.local')$$,
-  'compte.identifiant rejette un identifiant déjà pris par administrateur_systeme'
+    values ('99999999-9999-9999-9999-999999999999', '33333333-3333-3333-3333-333333333333', 'administrateur', 'X', 'X', 'compte-test', 'x2@test.local')$$,
+  'compte.identifiant reste rejeté s''il est déjà pris dans le même établissement'
 );
 
 select test.doit_echouer(
