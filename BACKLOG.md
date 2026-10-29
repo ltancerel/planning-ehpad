@@ -1377,11 +1377,13 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   l'interface réelle (pas par l'agent, cf. principe de base vierge) ;
   aucun salarié encore saisi au 16/10 — bloquant actuel du client, en
   attente de données de sa part._
-  _29/10 : premier fichier client (2 salariés) importé en PROD via le
-  nouveau script `scripts/import-salaries/import_salaries.py` (voir ce
-  dossier) — débloque ce point. Le client peut désormais générer et
-  appliquer lui-même le SQL d'import pour ses prochains fichiers, sans
-  repasser par l'agent à chaque salarié ajouté._
+  _29/10 : premier fichier client (2 salariés) importé en PROD — débloque
+  ce point. D'abord via un script d'agent générant du SQL à coller
+  manuellement ; remplacé le même jour par `scripts/planning-ehpad-tool.py`
+  (repris d'un script fourni par le client, écrivant directement en base
+  via l'API Supabase), qui couvre aussi les codes horaires. Le client peut
+  désormais lancer lui-même ses imports (salariés et/ou codes horaires),
+  sans repasser par l'agent à chaque fichier._
 
 - [ ] **7. Configurer une expiration de session Auth**
   _Ajoutée le 26/09, suite à une question du client : après rechargement
