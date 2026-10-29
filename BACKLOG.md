@@ -1440,6 +1440,36 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   jour (cf. AGENTS.md) : toute modification de PROD s'accompagne désormais
   d'une mise à jour de ce document.
 
+- [x] **9. Un administrateur ou un manager peut être responsable de plusieurs services**
+  Retour client du 29/10, suite à une erreur bloquante à la création d'un
+  vrai EHPAD (cf. addendum 29/10 de la story #2 ci-dessus, unicité de
+  `compte.identifiant` — découvert en creusant le même écran) : un administrateur ou
+  un manager doit pouvoir superviser plusieurs services (liste à cocher
+  sur l'écran Utilisateurs), mais un service n'a qu'un seul responsable à
+  la fois — administrateur ou manager, jamais utilisateur, qui ne peut
+  jamais avoir de service. Aucune restriction d'accès associée (confirmé
+  par le client) : la grille Planning reste visible intégralement : le
+  filtre avancé gagne seulement un raccourci « Mes services » qui
+  préremplit le critère Service existant avec les services du compte
+  connecté, toujours modifiable ensuite (cocher d'autres services si
+  besoin).
+  _Analyse d'impact présentée et validée avant tout code, conformément à
+  la convention actée le même jour (cf. AGENTS.md) — contrairement au
+  changement d'identifiant juste avant, analysé et implémenté dans le
+  même tour._
+  _Statut : fait._ Migration `20261029000003_service_responsable.sql` :
+  colonne `service.responsable_id` (remplace `compte.service_id`, sens
+  inversé — un compte responsable de plusieurs services, un service un
+  seul responsable, pas de table de liaison nécessaire), trigger
+  `verifier_responsable_service` (rejette un responsable de type
+  utilisateur), 1 ligne de donnée migrée (VHO/Direction, EHPAD de test).
+  Écran Utilisateurs (`UtilisateurForm.tsx` : liste à cocher au lieu d'un
+  select unique, grisée pour un service déjà pris par un autre compte ;
+  masquée pour Utilisateur), filtre avancé de la grille Planning
+  (`FiltreSalariesAvance.tsx`, raccourci « Mes services »). Tests DB mis à
+  jour (`02_contraintes.sql`). [Artifact Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  (domaine A) mis à jour en conséquence.
+
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
