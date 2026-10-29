@@ -9,7 +9,6 @@ import {
   AFFECTATIONS_ROULEMENT_DEMO,
   CORRESPONDANCE_SALARIE_FICHE_DEMO,
   affectationActuelle,
-  ficheDuSalarie,
   type Roulement,
   type Salarie,
   type ProfilUtilisateur,
@@ -260,33 +259,23 @@ export default function PlanningGrid({
   // Filtre avancé (retour client du 22/09) : chaque critère (type de paie,
   // présence, manager, service, planning) est indépendant et se combine en
   // ET avec les autres ; plusieurs valeurs cochées dans un même critère se
-  // combinent en OU. Un salarié sans fiche (ex. lignes "Besoin") n'a ni
-  // type de paie, ni présence, ni manager : il est exclu dès qu'un de ces
-  // critères est actif, mais reste filtrable par service (disponible
-  // directement sur la ligne du planning, sans fiche).
+  // combinent en OU. Branché sur les vraies données du salarié depuis le
+  // 29/10 (retour client) — ces 4 champs sont directement sur la table
+  // salarie, plus besoin de la fiche de démo séparée qui ne couvrait que
+  // les 10 salariés mock et excluait silencieusement tout salarié réel dès
+  // qu'un de ces filtres était coché.
   function salarieCorrespondAuxFiltres(salarie: Salarie): boolean {
     if (filtres.service.size > 0 && !filtres.service.has(salarie.service)) return false;
-
-    const besoinDeFiche =
-      filtres.typePaie.size > 0 ||
-      filtres.presence.size > 0 ||
-      filtres.manager.size > 0 ||
-      filtres.groupeRoulement.size > 0;
-    const fiche = besoinDeFiche ? ficheDuSalarie(salarie.id) : undefined;
-    if (besoinDeFiche && !fiche) return false;
-
-    if (fiche) {
-      if (filtres.typePaie.size > 0 && !filtres.typePaie.has(fiche.typePaie)) {
-        return false;
-      }
-      if (
-        filtres.presence.size > 0 &&
-        !filtres.presence.has(fiche.presence === "Présent" ? "present" : "absent")
-      ) {
-        return false;
-      }
-      if (filtres.manager.size > 0 && !filtres.manager.has(fiche.manager)) return false;
-      if (filtres.groupeRoulement.size > 0 && !filtres.groupeRoulement.has(fiche.groupeRoulement)) return false;
+    if (filtres.typePaie.size > 0 && !filtres.typePaie.has(salarie.typePaie)) return false;
+    if (
+      filtres.presence.size > 0 &&
+      !filtres.presence.has(salarie.presence === "Présent" ? "present" : "absent")
+    ) {
+      return false;
+    }
+    if (filtres.manager.size > 0 && !filtres.manager.has(salarie.manager)) return false;
+    if (filtres.groupeRoulement.size > 0 && !filtres.groupeRoulement.has(salarie.groupeRoulement)) {
+      return false;
     }
 
     if (filtres.planning.size > 0) {

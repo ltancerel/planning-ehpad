@@ -1234,18 +1234,37 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   grille Planning et données de démo mis à jour en conséquence.
   _Impact annexe repéré en vérifiant ce changement_ : le filtre avancé de
   la grille Planning (panneau « Filtres », critères Manager/Présence/
-  Alignement roulement en plus de celui-ci) n'a en réalité **jamais été
-  branché sur les vraies données salarié** — il continue de lire
+  Alignement roulement en plus de celui-ci) n'avait en réalité **jamais été
+  branché sur les vraies données salarié** — il continuait de lire
   `FICHES_SALARIES_DEMO`/`ficheDuSalarie` (10 profils de démo fixes, cf.
   `src/lib/mock-data.ts`) via une table de correspondance par id qui ne
-  contient que ces 10 id de démo. Pour un salarié réel, ces 4 critères
-  renvoient donc toujours "aucune fiche" et l'excluent dès qu'on en coche
-  un seul — un bug pré-existant, pas introduit par ce changement (déjà
-  là avant, le contrat en faisait partie). Non corrigé ici (hors
-  périmètre de la demande, nécessite de brancher le filtre sur les
-  colonnes réelles déjà présentes sur `salarie` — manager,
-  alignement_roulement, presence, type_paie — et de restructurer la
-  logique de filtre en conséquence) ; suggéré comme tâche séparée._
+  contenait que ces 10 id de démo. Pour un salarié réel, ces 4 critères
+  renvoyaient donc toujours "aucune fiche" et l'excluaient dès qu'on en
+  cochait un seul — un bug pré-existant, pas introduit par ce changement
+  (déjà là avant, le contrat en faisait partie).
+  _**Corrigé le même jour, retour client** (« Tu peux corriger le filtre en
+  suivant ») : `salarieCorrespondAuxFiltres` (dans `PlanningGrid.tsx`) lit
+  désormais directement les champs du salarié réel (`manager`,
+  `alignement_roulement`/`groupeRoulement`, `presence`, `type_paie`) au lieu
+  de passer par `ficheDuSalarie`. Type `Salarie` (`mock-data.ts`) enrichi en
+  conséquence ; `src/app/page.tsx` étend sa requête `salarie` pour peupler
+  ces 4 champs (même pattern de repli que `admin/salaries/page.tsx` : managé
+  « Aucun », groupe `GROUPES_ROULEMENT[0]` par défaut). Par ricochet,
+  `src/app/emargement/page.tsx` (qui construit aussi un `Salarie`) a reçu le
+  même enrichissement de requête, même si l'Émargement ne les affiche pas
+  encore — garde le type honnête partout où il est construit. Le mock
+  `SALARIES`/`genererPlanningDemo` (confirmé mort — plus aucun import
+  externe depuis le passage de la grille Planning et de l'Émargement aux
+  vraies données) a été découplé du type `Salarie` enrichi via un type local
+  `SalarieDemo` minimal, plutôt que d'inventer des valeurs manager/présence/
+  roulement/type de paie factices pour 15 entrées non consommées.
+  `ficheDuSalarie`/`CORRESPONDANCE_SALARIE_FICHE_DEMO` restent utilisés par
+  `roulementActuelDuSalarie` (raccourci « Appliquer le roulement », toujours
+  mock — story #35 restante, non concerné par ce correctif). 74 tests DB,
+  7 e2e, `tsc`/`eslint`/build verts (pas de scénario e2e dédié : les
+  parcours authentifiés ne sont pas couverts par la suite automatisée,
+  cf. note dans `connexion.spec.ts` — vérification manuelle ajoutée à
+  `STAGING_CHECKLIST.md`)._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,

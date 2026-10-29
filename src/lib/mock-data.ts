@@ -7,6 +7,10 @@ export type Salarie = {
   nom: string;
   prenom: string;
   service: string;
+  manager: Manager;
+  groupeRoulement: GroupeRoulement;
+  presence: "Présent" | "Absent";
+  typePaie: TypePaie;
 };
 
 export type ProfilUtilisateur = {
@@ -390,7 +394,10 @@ export const SERVICE_BESOINS = "ASH BESOINS";
 
 // Noms volontairement génériques (patronymes les plus courants en France) pour
 // bien signaler des données fictives et éviter toute homonymie avec un salarié réel.
-export const SALARIES: Salarie[] = [
+// Type minimal distinct de Salarie (plus riche, utilisé par les écrans réels) :
+// ces données de démo n'ont pas de manager/roulement/présence/type de paie.
+type SalarieDemo = { id: string; nom: string; prenom: string; service: string };
+export const SALARIES: SalarieDemo[] = [
   { id: "1", nom: "DUPONT", prenom: "Marie", service: "ADMINISTRATIF" },
   { id: "2", nom: "MARTIN", prenom: "Julie", service: "ADMINISTRATIF" },
   { id: "3", nom: "BERNARD", prenom: "Claire", service: "ADMINISTRATIF" },
@@ -443,7 +450,7 @@ const CODE_REPOS_DEMO = "."; // informatif, jamais un code travail — voir note
 // — cf. EXEMPLES_EMARGEMENT plus bas pour des cas déterministes.
 const CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO = ["CP", "MAL", "CARJ", "ABA", "ABI"];
 
-export function genererPlanningDemo(salaries: Salarie[], dates: string[]): Record<string, ValeurCellule> {
+export function genererPlanningDemo(salaries: SalarieDemo[], dates: string[]): Record<string, ValeurCellule> {
   const rng = seedAleatoire(42);
   const planning: Record<string, ValeurCellule> = {};
   for (const salarie of salaries) {

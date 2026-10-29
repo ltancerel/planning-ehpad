@@ -128,6 +128,11 @@ avec un EHPAD vide :
 - [ ] Se déconnecter puis revisiter `/` sans session → redirection vers
       `/login` (couvert par e2e, à revérifier une fois en conditions
       réelles).
+- [ ] Panneau de filtres avancés (29/10) : désormais branché sur les
+      vraies données du salarié (manager, alignement roulement, présence,
+      type de paie), plus sur la fiche mock — vérifier qu'un filtre par
+      Manager, Présence, Alignement roulement ou Type de paie masque/affiche
+      effectivement les bonnes lignes pour des salariés réels.
 
 ## Salariés (story #34, écran /admin/salaries — 25/09, 26/09)
 

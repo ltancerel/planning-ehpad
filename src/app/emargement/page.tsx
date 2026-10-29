@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import type { Salarie } from "@/lib/mock-data";
+import { GROUPES_ROULEMENT, type GroupeRoulement, type Manager, type Salarie, type TypePaie } from "@/lib/mock-data";
 import type { HoraireCategorie, HoraireCode, TypeEvenement, ValeurCellule } from "@/lib/horaire-codes";
 import { formatDateISO, genererPeriode, lundiDeLaSemaine, lundiLePlusProche, parseDateISO } from "@/lib/dates";
 import { chargerPlanningReel } from "@/app/planning-actions";
@@ -13,14 +13,14 @@ async function resoudreSalarieCible(supabase: SupabaseClient, salarieIdParam?: s
   if (salarieIdParam) {
     const { data } = await supabase
       .from("salarie")
-      .select("id, nom, prenom, service:service_id(nom)")
+      .select("id, nom, prenom, manager, alignement_roulement, presence, type_paie, service:service_id(nom)")
       .eq("id", salarieIdParam)
       .maybeSingle();
     if (data) return data;
   }
   const { data } = await supabase
     .from("salarie")
-    .select("id, nom, prenom, service:service_id(nom)")
+    .select("id, nom, prenom, manager, alignement_roulement, presence, type_paie, service:service_id(nom)")
     .order("nom")
     .limit(1)
     .maybeSingle();
@@ -76,6 +76,10 @@ export default async function EmargementPage({
     nom: salarieRow.nom,
     prenom: salarieRow.prenom,
     service: salarieRow.service?.nom ?? "",
+    manager: (salarieRow.manager as Manager | null) ?? "Aucun",
+    groupeRoulement: (salarieRow.alignement_roulement as GroupeRoulement | null) ?? GROUPES_ROULEMENT[0],
+    presence: salarieRow.presence === "Absent" ? ("Absent" as const) : ("Présent" as const),
+    typePaie: salarieRow.type_paie as TypePaie,
   };
 
   const { data: codesData } = await supabase
