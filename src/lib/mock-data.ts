@@ -18,6 +18,10 @@ export type ProfilUtilisateur = {
   prenom: string;
   typeUtilisateur: "Administrateur" | "Manager" | "Utilisateur";
   service: string;
+  // Services dont ce compte est responsable (administrateur/manager
+  // uniquement, cf. service.responsable_id) — utilisé par le raccourci
+  // "Mes services" du filtre avancé de la grille Planning.
+  mesServices: string[];
   poste: string;
 };
 
@@ -27,6 +31,7 @@ export const UTILISATEUR_CONNECTE: ProfilUtilisateur = {
   prenom: "Virginie",
   typeUtilisateur: "Administrateur",
   service: "Administration",
+  mesServices: ["Administration"],
   poste: "Direction",
 };
 
@@ -37,7 +42,11 @@ export type Utilisateur = {
   prenom: string;
   email: string;
   typeUtilisateur: "Administrateur" | "Manager" | "Utilisateur";
-  service: string;
+  // Services dont ce compte est responsable (administrateur/manager
+  // uniquement, cf. service.responsable_id) — toujours vide pour
+  // Utilisateur, 0 à N pour les deux autres types (retour client du 29/10,
+  // remplace l'ancien champ `service` à valeur unique).
+  services: string[];
   poste: string;
 };
 
@@ -51,7 +60,7 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
     prenom: "Thomas",
     email: "thomas.morel@example.fr",
     typeUtilisateur: "Administrateur",
-    service: "ADMINISTRATIF",
+    services: ["ADMINISTRATIF"],
     poste: "Direction",
   },
   {
@@ -61,7 +70,7 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
     prenom: "Sophie",
     email: "sophie.lambert@example.fr",
     typeUtilisateur: "Manager",
-    service: "IDE",
+    services: ["IDE", "ASH CDD"],
     poste: "Infirmière coordinatrice",
   },
   {
@@ -71,7 +80,7 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
     prenom: "Julien",
     email: "julien.durand@example.fr",
     typeUtilisateur: "Utilisateur",
-    service: "ASH CDD",
+    services: [],
     poste: "Agent",
   },
 ];

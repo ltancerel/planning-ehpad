@@ -22,9 +22,15 @@ export default async function AdminLayout({ children }: { children: ReactNode })
 
   const { data: compte } = await supabase
     .from("compte")
-    .select("nom, prenom, type_compte, poste, service:service_id(nom)")
+    .select("nom, prenom, type_compte, poste")
     .eq("id", user.id)
     .single();
+
+  const { data: servicesResponsable } = await supabase
+    .from("service")
+    .select("nom")
+    .eq("responsable_id", user.id)
+    .order("ordre");
 
   if (!compte || compte.type_compte !== "administrateur") {
     return (
@@ -60,7 +66,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
             nom: compte.nom,
             prenom: compte.prenom,
             typeUtilisateur: "Administrateur",
-            service: compte.service?.nom,
+            service: (servicesResponsable ?? []).map((s) => s.nom).join(", ") || undefined,
             poste: compte.poste ?? undefined,
           }}
         />

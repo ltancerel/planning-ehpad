@@ -763,6 +763,7 @@ export default function PlanningGrid({
               managers={MANAGERS}
               groupesRoulement={GROUPES_ROULEMENT}
               nbResultats={salariesOrdonnes.length}
+              mesServices={utilisateur.mesServices}
             />
             <button
               onClick={() => allerSemaine(-1)}

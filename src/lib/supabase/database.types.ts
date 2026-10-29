@@ -190,7 +190,6 @@ export type Database = {
           nom: string
           poste: string | null
           prenom: string
-          service_id: string | null
           type_compte: string
         }
         Insert: {
@@ -202,7 +201,6 @@ export type Database = {
           nom: string
           poste?: string | null
           prenom: string
-          service_id?: string | null
           type_compte: string
         }
         Update: {
@@ -214,7 +212,6 @@ export type Database = {
           nom?: string
           poste?: string | null
           prenom?: string
-          service_id?: string | null
           type_compte?: string
         }
         Relationships: [
@@ -223,13 +220,6 @@ export type Database = {
             columns: ["ehpad_id"]
             isOneToOne: false
             referencedRelation: "ehpad"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "compte_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "service"
             referencedColumns: ["id"]
           },
         ]
@@ -736,18 +726,21 @@ export type Database = {
           id: string
           nom: string
           ordre: number
+          responsable_id: string | null
         }
         Insert: {
           ehpad_id: string
           id?: string
           nom: string
           ordre: number
+          responsable_id?: string | null
         }
         Update: {
           ehpad_id?: string
           id?: string
           nom?: string
           ordre?: number
+          responsable_id?: string | null
         }
         Relationships: [
           {
@@ -755,6 +748,13 @@ export type Database = {
             columns: ["ehpad_id"]
             isOneToOne: false
             referencedRelation: "ehpad"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_responsable_id_fkey"
+            columns: ["responsable_id"]
+            isOneToOne: false
+            referencedRelation: "compte"
             referencedColumns: ["id"]
           },
         ]

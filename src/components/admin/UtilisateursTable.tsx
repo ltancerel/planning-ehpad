@@ -47,7 +47,7 @@ export default function UtilisateursTable({ utilisateurs, onModifier, onSupprime
                 {utilisateur.typeUtilisateur}
               </span>
             </td>
-            <td className="px-3 py-2 text-zinc-600">{utilisateur.service}</td>
+            <td className="px-3 py-2 text-zinc-600">{utilisateur.services.join(", ") || "—"}</td>
             <td className="px-3 py-2 text-zinc-600">{utilisateur.poste}</td>
             <td className="px-3 py-2 text-right">
               <button

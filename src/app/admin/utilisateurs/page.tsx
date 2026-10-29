@@ -13,8 +13,13 @@ export default async function UtilisateursAdminPage() {
 
   const { data } = await supabase
     .from("compte")
-    .select("id, identifiant, nom, prenom, email, type_compte, poste, service:service_id(nom)")
+    .select("id, identifiant, nom, prenom, email, type_compte, poste")
     .order("nom");
+
+  const { data: servicesData } = await supabase
+    .from("service")
+    .select("id, nom, responsable_id")
+    .order("ordre");
 
   const utilisateurs: Utilisateur[] = (data ?? []).map((c) => ({
     id: c.id,
@@ -23,11 +28,11 @@ export default async function UtilisateursAdminPage() {
     prenom: c.prenom,
     email: c.email,
     typeUtilisateur: TYPE_COMPTE_DEPUIS_DB[c.type_compte] ?? "Utilisateur",
-    service: c.service?.nom ?? "",
+    services: (servicesData ?? []).filter((s) => s.responsable_id === c.id).map((s) => s.nom),
     poste: c.poste ?? "",
   }));
 
-  const { data: services } = await supabase.from("service").select("id, nom").order("ordre");
+  const services = (servicesData ?? []).map((s) => ({ id: s.id, nom: s.nom }));
 
   return <UtilisateursAdminClient utilisateurs={utilisateurs} services={services ?? []} />;
 }

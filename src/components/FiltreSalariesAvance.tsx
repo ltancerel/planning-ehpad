@@ -163,6 +163,7 @@ export function FiltreSalariesBouton({
   managers,
   groupesRoulement,
   nbResultats,
+  mesServices,
 }: {
   filtres: FiltresAvances;
   onChange: (f: FiltresAvances) => void;
@@ -170,6 +171,10 @@ export function FiltreSalariesBouton({
   managers: Manager[];
   groupesRoulement: GroupeRoulement[];
   nbResultats: number;
+  // Services dont le compte connecté est responsable (retour client du
+  // 29/10) — alimente le raccourci "Mes services" ci-dessous, absent
+  // (undefined) si le compte n'en gère aucun.
+  mesServices?: string[];
 }) {
   const [ouvert, setOuvert] = useState(false);
   const conteneurRef = useRef<HTMLDivElement>(null);
@@ -237,13 +242,33 @@ export function FiltreSalariesBouton({
               selection={filtres.groupeRoulement}
               onToggle={(v) => onChange({ ...filtres, groupeRoulement: avecValeurBasculee(filtres.groupeRoulement, v) })}
             />
-            <SectionCaseACocher
-              titre="Service"
-              options={services}
-              libelle={(v) => v}
-              selection={filtres.service}
-              onToggle={(v) => onChange({ ...filtres, service: avecValeurBasculee(filtres.service, v) })}
-            />
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Service</p>
+                {mesServices && mesServices.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...filtres, service: new Set(mesServices) })}
+                    className="text-[11px] font-medium text-blue-600 hover:text-blue-800"
+                  >
+                    Mes services
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                {services.map((option) => (
+                  <label key={option} className="flex cursor-pointer items-center gap-1.5 text-sm text-zinc-700">
+                    <input
+                      type="checkbox"
+                      checked={filtres.service.has(option)}
+                      onChange={() => onChange({ ...filtres, service: avecValeurBasculee(filtres.service, option) })}
+                      className="h-3.5 w-3.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    {option}
+                  </label>
+                ))}
+              </div>
+            </div>
           </div>
 
           <div className="mt-4 border-t border-zinc-100 pt-3">

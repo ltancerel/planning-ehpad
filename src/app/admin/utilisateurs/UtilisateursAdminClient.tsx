@@ -20,7 +20,26 @@ export default function UtilisateursAdminClient({
   const [nouveauService, setNouveauService] = useState("");
   const [formulaireServiceOuvert, setFormulaireServiceOuvert] = useState(false);
   const [pending, demarrer] = useTransition();
-  const nomsServices = services.map((s) => s.nom);
+
+  // Pour chaque service, qui en est déjà responsable (si quelqu'un) —
+  // dérivé des utilisateurs déjà chargés, pas besoin d'une requête
+  // dédiée. Permet au formulaire de griser les services déjà pris par un
+  // AUTRE compte que celui en cours d'édition (retour client du 29/10).
+  const responsableParService = new Map<string, { id: string; nom: string }>();
+  for (const u of utilisateurs) {
+    for (const nomService of u.services) {
+      responsableParService.set(nomService, { id: u.id, nom: `${u.prenom} ${u.nom}` });
+    }
+  }
+  const servicesAvecResponsable = services.map((s) => {
+    const responsable = responsableParService.get(s.nom);
+    return {
+      id: s.id,
+      nom: s.nom,
+      responsableId: responsable?.id ?? null,
+      responsableNom: responsable?.nom ?? null,
+    };
+  });
 
   function ouvrirCreation() {
     setUtilisateurEnEdition(undefined);
@@ -188,7 +207,7 @@ export default function UtilisateursAdminClient({
             <UtilisateurForm
               valeurInitiale={utilisateurEnEdition}
               identifiantsExistants={utilisateurs.map((u) => u.identifiant)}
-              services={nomsServices}
+              services={servicesAvecResponsable}
               onValider={enregistrer}
               onAnnuler={fermerPanneau}
             />

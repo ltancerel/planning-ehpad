@@ -22,7 +22,7 @@ export default async function Home() {
 
   const { data: compte } = await supabase
     .from("compte")
-    .select("nom, prenom, type_compte, poste, service:service_id(nom)")
+    .select("nom, prenom, type_compte, poste")
     .eq("id", user.id)
     .single();
 
@@ -35,7 +35,8 @@ export default async function Home() {
 
   const { data: ehpad } = await supabase.from("ehpad").select("nom, logo_base64").single();
 
-  const { data: services } = await supabase.from("service").select("nom").order("ordre");
+  const { data: services } = await supabase.from("service").select("nom, responsable_id").order("ordre");
+  const mesServices = (services ?? []).filter((s) => s.responsable_id === user.id).map((s) => s.nom);
 
   const { data: joursFeriesData } = await supabase.from("jour_ferie").select("date").eq("actif", true);
   const joursFeries = (joursFeriesData ?? []).map((j) => j.date);
@@ -93,7 +94,8 @@ export default async function Home() {
         nom: compte.nom,
         prenom: compte.prenom,
         typeUtilisateur: LABEL_TYPE_COMPTE[compte.type_compte] ?? "Utilisateur",
-        service: compte.service?.nom ?? "",
+        service: mesServices.join(", "),
+        mesServices,
         poste: compte.poste ?? "",
       }}
     />

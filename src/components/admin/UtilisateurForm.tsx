@@ -5,10 +5,12 @@ import type { Utilisateur } from "@/lib/mock-data";
 
 const TYPES_UTILISATEUR: Utilisateur["typeUtilisateur"][] = ["Administrateur", "Manager", "Utilisateur"];
 
+export type ServiceOption = { id: string; nom: string; responsableId: string | null; responsableNom: string | null };
+
 type UtilisateurFormProps = {
   valeurInitiale?: Utilisateur;
   identifiantsExistants: string[];
-  services: string[];
+  services: ServiceOption[];
   onValider: (utilisateur: Omit<Utilisateur, "id">) => void;
   onAnnuler: () => void;
 };
@@ -28,12 +30,31 @@ export default function UtilisateurForm({
   const [typeUtilisateur, setTypeUtilisateur] = useState<Utilisateur["typeUtilisateur"]>(
     valeurInitiale?.typeUtilisateur ?? "Utilisateur"
   );
-  const [service, setService] = useState(valeurInitiale?.service ?? services[0] ?? "");
+  const [servicesSelectionnes, setServicesSelectionnes] = useState<Set<string>>(
+    new Set(valeurInitiale?.services ?? [])
+  );
   const [poste, setPoste] = useState(valeurInitiale?.poste ?? "");
   const [erreur, setErreur] = useState<string | null>(null);
 
   function changerIdentifiant(saisie: string) {
     setIdentifiant(saisie.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 3));
+  }
+
+  function basculerService(nomService: string) {
+    setServicesSelectionnes((precedent) => {
+      const copie = new Set(precedent);
+      if (copie.has(nomService)) copie.delete(nomService);
+      else copie.add(nomService);
+      return copie;
+    });
+  }
+
+  // Un utilisateur ne peut jamais être responsable d'un service (retour
+  // client du 29/10) : on vide la sélection dès qu'on bascule sur ce type,
+  // plutôt que de la laisser masquée mais toujours présente en mémoire.
+  function changerType(type: Utilisateur["typeUtilisateur"]) {
+    setTypeUtilisateur(type);
+    if (type === "Utilisateur") setServicesSelectionnes(new Set());
   }
 
   function valider() {
@@ -62,7 +83,7 @@ export default function UtilisateurForm({
       prenom: prenom.trim(),
       email: email.trim(),
       typeUtilisateur,
-      service,
+      services: typeUtilisateur === "Utilisateur" ? [] : Array.from(servicesSelectionnes),
       poste: poste.trim(),
     });
   }
@@ -128,7 +149,7 @@ export default function UtilisateurForm({
           <label className="mb-1 block text-xs font-medium text-zinc-700">Type d&apos;utilisateur</label>
           <select
             value={typeUtilisateur}
-            onChange={(e) => setTypeUtilisateur(e.target.value as Utilisateur["typeUtilisateur"])}
+            onChange={(e) => changerType(e.target.value as Utilisateur["typeUtilisateur"])}
             className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
           >
             {TYPES_UTILISATEUR.map((type) => (
@@ -143,20 +164,39 @@ export default function UtilisateurForm({
           </p>
         </div>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-700">Service</label>
-          <select
-            value={service}
-            onChange={(e) => setService(e.target.value)}
-            className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-          >
-            {services.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-        </div>
+        {typeUtilisateur !== "Utilisateur" && (
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-700">
+              Services ({typeUtilisateur === "Administrateur" ? "dont il est administrateur" : "dont il est manager"})
+            </label>
+            <div className="flex flex-col gap-1 rounded border border-zinc-300 p-2">
+              {services.map((s) => {
+                const prisParAutre = s.responsableId !== null && s.responsableId !== valeurInitiale?.id;
+                return (
+                  <label
+                    key={s.id}
+                    className={`flex items-center gap-1.5 text-sm ${
+                      prisParAutre ? "cursor-not-allowed text-zinc-400" : "cursor-pointer text-zinc-700"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={servicesSelectionnes.has(s.nom)}
+                      disabled={prisParAutre}
+                      onChange={() => basculerService(s.nom)}
+                      className="h-3.5 w-3.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    {s.nom}
+                    {prisParAutre && (
+                      <span className="text-[11px] text-zinc-400">— déjà affecté à {s.responsableNom}</span>
+                    )}
+                  </label>
+                );
+              })}
+              {services.length === 0 && <p className="text-xs italic text-zinc-400">Aucun service créé.</p>}
+            </div>
+          </div>
+        )}
 
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-700">Poste</label>

@@ -86,9 +86,26 @@ export async function creerUtilisateur(donnees: Omit<Utilisateur, "id">): Promis
   if ("error" in autorisation) return autorisation;
 
   const supabase = await createClient();
-  const { data: service } = await supabase.from("service").select("id").eq("nom", donnees.service).single();
-  if (!service) {
-    return { error: "Service introuvable." };
+
+  // Un utilisateur n'est jamais responsable d'un service (retour client
+  // du 29/10) — le formulaire ne devrait jamais en envoyer, mais on
+  // l'ignore quand même par sécurité plutôt que de laisser le trigger
+  // service.responsable_id le rejeter avec une erreur peu claire.
+  const servicesVoulus = donnees.typeUtilisateur === "Utilisateur" ? [] : donnees.services;
+  let serviceIds: string[] = [];
+  if (servicesVoulus.length > 0) {
+    const { data: servicesTrouves } = await supabase
+      .from("service")
+      .select("id, nom, responsable_id")
+      .in("nom", servicesVoulus);
+    if (!servicesTrouves || servicesTrouves.length !== servicesVoulus.length) {
+      return { error: "Un des services sélectionnés est introuvable." };
+    }
+    const dejaPris = servicesTrouves.find((s) => s.responsable_id !== null);
+    if (dejaPris) {
+      return { error: `Le service « ${dejaPris.nom} » a déjà un responsable — rechargez la page.` };
+    }
+    serviceIds = servicesTrouves.map((s) => s.id);
   }
 
   const admin = createAdminClient();
@@ -106,13 +123,23 @@ export async function creerUtilisateur(donnees: Omit<Utilisateur, "id">): Promis
     prenom: donnees.prenom,
     identifiant: donnees.identifiant,
     email: donnees.email,
-    service_id: service.id,
     poste: donnees.poste || null,
   });
 
   if (erreurCompte) {
     await admin.auth.admin.deleteUser(authData.user.id);
     return { error: "Création du compte impossible : " + erreurCompte.message };
+  }
+
+  if (serviceIds.length > 0) {
+    const { error: erreurServices } = await admin
+      .from("service")
+      .update({ responsable_id: authData.user.id })
+      .in("id", serviceIds);
+    if (erreurServices) {
+      await admin.auth.admin.deleteUser(authData.user.id);
+      return { error: "Affectation des services impossible : " + erreurServices.message };
+    }
   }
 
   revalidatePath("/admin/utilisateurs");
@@ -125,9 +152,22 @@ export async function modifierUtilisateur(id: string, donnees: Omit<Utilisateur,
   }
 
   const supabase = await createClient();
-  const { data: service } = await supabase.from("service").select("id").eq("nom", donnees.service).single();
-  if (!service) {
-    return { error: "Service introuvable." };
+
+  const servicesVoulus = donnees.typeUtilisateur === "Utilisateur" ? [] : donnees.services;
+  let serviceIds: string[] = [];
+  if (servicesVoulus.length > 0) {
+    const { data: servicesTrouves } = await supabase
+      .from("service")
+      .select("id, nom, responsable_id")
+      .in("nom", servicesVoulus);
+    if (!servicesTrouves || servicesTrouves.length !== servicesVoulus.length) {
+      return { error: "Un des services sélectionnés est introuvable." };
+    }
+    const dejaPris = servicesTrouves.find((s) => s.responsable_id !== null && s.responsable_id !== id);
+    if (dejaPris) {
+      return { error: `Le service « ${dejaPris.nom} » a déjà un responsable — rechargez la page.` };
+    }
+    serviceIds = servicesTrouves.map((s) => s.id);
   }
 
   // Pas de service_role nécessaire ici : mise à jour d'un compte existant,
@@ -140,7 +180,6 @@ export async function modifierUtilisateur(id: string, donnees: Omit<Utilisateur,
       prenom: donnees.prenom,
       identifiant: donnees.identifiant,
       email: donnees.email,
-      service_id: service.id,
       poste: donnees.poste || null,
     })
     .eq("id", id)
@@ -149,6 +188,27 @@ export async function modifierUtilisateur(id: string, donnees: Omit<Utilisateur,
 
   if (error) {
     return { error: "Mise à jour impossible : " + error.message };
+  }
+
+  // Détache d'abord tout ce que ce compte gérait, puis rattache la
+  // sélection voulue — plus simple et plus sûr qu'un diff ajout/retrait,
+  // notamment si le type de compte vient de changer vers Utilisateur.
+  const { error: erreurDetachement } = await supabase
+    .from("service")
+    .update({ responsable_id: null })
+    .eq("responsable_id", id);
+  if (erreurDetachement) {
+    return { error: "Mise à jour des services impossible : " + erreurDetachement.message };
+  }
+
+  if (serviceIds.length > 0) {
+    const { error: erreurAffectation } = await supabase
+      .from("service")
+      .update({ responsable_id: id })
+      .in("id", serviceIds);
+    if (erreurAffectation) {
+      return { error: "Affectation des services impossible : " + erreurAffectation.message };
+    }
   }
 
   revalidatePath("/admin/utilisateurs");
