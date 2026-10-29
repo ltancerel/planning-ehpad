@@ -71,3 +71,35 @@ select test.doit_echouer(
     values ('33333333-3333-3333-3333-333333333333', '77777777-7777-7777-7777-777777777777', 'ZPAI', 'Test', 'Paie', 'Présent', 'autre')$$,
   'salarie.type_paie rejette une valeur hors 25/M, 30/M, Aucun'
 );
+
+-- service.responsable_id : administrateur ou manager exclusivement
+-- (migration 20261029000003, remplace compte.service_id) — un compte
+-- utilisateur n'a jamais de service, un manager/administrateur peut en
+-- avoir plusieurs (simple colonne sur service, pas de table de liaison).
+select test.doit_echouer(
+  $$update public.service set responsable_id = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+    where id = '77777777-7777-7777-7777-777777777777'$$,
+  'service.responsable_id rejette un compte utilisateur'
+);
+
+update public.service set responsable_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+where id = '77777777-7777-7777-7777-777777777777';
+select test.ok(
+  (select responsable_id from public.service where id = '77777777-7777-7777-7777-777777777777')
+    = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+  'service.responsable_id accepte un compte manager'
+);
+
+insert into public.service (id, ehpad_id, nom, ordre)
+values ('77777777-7777-7777-7777-777777777779', '33333333-3333-3333-3333-333333333333', 'Cuisine', 2);
+update public.service set responsable_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+where id = '77777777-7777-7777-7777-777777777779';
+select test.ok(
+  (select count(*) from public.service where responsable_id = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa') = 2,
+  'service.responsable_id : un même manager peut être responsable de plusieurs services'
+);
+
+-- nettoyage, pour ne pas perturber les tests suivants
+update public.service set responsable_id = null
+where id in ('77777777-7777-7777-7777-777777777777', '77777777-7777-7777-7777-777777777779');
+delete from public.service where id = '77777777-7777-7777-7777-777777777779';
