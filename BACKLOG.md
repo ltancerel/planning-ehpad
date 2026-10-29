@@ -1058,6 +1058,24 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   confirmé. `identifiant` reste inchangé comme champ produit à part (code 3
   lettres, déjà maquetté sur Admin > Utilisateurs et vraisemblablement la
   grille Planning) — seule la connexion n'en dépend plus._
+  _29/10, retour client : la contrainte `UNIQUE` globale sur
+  `compte.identifiant` (+ son trigger croisé avec `administrateur_systeme`,
+  posés le 17/09 pour la résolution identifiant→email ci-dessus — restés en
+  place après son retrait du 25/09, alors qu'ils n'avaient plus de
+  justification) bloquait la création d'un vrai EHPAD dès qu'un de ses
+  comptes reprenait l'identifiant 3 lettres d'une personne déjà présente
+  sur un autre établissement (cas réel : même directrice sur l'EHPAD de
+  test puis le vrai EHPAD du client). Remplacée par
+  `UNIQUE (ehpad_id, identifiant)` sur `compte` (migration
+  `20261029000002_identifiant_unique_par_etablissement.sql`) : deux
+  établissements différents peuvent désormais réutiliser le même
+  identifiant, toujours refusé au sein d'un même établissement.
+  `administrateur_systeme.identifiant` garde sa propre unicité simple.
+  Aucun impact Front End (l'écran Admin > Utilisateurs vérifiait déjà
+  l'unicité scopée à son propre EHPAD, via la liste `identifiantsExistants`
+  elle-même filtrée par RLS). Tests mis à jour (`02_contraintes.sql`),
+  [Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  (domaine A, note « identifiant ») republié en conséquence._
 
 - [ ] **3. Brancher les écrans Administration sur le backend** _(issue #34)_
   Comptes/utilisateurs, salariés, codes horaires, roulements, années/jours
