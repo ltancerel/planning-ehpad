@@ -1,7 +1,7 @@
 -- Gestion des salariés/services par l'Administrateur d'un EHPAD (écran
 -- /admin/salaries, story #34/#35). RLS déjà posée (service/salarie dans le
--- groupe générique tables_ehpad_admin, contrat via policy dédiée,
--- migration 0008) — jamais testée à l'écriture avant cet écran.
+-- groupe générique tables_ehpad_admin, migration 0008) — jamais testée à
+-- l'écriture avant cet écran.
 
 -- 1) un administrateur peut créer un service pour son EHPAD
 set role authenticated;
@@ -72,29 +72,17 @@ end $$;
 reset role;
 reset request.jwt.claim.sub;
 
--- 5) un administrateur peut créer un contrat actif pour ce salarié
+-- 5) un administrateur peut modifier le type de paie d'un salarié (défaut
+--    "Aucun" à la création, cf. migration 20261029000001 — remplace
+--    l'ancien concept de contrat CDI/CDD historisé)
 set role authenticated;
 set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
-insert into public.contrat (salarie_id, type_contrat, date_debut, actif)
-values ('c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2', 'CDI', current_date, true);
-select count(*) as n from public.contrat where salarie_id = 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2' and actif \gset contrat_cree_
+select type_paie from public.salarie where id = 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2' \gset type_paie_defaut_
+update public.salarie set type_paie = '25/M' where id = 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2';
+select type_paie from public.salarie where id = 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2' \gset type_paie_modifie_
 reset role;
 reset request.jwt.claim.sub;
 
-select test.ok(:contrat_cree_n = 1, 'gestion salariés : un administrateur peut créer un contrat actif pour son salarié');
+select test.ok(:'type_paie_defaut_type_paie' = 'Aucun', 'gestion salariés : le type de paie par défaut est "Aucun" à la création');
+select test.ok(:'type_paie_modifie_type_paie' = '25/M', 'gestion salariés : un administrateur peut modifier le type de paie de son salarié');
 
--- 6) bascule de contrat (CDI -> CDD) : clôture (date_fin) puis nouveau,
---    jamais deux actifs à la fois — reproduit la séquence réelle de
---    l'écran (UPDATE puis INSERT), pas juste la contrainte en isolation
---    (déjà testée côté contraintes, 02_contraintes.sql)
-set role authenticated;
-set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
-update public.contrat set actif = false, date_fin = current_date
-where salarie_id = 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2' and actif;
-insert into public.contrat (salarie_id, type_contrat, date_debut, actif)
-values ('c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2', 'CDD', current_date, true);
-select count(*) as n from public.contrat where salarie_id = 'c2c2c2c2-c2c2-c2c2-c2c2-c2c2c2c2c2c2' and actif \gset contrat_bascule_
-reset role;
-reset request.jwt.claim.sub;
-
-select test.ok(:contrat_bascule_n = 1, 'gestion salariés : bascule CDI→CDD sans jamais deux contrats actifs à la fois');

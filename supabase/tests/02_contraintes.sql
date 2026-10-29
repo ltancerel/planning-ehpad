@@ -40,12 +40,10 @@ select test.doit_echouer(
   'journee refuse un code evenementiel sans code travail'
 );
 
--- contrat : un seul actif par salarié (index unique partiel, cf. migration 0002)
-insert into public.contrat (salarie_id, type_contrat, date_debut, actif)
-values ('88888888-8888-8888-8888-888888888888', 'CDI', '2020-01-01', true);
-
+-- salarie.type_paie : 3 valeurs possibles seulement (cf. migration
+-- 20261029000001, remplace l'ancien concept de contrat CDI/CDD)
 select test.doit_echouer(
-  $$insert into public.contrat (salarie_id, type_contrat, date_debut, actif)
-    values ('88888888-8888-8888-8888-888888888888', 'CDD', '2026-01-01', true)$$,
-  'un salarié ne peut pas avoir 2 contrats actifs simultanément'
+  $$insert into public.salarie (ehpad_id, service_id, matricule, nom, prenom, presence, type_paie)
+    values ('33333333-3333-3333-3333-333333333333', '77777777-7777-7777-7777-777777777777', 'ZPAI', 'Test', 'Paie', 'Présent', 'autre')$$,
+  'salarie.type_paie rejette une valeur hors 25/M, 30/M, Aucun'
 );
