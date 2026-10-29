@@ -264,41 +264,6 @@ export type Database = {
           },
         ]
       }
-      contrat: {
-        Row: {
-          actif: boolean
-          date_debut: string
-          date_fin: string | null
-          id: string
-          salarie_id: string
-          type_contrat: string
-        }
-        Insert: {
-          actif?: boolean
-          date_debut: string
-          date_fin?: string | null
-          id?: string
-          salarie_id: string
-          type_contrat: string
-        }
-        Update: {
-          actif?: boolean
-          date_debut?: string
-          date_fin?: string | null
-          id?: string
-          salarie_id?: string
-          type_contrat?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contrat_salarie_id_fkey"
-            columns: ["salarie_id"]
-            isOneToOne: false
-            referencedRelation: "salarie"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       ehpad: {
         Row: {
           actif: boolean
@@ -722,6 +687,7 @@ export type Database = {
           prenom: string
           presence: string
           service_id: string
+          type_paie: string
         }
         Insert: {
           alignement_roulement?: string | null
@@ -733,6 +699,7 @@ export type Database = {
           prenom: string
           presence: string
           service_id: string
+          type_paie?: string
         }
         Update: {
           alignement_roulement?: string | null
@@ -744,6 +711,7 @@ export type Database = {
           prenom?: string
           presence?: string
           service_id?: string
+          type_paie?: string
         }
         Relationships: [
           {

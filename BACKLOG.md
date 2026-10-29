@@ -695,6 +695,10 @@ export réel, connecteur paie.
     CDI. Le type de contrat n'est donc pas figé sur CDI : l'export doit proposer
     une **sélection des types de contrat à inclure** (au moins CDI/CDD), CDI
     seul n'étant qu'un cas d'usage parmi d'autres.
+  - _Note du 29/10_ : terminologie CDI/CDD obsolète depuis le remplacement
+    du contrat par le type de paie (`25/M`/`30/M`/`Aucun`, cf. story #34) —
+    à adapter en « sélection des types de paie à inclure » si cette story
+    est un jour réintégrée.
 - **Blocage visuel du planning passé (WAIVED)** — issue #13, sortie de l'EPIC et
   titre GitHub mis à jour le 17/09. Affichage grisé/verrouillé des cellules passées
   dans la grille (visuel uniquement, sans logique de verrouillage réelle). Mise de
@@ -1219,6 +1223,29 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   supprimée »). 6 nouveaux tests DB (le RPC lui-même avait déjà 5 tests
   dédiés depuis sa création, jamais exécutés sur une vraie réconciliation).
   66 tests DB, 11 e2e, tous verts._
+  _**29/10, retour client** : remplacement du concept de contrat (CDI/CDD,
+  historisé dans une table `contrat` séparée, un seul actif à la fois) par
+  un champ `type_paie` simple directement sur `salarie` (`25/M`, `30/M` ou
+  `Aucun`, défaut `Aucun`) — le besoin réel ne correspondait pas à la
+  notion de contrat actif/inactif. Table `contrat` supprimée (0 ligne en
+  PROD au moment de la migration, vérifié avant d'écrire la migration) ;
+  plus de state machine applicative à gérer (c'était l'essentiel de la
+  complexité de l'écran Salariés). Écran Salariés, filtre avancé de la
+  grille Planning et données de démo mis à jour en conséquence.
+  _Impact annexe repéré en vérifiant ce changement_ : le filtre avancé de
+  la grille Planning (panneau « Filtres », critères Manager/Présence/
+  Alignement roulement en plus de celui-ci) n'a en réalité **jamais été
+  branché sur les vraies données salarié** — il continue de lire
+  `FICHES_SALARIES_DEMO`/`ficheDuSalarie` (10 profils de démo fixes, cf.
+  `src/lib/mock-data.ts`) via une table de correspondance par id qui ne
+  contient que ces 10 id de démo. Pour un salarié réel, ces 4 critères
+  renvoient donc toujours "aucune fiche" et l'excluent dès qu'on en coche
+  un seul — un bug pré-existant, pas introduit par ce changement (déjà
+  là avant, le contrat en faisait partie). Non corrigé ici (hors
+  périmètre de la demande, nécessite de brancher le filtre sur les
+  colonnes réelles déjà présentes sur `salarie` — manager,
+  alignement_roulement, presence, type_paie — et de restructurer la
+  logique de filtre en conséquence) ; suggéré comme tâche séparée._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,

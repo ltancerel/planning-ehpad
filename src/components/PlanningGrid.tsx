@@ -257,18 +257,18 @@ export default function PlanningGrid({
     });
   }
 
-  // Filtre avancé (retour client du 22/09) : chaque critère (contrat,
+  // Filtre avancé (retour client du 22/09) : chaque critère (type de paie,
   // présence, manager, service, planning) est indépendant et se combine en
   // ET avec les autres ; plusieurs valeurs cochées dans un même critère se
   // combinent en OU. Un salarié sans fiche (ex. lignes "Besoin") n'a ni
-  // contrat, ni présence, ni manager : il est exclu dès qu'un de ces
+  // type de paie, ni présence, ni manager : il est exclu dès qu'un de ces
   // critères est actif, mais reste filtrable par service (disponible
   // directement sur la ligne du planning, sans fiche).
   function salarieCorrespondAuxFiltres(salarie: Salarie): boolean {
     if (filtres.service.size > 0 && !filtres.service.has(salarie.service)) return false;
 
     const besoinDeFiche =
-      filtres.contrat.size > 0 ||
+      filtres.typePaie.size > 0 ||
       filtres.presence.size > 0 ||
       filtres.manager.size > 0 ||
       filtres.groupeRoulement.size > 0;
@@ -276,7 +276,7 @@ export default function PlanningGrid({
     if (besoinDeFiche && !fiche) return false;
 
     if (fiche) {
-      if (filtres.contrat.size > 0 && !filtres.contrat.has(fiche.contratActif ? "actif" : "inactif")) {
+      if (filtres.typePaie.size > 0 && !filtres.typePaie.has(fiche.typePaie)) {
         return false;
       }
       if (

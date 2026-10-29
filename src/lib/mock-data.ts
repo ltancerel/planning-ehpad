@@ -83,14 +83,15 @@ export const MANAGERS: Manager[] = ["Aucun", "Maîtresse de maison", "IDEC"];
 export type GroupeRoulement = "Équipe A" | "Équipe B" | "Équipe C" | "Équipe D";
 export const GROUPES_ROULEMENT: GroupeRoulement[] = ["Équipe A", "Équipe B", "Équipe C", "Équipe D"];
 
+export type TypePaie = "25/M" | "30/M" | "Aucun";
+
 export type FicheSalarie = {
   id: string;
   matricule: string; // 4 lettres majuscules
   nom: string;
   prenom: string;
   service: string;
-  typeContrat: "CDD" | "CDI";
-  contratActif: boolean;
+  typePaie: TypePaie;
   manager: Manager;
   groupeRoulement: GroupeRoulement;
   presence: "Présent" | "Absent";
@@ -105,8 +106,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "BERNARD",
     prenom: "Claire",
     service: "ADMINISTRATIF",
-    typeContrat: "CDI",
-    contratActif: true,
+    typePaie: "25/M",
     manager: "Aucun",
     groupeRoulement: "Équipe A",
     presence: "Présent",
@@ -117,8 +117,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "LAURENT",
     prenom: "Inès",
     service: "ASH CDD",
-    typeContrat: "CDD",
-    contratActif: true,
+    typePaie: "30/M",
     manager: "IDEC",
     groupeRoulement: "Équipe B",
     presence: "Présent",
@@ -129,8 +128,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "DUPONT",
     prenom: "Marie",
     service: "ADMINISTRATIF",
-    typeContrat: "CDI",
-    contratActif: true,
+    typePaie: "25/M",
     manager: "Aucun",
     groupeRoulement: "Équipe C",
     presence: "Présent",
@@ -141,8 +139,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "MARTIN",
     prenom: "Julie",
     service: "ADMINISTRATIF",
-    typeContrat: "CDI",
-    contratActif: true,
+    typePaie: "30/M",
     manager: "Aucun",
     groupeRoulement: "Équipe D",
     presence: "Présent",
@@ -153,8 +150,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "DURAND",
     prenom: "Sophie",
     service: "ADMINISTRATIF",
-    typeContrat: "CDI",
-    contratActif: true,
+    typePaie: "25/M",
     manager: "Aucun",
     groupeRoulement: "Équipe A",
     presence: "Absent",
@@ -165,8 +161,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "PETIT",
     prenom: "Léa",
     service: "ASH CDD",
-    typeContrat: "CDD",
-    contratActif: true,
+    typePaie: "30/M",
     manager: "IDEC",
     groupeRoulement: "Équipe B",
     presence: "Présent",
@@ -177,8 +172,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "ROBERT",
     prenom: "Emma",
     service: "ASH CDD",
-    typeContrat: "CDD",
-    contratActif: true,
+    typePaie: "25/M",
     manager: "IDEC",
     groupeRoulement: "Équipe C",
     presence: "Présent",
@@ -189,8 +183,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "RICHARD",
     prenom: "Chloé",
     service: "ASH CDD",
-    typeContrat: "CDD",
-    contratActif: false,
+    typePaie: "Aucun",
     manager: "IDEC",
     groupeRoulement: "Équipe D",
     presence: "Absent",
@@ -201,8 +194,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "DUBOIS",
     prenom: "Camille",
     service: "ASH CDD",
-    typeContrat: "CDD",
-    contratActif: true,
+    typePaie: "30/M",
     manager: "IDEC",
     groupeRoulement: "Équipe A",
     presence: "Présent",
@@ -213,8 +205,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "MOREAU",
     prenom: "Lucas",
     service: "ASH CDD",
-    typeContrat: "CDD",
-    contratActif: true,
+    typePaie: "25/M",
     manager: "IDEC",
     groupeRoulement: "Équipe B",
     presence: "Absent",
@@ -225,8 +216,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "SIMON",
     prenom: "Manon",
     service: "IDE",
-    typeContrat: "CDI",
-    contratActif: true,
+    typePaie: "30/M",
     manager: "Maîtresse de maison",
     groupeRoulement: "Équipe C",
     presence: "Présent",
@@ -237,8 +227,7 @@ export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
     nom: "MICHEL",
     prenom: "Anna",
     service: "IDE",
-    typeContrat: "CDI",
-    contratActif: false,
+    typePaie: "Aucun",
     manager: "Maîtresse de maison",
     groupeRoulement: "Équipe D",
     presence: "Absent",

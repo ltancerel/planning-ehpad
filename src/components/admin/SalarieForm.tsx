@@ -40,10 +40,7 @@ export default function SalarieForm({
   const [nom, setNom] = useState(valeurInitiale?.nom ?? "");
   const [prenom, setPrenom] = useState(valeurInitiale?.prenom ?? "");
   const [serviceId, setServiceId] = useState(valeurInitiale?.serviceId ?? services[0]?.id ?? "");
-  const [typeContrat, setTypeContrat] = useState<FicheSalarie["typeContrat"]>(
-    valeurInitiale?.typeContrat ?? "CDI"
-  );
-  const [contratActif, setContratActif] = useState(valeurInitiale?.contratActif ?? true);
+  const [typePaie, setTypePaie] = useState<FicheSalarie["typePaie"]>(valeurInitiale?.typePaie ?? "Aucun");
   const [manager, setManager] = useState<Manager>(valeurInitiale?.manager ?? "Aucun");
   const [groupeRoulement, setGroupeRoulement] = useState<GroupeRoulement>(
     valeurInitiale?.groupeRoulement ?? GROUPES_ROULEMENT[0]
@@ -85,8 +82,7 @@ export default function SalarieForm({
       nom: nom.trim().toUpperCase(),
       prenom: capitaliser(prenom.trim()),
       serviceId,
-      typeContrat,
-      contratActif,
+      typePaie,
       manager,
       alignementRoulement: groupeRoulement,
       presence,
@@ -152,28 +148,17 @@ export default function SalarieForm({
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-zinc-700">Type de contrat</label>
-            <select
-              value={typeContrat}
-              onChange={(e) => setTypeContrat(e.target.value as FicheSalarie["typeContrat"])}
-              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-            >
-              <option value="CDI">CDI</option>
-              <option value="CDD">CDD</option>
-            </select>
-          </div>
-          <div className="flex items-end pb-2">
-            <label className="flex items-center gap-1.5 text-xs font-medium text-zinc-700">
-              <input
-                type="checkbox"
-                checked={contratActif}
-                onChange={(e) => setContratActif(e.target.checked)}
-              />
-              Contrat actif
-            </label>
-          </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-zinc-700">Type de paie</label>
+          <select
+            value={typePaie}
+            onChange={(e) => setTypePaie(e.target.value as FicheSalarie["typePaie"])}
+            className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+          >
+            <option value="Aucun">Aucun</option>
+            <option value="25/M">25/M</option>
+            <option value="30/M">30/M</option>
+          </select>
         </div>
 
         <div className="flex gap-3">

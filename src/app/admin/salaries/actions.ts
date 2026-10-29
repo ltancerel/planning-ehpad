@@ -16,17 +16,16 @@ export type ChampsSalarie = {
   nom: string;
   prenom: string;
   serviceId: string;
-  typeContrat: "CDI" | "CDD";
-  contratActif: boolean;
+  typePaie: "25/M" | "30/M" | "Aucun";
   manager: string;
   alignementRoulement: string;
   presence: "Présent" | "Absent";
 };
 
-// « Passer actif à faux renseigne date_fin dans la même requête » (spec
-// API, issue #26) : géré ici, côté formulaire — clôt l'ancien contrat actif
-// (date_fin = aujourd'hui) avant d'en ouvrir un nouveau si besoin, jamais
-// deux contrats actifs à la fois (index unique partiel déjà posé en base).
+// Type de paie directement sur salarie — remplace l'ancien concept de
+// contrat (CDI/CDD) historisé dans une table séparée (retour client du
+// 29/10 : la notion de contrat actif/inactif ne correspondait pas au
+// besoin réel, cf. migration 20261029000001).
 export async function enregistrerSalarie(
   id: string | undefined,
   champs: ChampsSalarie
@@ -50,12 +49,11 @@ export async function enregistrerSalarie(
     matricule: champs.matricule,
     nom: champs.nom.trim().toUpperCase(),
     prenom: champs.prenom.trim(),
+    type_paie: champs.typePaie,
     manager: champs.manager || null,
     alignement_roulement: champs.alignementRoulement || null,
     presence: champs.presence,
   };
-
-  let salarieId = id;
 
   // .select().single() partout : détecte un 0-ligne-affectée (RLS qui
   // filtre silencieusement) au lieu de rapporter un faux succès — même
@@ -66,54 +64,9 @@ export async function enregistrerSalarie(
       return { error: "Mise à jour du salarié impossible : " + error.message };
     }
   } else {
-    const { data, error } = await supabase.from("salarie").insert(donneesSalarie).select("id").single();
+    const { error } = await supabase.from("salarie").insert(donneesSalarie).select("id").single();
     if (error) {
       return { error: "Création du salarié impossible : " + error.message };
-    }
-    salarieId = data.id;
-  }
-
-  const { data: contratActuel } = await supabase
-    .from("contrat")
-    .select("id, type_contrat")
-    .eq("salarie_id", salarieId!)
-    .eq("actif", true)
-    .maybeSingle();
-
-  const aujourdHui = new Date().toISOString().slice(0, 10);
-
-  if (contratActuel) {
-    if (!champs.contratActif || contratActuel.type_contrat !== champs.typeContrat) {
-      const { error } = await supabase
-        .from("contrat")
-        .update({ actif: false, date_fin: aujourdHui })
-        .eq("id", contratActuel.id)
-        .select()
-        .single();
-      if (error) {
-        return { error: "Clôture du contrat impossible : " + error.message };
-      }
-    }
-    if (champs.contratActif && contratActuel.type_contrat !== champs.typeContrat) {
-      const { error } = await supabase.from("contrat").insert({
-        salarie_id: salarieId!,
-        type_contrat: champs.typeContrat,
-        date_debut: aujourdHui,
-        actif: true,
-      });
-      if (error) {
-        return { error: "Création du nouveau contrat impossible : " + error.message };
-      }
-    }
-  } else if (champs.contratActif) {
-    const { error } = await supabase.from("contrat").insert({
-      salarie_id: salarieId!,
-      type_contrat: champs.typeContrat,
-      date_debut: aujourdHui,
-      actif: true,
-    });
-    if (error) {
-      return { error: "Création du contrat impossible : " + error.message };
     }
   }
 

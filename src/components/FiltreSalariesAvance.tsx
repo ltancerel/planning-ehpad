@@ -1,21 +1,21 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { GroupeRoulement, Manager } from "@/lib/mock-data";
+import type { GroupeRoulement, Manager, TypePaie } from "@/lib/mock-data";
 
 // Filtre avancé de la vue Planning (retour client du 22/09) : remplace
 // l'ancien sélecteur à choix unique (Tous / Présents / Contrat actif / ...)
 // par des critères combinables indépendamment (ET entre critères, OU entre
-// valeurs d'un même critère) — ex. Contrat actif ET Présent, ou Contrat actif
-// ET (Présent OU Absent). Inspiré du panneau de filtres d'HelloWork : un
-// bouton "Filtres" ouvre une fenêtre à sections, les filtres actifs
-// s'affichent ensuite sous forme de jetons retirables individuellement.
-export type Contrat = "actif" | "inactif";
+// valeurs d'un même critère) — ex. Type de paie 25/M ET Présent, ou Type de
+// paie 25/M ET (Présent OU Absent). Inspiré du panneau de filtres
+// d'HelloWork : un bouton "Filtres" ouvre une fenêtre à sections, les
+// filtres actifs s'affichent ensuite sous forme de jetons retirables
+// individuellement.
 export type Presence = "present" | "absent";
 export type EtatPlanning = "avec" | "sans";
 
 export type FiltresAvances = {
-  contrat: Set<Contrat>;
+  typePaie: Set<TypePaie>;
   presence: Set<Presence>;
   manager: Set<Manager>;
   groupeRoulement: Set<GroupeRoulement>;
@@ -25,7 +25,7 @@ export type FiltresAvances = {
 
 export function filtresVides(): FiltresAvances {
   return {
-    contrat: new Set(),
+    typePaie: new Set(),
     presence: new Set(),
     manager: new Set(),
     groupeRoulement: new Set(),
@@ -36,7 +36,7 @@ export function filtresVides(): FiltresAvances {
 
 export function nbFiltresActifs(filtres: FiltresAvances): number {
   return (
-    filtres.contrat.size +
+    filtres.typePaie.size +
     filtres.presence.size +
     filtres.manager.size +
     filtres.groupeRoulement.size +
@@ -45,7 +45,7 @@ export function nbFiltresActifs(filtres: FiltresAvances): number {
   );
 }
 
-const LIBELLES_CONTRAT: Record<Contrat, string> = { actif: "Contrat actif", inactif: "Contrat inactif" };
+const LIBELLES_TYPE_PAIE: Record<TypePaie, string> = { "25/M": "25/M", "30/M": "30/M", Aucun: "Aucun" };
 const LIBELLES_PRESENCE: Record<Presence, string> = { present: "Présent", absent: "Non présent" };
 const LIBELLES_PLANNING: Record<EtatPlanning, string> = { avec: "Avec planning", sans: "Sans planning" };
 
@@ -65,11 +65,11 @@ function pucesActives(
   onChange: (f: FiltresAvances) => void
 ): Puce[] {
   const puces: Puce[] = [];
-  for (const v of filtres.contrat) {
+  for (const v of filtres.typePaie) {
     puces.push({
-      cle: `contrat-${v}`,
-      libelle: LIBELLES_CONTRAT[v],
-      retirer: () => onChange({ ...filtres, contrat: avecValeurBasculee(filtres.contrat, v) }),
+      cle: `typePaie-${v}`,
+      libelle: `Paie ${LIBELLES_TYPE_PAIE[v]}`,
+      retirer: () => onChange({ ...filtres, typePaie: avecValeurBasculee(filtres.typePaie, v) }),
     });
   }
   for (const v of filtres.presence) {
@@ -210,11 +210,11 @@ export function FiltreSalariesBouton({
         <div className="absolute right-0 top-full z-40 mt-1.5 w-[360px] rounded border border-zinc-200 bg-white p-3.5 shadow-lg">
           <div className="grid grid-cols-2 gap-x-4 gap-y-4">
             <SectionCaseACocher
-              titre="Contrat"
-              options={["actif", "inactif"] as Contrat[]}
-              libelle={(v) => LIBELLES_CONTRAT[v]}
-              selection={filtres.contrat}
-              onToggle={(v) => onChange({ ...filtres, contrat: avecValeurBasculee(filtres.contrat, v) })}
+              titre="Type de paie"
+              options={["25/M", "30/M", "Aucun"] as TypePaie[]}
+              libelle={(v) => LIBELLES_TYPE_PAIE[v]}
+              selection={filtres.typePaie}
+              onToggle={(v) => onChange({ ...filtres, typePaie: avecValeurBasculee(filtres.typePaie, v) })}
             />
             <SectionCaseACocher
               titre="Présence"

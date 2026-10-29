@@ -139,13 +139,12 @@ avec un EHPAD vide :
       sélecteur du formulaire Salarié, sans avoir à recharger la page.
 - [ ] Dans le formulaire Salarié, le champ Service apparaît en premier, à
       gauche, à côté du Matricule (retour client du 26/09).
-- [ ] Créer un salarié (matricule 4 lettres, service, type de contrat,
+- [ ] Créer un salarié (matricule 4 lettres, service, type de paie,
       manager, alignement roulement, présence) → apparaît dans le tableau ;
-      recharger la page confirme la persistance.
-- [ ] Modifier ce salarié, notamment repasser son contrat à « inactif » →
-      `date_fin` posée en base (vérifiable via une requête, pas encore
-      affichée à l'écran) ; le rebasculer sur un autre type de contrat
-      (CDD→CDI) en le laissant actif → un seul contrat actif à la fois.
+      recharger la page confirme la persistance. Par défaut (à la
+      création), le type de paie est « Aucun ».
+- [ ] Modifier ce salarié, changer son type de paie (25/M, 30/M, Aucun) →
+      persiste réellement, visible dans le tableau et après rechargement.
 - [ ] Supprimer un salarié → disparaît du tableau.
 - [ ] Avec un compte `manager` ou `utilisateur` connecté : `/admin/salaries`
       affiche l'écran « zone réservée », pas le formulaire.

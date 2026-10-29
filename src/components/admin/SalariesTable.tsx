@@ -17,7 +17,7 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
           <th className="px-3 py-2">Nom</th>
           <th className="px-3 py-2">Prénom</th>
           <th className="px-3 py-2">Service</th>
-          <th className="px-3 py-2">Contrat</th>
+          <th className="px-3 py-2">Type de paie</th>
           <th className="px-3 py-2">Manager</th>
           <th className="px-3 py-2">Alignement roulement</th>
           <th className="px-3 py-2">Présence</th>
@@ -36,15 +36,12 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
             <td className="px-3 py-2">{salarie.prenom}</td>
             <td className="px-3 py-2 text-zinc-600">{salarie.service}</td>
             <td className="px-3 py-2">
-              <span className="mr-1 inline-block rounded bg-zinc-100 px-1.5 py-0.5 text-xs font-medium text-zinc-600">
-                {salarie.typeContrat}
-              </span>
               <span
                 className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${
-                  salarie.contratActif ? "bg-green-100 text-green-700" : "bg-zinc-200 text-zinc-500"
+                  salarie.typePaie === "Aucun" ? "bg-zinc-200 text-zinc-500" : "bg-green-100 text-green-700"
                 }`}
               >
-                {salarie.contratActif ? "Actif" : "Inactif"}
+                {salarie.typePaie}
               </span>
             </td>
             <td className="px-3 py-2 text-zinc-600">{salarie.manager}</td>
