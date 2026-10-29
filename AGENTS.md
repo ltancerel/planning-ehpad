@@ -44,6 +44,14 @@ conformité de ce qui est livré.
 - Les **migrations de schéma** (`supabase/migrations/`) sont pilotées à la
   demande, exclusivement sur la base de données de PROD (seul environnement
   existant pour l'instant — pas de DEV/STAGING, cf. BACKLOG epic #38).
+- **Avant d'écrire une migration de schéma** (y compris pour relâcher ou
+  modifier une contrainte existante), présenter l'analyse d'impact (ce qui
+  change en base, ce que ça change ou non côté Front End, les tests
+  concernés) et attendre une validation explicite du client avant d'écrire
+  le moindre code ou d'appliquer quoi que ce soit — convention actée le
+  29/10, suite à un changement (unicité de `compte.identifiant`) analysé
+  puis directement implémenté et appliqué en PROD dans le même tour, sans
+  étape de validation de l'analyse.
 - **Créer des données** sur la base de données de PROD (au-delà du contenu
   des migrations elles-mêmes — ex. amorçage d'un compte, données de
   référence ajoutées hors migration) n'est **jamais** fait sans accord
