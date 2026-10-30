@@ -29,8 +29,8 @@ export async function enregistrerSalarie(
   id: string | undefined,
   champs: ChampsSalarie
 ): Promise<{ error?: string }> {
-  if (!/^[A-Z]{2,5}$/.test(champs.matricule)) {
-    return { error: "Le matricule doit contenir entre 2 et 5 lettres majuscules." };
+  if (!/^[A-Z0-9]{2,5}$/.test(champs.matricule)) {
+    return { error: "Le matricule doit contenir entre 2 et 5 lettres et/ou chiffres." };
   }
   if (!champs.nom.trim() || !champs.prenom.trim()) {
     return { error: "Le nom et le prénom sont obligatoires." };

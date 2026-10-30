@@ -96,7 +96,7 @@ export type TypePaie = "25/M" | "30/M" | "Aucun";
 
 export type FicheSalarie = {
   id: string;
-  matricule: string; // 2 à 5 lettres majuscules
+  matricule: string; // 2 à 5 lettres et/ou chiffres, majuscules
   nom: string;
   prenom: string;
   service: string;

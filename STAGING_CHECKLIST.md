@@ -144,8 +144,9 @@ avec un EHPAD vide :
       sélecteur du formulaire Salarié, sans avoir à recharger la page.
 - [ ] Dans le formulaire Salarié, le champ Service apparaît en premier, à
       gauche, à côté du Matricule (retour client du 26/09).
-- [ ] Créer un salarié (matricule 2 à 5 lettres, service, type de paie,
-      alignement roulement, présence) → apparaît dans le tableau ;
+- [ ] Créer un salarié (matricule 2 à 5 caractères, lettres et/ou chiffres,
+      service, type de paie, alignement roulement, présence) → apparaît
+      dans le tableau ;
       recharger la page confirme la persistance. Par défaut (à la
       création), le type de paie est « Aucun ».
 - [ ] Modifier ce salarié, changer son type de paie (25/M, 30/M, Aucun) →

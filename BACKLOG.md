@@ -1498,16 +1498,19 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   [Artifact Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
   (domaine B) mis à jour en conséquence.
 
-- [x] **11. Autoriser le matricule des salariés de 2 à 5 lettres (au lieu d'exactement 4)**
+- [x] **11. Autoriser le matricule des salariés de 2 à 5 caractères, lettres et/ou chiffres (au lieu d'exactement 4 lettres)**
   Retour client du 30/10 : la contrainte « exactement 4 lettres » était
   une règle purement applicative, sans contrainte de schéma en base
   (`salarie.matricule` est un simple `text not null`, contraint seulement
   par `unique (ehpad_id, matricule)`) — donc aucun impact base de
-  données, aucune migration nécessaire.
-  _Statut : fait._ Validation ajustée à `2 à 5 lettres majuscules` (regex
-  `^[A-Z]{2,5}$`) dans `SalarieForm.tsx` (saisie, label, placeholder) et
-  `admin/salaries/actions.ts` (validation serveur), et dans le script
-  d'import en masse (`scripts/planning-ehpad-tool.py`, `en_matricule()`).
+  données, aucune migration nécessaire. D'abord assoupli à « 2 à 5
+  lettres », puis corrigé le même jour suite à un import réel en échec
+  sur des matricules contenant un chiffre (`RANG3`, `YOUS2`, `ALVA1`).
+  _Statut : fait._ Validation finale : `2 à 5 lettres et/ou chiffres`
+  (regex `^[A-Z0-9]{2,5}$`) dans `SalarieForm.tsx` (saisie, label,
+  placeholder) et `admin/salaries/actions.ts` (validation serveur), et
+  dans le script d'import en masse (`scripts/planning-ehpad-tool.py`,
+  `en_matricule()`, `isalnum()` au lieu de `isalpha()`).
   `STAGING_CHECKLIST.md` et le commentaire de type dans `mock-data.ts`
   mis à jour en conséquence. Aucun impact sur les tests DB (aucune
   contrainte ne portait sur le format).
