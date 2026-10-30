@@ -1470,6 +1470,34 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   jour (`02_contraintes.sql`). [Artifact Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
   (domaine A) mis à jour en conséquence.
 
+- [x] **10. Supprimer le manager du salarié, devenu redondant avec service.responsable_id**
+  Retour client du 30/10, suite à la story #9 ci-dessus : l'écran de
+  création de salarié proposait IDEC et Maîtresse de maison comme manager
+  alors qu'aucun des deux n'existait réellement dans l'établissement —
+  `salarie.manager` n'avait jamais été qu'une étiquette libre, sans lien
+  avec un compte réel (point ouvert déjà signalé dans l'artifact Modèle de
+  données). Puisque chaque salarié a déjà un `service_id` obligatoire et
+  que chaque service a désormais un `responsable_id` (story #9), le
+  manager se déduit sans ressaisie : il n'est plus demandé à la création
+  ou modification d'un salarié, seulement son service.
+  _Statut : fait._ Migration `20261030000001_supprimer_salarie_manager.sql`
+  (colonne `manager` supprimée — 0 ligne `salarie` en PROD vérifiée avant
+  et juste avant l'application), appliquée sur PROD, auditée
+  (`get_advisors`, propre). Écran Salariés (`SalarieForm.tsx`,
+  `SalariesTable.tsx`, `actions.ts`, `page.tsx`), filtre avancé de la grille
+  Planning (`FiltreSalariesAvance.tsx`, `PlanningGrid.tsx` — le critère
+  Manager est retiré, le raccourci « Mes services » de la story #9 couvre
+  déjà le besoin de filtrage rapide), écran Émargement
+  (`app/emargement/page.tsx`) et données de démo (`mock-data.ts`, type
+  `Manager`/`MANAGERS` retirés) mis à jour en conséquence. Script
+  d'import en masse (`scripts/planning-ehpad-tool.py`) mis à jour pour ne
+  plus attendre de colonne Manager dans le fichier Excel du client (une
+  colonne Manager présente dans un fichier existant est désormais ignorée
+  silencieusement, comme les anciennes colonnes de contrat). Tests DB
+  inchangés (aucune contrainte ni trigger ne portait sur cette colonne).
+  [Artifact Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  (domaine B) mis à jour en conséquence.
+
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
