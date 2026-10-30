@@ -671,7 +671,6 @@ export type Database = {
           alignement_roulement: string | null
           ehpad_id: string
           id: string
-          manager: string | null
           matricule: string
           nom: string
           prenom: string
@@ -683,7 +682,6 @@ export type Database = {
           alignement_roulement?: string | null
           ehpad_id: string
           id?: string
-          manager?: string | null
           matricule: string
           nom: string
           prenom: string
@@ -695,7 +693,6 @@ export type Database = {
           alignement_roulement?: string | null
           ehpad_id?: string
           id?: string
-          manager?: string | null
           matricule?: string
           nom?: string
           prenom?: string
