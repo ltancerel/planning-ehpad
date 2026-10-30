@@ -54,12 +54,12 @@ export default function SalarieForm({
     : undefined;
 
   function changerMatricule(saisie: string) {
-    setMatricule(saisie.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 4));
+    setMatricule(saisie.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 5));
   }
 
   function valider() {
-    if (!/^[A-Z]{4}$/.test(matricule)) {
-      setErreur("Le matricule doit contenir exactement 4 lettres majuscules.");
+    if (!/^[A-Z]{2,5}$/.test(matricule)) {
+      setErreur("Le matricule doit contenir entre 2 et 5 lettres majuscules.");
       return;
     }
     const autresMatricules = matriculesExistants.filter((m) => m !== valeurInitiale?.matricule);
@@ -116,13 +116,13 @@ export default function SalarieForm({
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700">
-              Matricule (4 lettres)
+              Matricule (2 à 5 lettres)
             </label>
             <input
               value={matricule}
               onChange={(e) => changerMatricule(e.target.value)}
               className="w-24 rounded border border-zinc-300 px-2 py-1.5 text-sm font-semibold uppercase"
-              placeholder="ABCD"
+              placeholder="ABCDE"
             />
           </div>
         </div>

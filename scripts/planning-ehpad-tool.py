@@ -233,8 +233,8 @@ def en_alignement_roulement(valeur):
 
 def en_matricule(valeur):
     v = (texte(valeur) or "").upper()
-    if len(v) != 4 or not v.isalpha():
-        raise ValueError(f"matricule « {valeur} » invalide (4 lettres exactement)")
+    if not (2 <= len(v) <= 5) or not v.isalpha():
+        raise ValueError(f"matricule « {valeur} » invalide (de 2 à 5 lettres)")
     return v
 
 
