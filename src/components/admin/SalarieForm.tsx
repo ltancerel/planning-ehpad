@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import type { AffectationRoulement, GroupeRoulement, FicheSalarie, Manager, Roulement } from "@/lib/mock-data";
-import { MANAGERS, GROUPES_ROULEMENT, affectationActuelle } from "@/lib/mock-data";
+import type { AffectationRoulement, GroupeRoulement, FicheSalarie, Roulement } from "@/lib/mock-data";
+import { GROUPES_ROULEMENT, affectationActuelle } from "@/lib/mock-data";
 import { formatDateISO, formatJourMois, parseDateISO } from "@/lib/dates";
 import RoulementSalariePanel from "@/components/admin/RoulementSalariePanel";
 import type { ChampsSalarie } from "@/app/admin/salaries/actions";
@@ -41,7 +41,6 @@ export default function SalarieForm({
   const [prenom, setPrenom] = useState(valeurInitiale?.prenom ?? "");
   const [serviceId, setServiceId] = useState(valeurInitiale?.serviceId ?? services[0]?.id ?? "");
   const [typePaie, setTypePaie] = useState<FicheSalarie["typePaie"]>(valeurInitiale?.typePaie ?? "Aucun");
-  const [manager, setManager] = useState<Manager>(valeurInitiale?.manager ?? "Aucun");
   const [groupeRoulement, setGroupeRoulement] = useState<GroupeRoulement>(
     valeurInitiale?.groupeRoulement ?? GROUPES_ROULEMENT[0]
   );
@@ -83,7 +82,6 @@ export default function SalarieForm({
       prenom: capitaliser(prenom.trim()),
       serviceId,
       typePaie,
-      manager,
       alignementRoulement: groupeRoulement,
       presence,
     });
@@ -161,35 +159,19 @@ export default function SalarieForm({
           </select>
         </div>
 
-        <div className="flex gap-3">
-          <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-zinc-700">Manager</label>
-            <select
-              value={manager}
-              onChange={(e) => setManager(e.target.value as Manager)}
-              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-            >
-              {MANAGERS.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1">
-            <label className="mb-1 block text-xs font-medium text-zinc-700">Alignement roulement</label>
-            <select
-              value={groupeRoulement}
-              onChange={(e) => setGroupeRoulement(e.target.value as GroupeRoulement)}
-              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-            >
-              {GROUPES_ROULEMENT.map((eq) => (
-                <option key={eq} value={eq}>
-                  {eq}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label className="mb-1 block text-xs font-medium text-zinc-700">Alignement roulement</label>
+          <select
+            value={groupeRoulement}
+            onChange={(e) => setGroupeRoulement(e.target.value as GroupeRoulement)}
+            className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+          >
+            {GROUPES_ROULEMENT.map((eq) => (
+              <option key={eq} value={eq}>
+                {eq}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="rounded border border-zinc-200 p-3">

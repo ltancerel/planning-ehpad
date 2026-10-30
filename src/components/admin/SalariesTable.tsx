@@ -18,7 +18,6 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
           <th className="px-3 py-2">Prénom</th>
           <th className="px-3 py-2">Service</th>
           <th className="px-3 py-2">Type de paie</th>
-          <th className="px-3 py-2">Manager</th>
           <th className="px-3 py-2">Alignement roulement</th>
           <th className="px-3 py-2">Présence</th>
           <th className="px-3 py-2" />
@@ -44,7 +43,6 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
                 {salarie.typePaie}
               </span>
             </td>
-            <td className="px-3 py-2 text-zinc-600">{salarie.manager}</td>
             <td className="px-3 py-2 text-zinc-600">{salarie.groupeRoulement}</td>
             <td className="px-3 py-2">
               <span
@@ -73,7 +71,7 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
         ))}
         {salaries.length === 0 && (
           <tr>
-            <td colSpan={9} className="px-3 py-6 text-center text-sm text-zinc-400">
+            <td colSpan={8} className="px-3 py-6 text-center text-sm text-zinc-400">
               Aucun salarié.
             </td>
           </tr>

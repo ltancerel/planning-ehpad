@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { GroupeRoulement, Manager, TypePaie } from "@/lib/mock-data";
+import type { GroupeRoulement, TypePaie } from "@/lib/mock-data";
 
 // Filtre avancé de la vue Planning (retour client du 22/09) : remplace
 // l'ancien sélecteur à choix unique (Tous / Présents / Contrat actif / ...)
@@ -17,7 +17,6 @@ export type EtatPlanning = "avec" | "sans";
 export type FiltresAvances = {
   typePaie: Set<TypePaie>;
   presence: Set<Presence>;
-  manager: Set<Manager>;
   groupeRoulement: Set<GroupeRoulement>;
   service: Set<string>;
   planning: Set<EtatPlanning>;
@@ -27,7 +26,6 @@ export function filtresVides(): FiltresAvances {
   return {
     typePaie: new Set(),
     presence: new Set(),
-    manager: new Set(),
     groupeRoulement: new Set(),
     service: new Set(),
     planning: new Set(),
@@ -38,7 +36,6 @@ export function nbFiltresActifs(filtres: FiltresAvances): number {
   return (
     filtres.typePaie.size +
     filtres.presence.size +
-    filtres.manager.size +
     filtres.groupeRoulement.size +
     filtres.service.size +
     filtres.planning.size
@@ -77,13 +74,6 @@ function pucesActives(
       cle: `presence-${v}`,
       libelle: LIBELLES_PRESENCE[v],
       retirer: () => onChange({ ...filtres, presence: avecValeurBasculee(filtres.presence, v) }),
-    });
-  }
-  for (const v of filtres.manager) {
-    puces.push({
-      cle: `manager-${v}`,
-      libelle: v === "Aucun" ? "Sans manager" : v,
-      retirer: () => onChange({ ...filtres, manager: avecValeurBasculee(filtres.manager, v) }),
     });
   }
   for (const v of filtres.groupeRoulement) {
@@ -160,7 +150,6 @@ export function FiltreSalariesBouton({
   filtres,
   onChange,
   services,
-  managers,
   groupesRoulement,
   nbResultats,
   mesServices,
@@ -168,7 +157,6 @@ export function FiltreSalariesBouton({
   filtres: FiltresAvances;
   onChange: (f: FiltresAvances) => void;
   services: string[];
-  managers: Manager[];
   groupesRoulement: GroupeRoulement[];
   nbResultats: number;
   // Services dont le compte connecté est responsable (retour client du
@@ -227,13 +215,6 @@ export function FiltreSalariesBouton({
               libelle={(v) => LIBELLES_PRESENCE[v]}
               selection={filtres.presence}
               onToggle={(v) => onChange({ ...filtres, presence: avecValeurBasculee(filtres.presence, v) })}
-            />
-            <SectionCaseACocher
-              titre="Manager"
-              options={managers}
-              libelle={(v) => (v === "Aucun" ? "Sans manager" : v)}
-              selection={filtres.manager}
-              onToggle={(v) => onChange({ ...filtres, manager: avecValeurBasculee(filtres.manager, v) })}
             />
             <SectionCaseACocher
               titre="Alignement roulement"

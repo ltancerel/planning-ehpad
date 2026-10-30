@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PlanningGrid from "@/components/PlanningGrid";
-import { GROUPES_ROULEMENT, type GroupeRoulement, type Manager, type ProfilUtilisateur, type TypePaie } from "@/lib/mock-data";
+import { GROUPES_ROULEMENT, type GroupeRoulement, type ProfilUtilisateur, type TypePaie } from "@/lib/mock-data";
 import type { HoraireCategorie, HoraireCode, TypeEvenement } from "@/lib/horaire-codes";
 
 const LABEL_TYPE_COMPTE: Record<string, ProfilUtilisateur["typeUtilisateur"]> = {
@@ -43,7 +43,7 @@ export default async function Home() {
 
   const { data: salariesData } = await supabase
     .from("salarie")
-    .select("id, nom, prenom, manager, alignement_roulement, presence, type_paie, service:service_id(nom)")
+    .select("id, nom, prenom, alignement_roulement, presence, type_paie, service:service_id(nom)")
     .order("nom");
 
   const salaries = (salariesData ?? []).map((s) => ({
@@ -51,7 +51,6 @@ export default async function Home() {
     nom: s.nom,
     prenom: s.prenom,
     service: s.service?.nom ?? "",
-    manager: (s.manager as Manager | null) ?? "Aucun",
     groupeRoulement: (s.alignement_roulement as GroupeRoulement | null) ?? GROUPES_ROULEMENT[0],
     presence: s.presence === "Absent" ? ("Absent" as const) : ("Présent" as const),
     typePaie: s.type_paie as TypePaie,

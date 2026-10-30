@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { GROUPES_ROULEMENT, type Manager, type GroupeRoulement, type TypePaie } from "@/lib/mock-data";
+import { GROUPES_ROULEMENT, type GroupeRoulement, type TypePaie } from "@/lib/mock-data";
 import type { ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
 import SalariesAdminClient from "./SalariesAdminClient";
 
@@ -11,7 +11,7 @@ export default async function SalariesAdminPage() {
   const { data: salariesData } = await supabase
     .from("salarie")
     .select(
-      "id, matricule, nom, prenom, manager, alignement_roulement, presence, type_paie, service:service_id(id, nom)"
+      "id, matricule, nom, prenom, alignement_roulement, presence, type_paie, service:service_id(id, nom)"
     )
     .order("nom");
 
@@ -23,7 +23,6 @@ export default async function SalariesAdminPage() {
     service: s.service?.nom ?? "",
     serviceId: s.service?.id ?? "",
     typePaie: s.type_paie as TypePaie,
-    manager: (s.manager as Manager | null) ?? "Aucun",
     groupeRoulement: (s.alignement_roulement as GroupeRoulement | null) ?? GROUPES_ROULEMENT[0],
     presence: s.presence === "Absent" ? "Absent" : "Présent",
   }));

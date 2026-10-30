@@ -171,16 +171,17 @@ def indexer_colonnes(entetes, colonnes, obligatoires, nom_fichier):
 # =====================================================================
 
 # Correspondance champ de l'application -> intitulé de colonne attendu dans
-# l'Excel. "Contrat Actif" et "Type de contrat" (ancien modèle, table contrat
-# supprimée le 29/10) ne sont plus reconnues : une colonne de ce nom encore
-# présente dans un fichier client est silencieusement ignorée, remplacée par
-# "Type de paie".
+# l'Excel. "Contrat Actif"/"Type de contrat" (ancien modèle contrat,
+# supprimé le 29/10) et "Manager" (étiquette figée sans lien avec un vrai
+# compte, retirée le 30/10 — le vrai responsable se lit via
+# service.responsable_id, écran Utilisateurs) ne sont plus reconnues : une
+# colonne de ce nom encore présente dans un fichier client est
+# silencieusement ignorée.
 COLONNES_SALARIES = {
     "matricule": "Matricule",
     "nom": "Nom",
     "prenom": "Prénom",
     "service": "Service",
-    "manager": "Manager",
     "type_paie": "Type de paie",
     "alignement_roulement": "Alignement roulement",
     "presence": "Présence",
@@ -189,7 +190,6 @@ COLONNES_SALARIES = {
 }
 OBLIGATOIRES_SALARIES = ["matricule", "nom", "prenom", "service"]
 
-MANAGERS_VALIDES = {"Aucun", "Maîtresse de maison", "IDEC"}
 TYPES_PAIE_VALIDES = {"Aucun", "25/M", "30/M"}
 GROUPES_ROULEMENT_VALIDES = {"Équipe A", "Équipe B", "Équipe C", "Équipe D"}
 # Certains fichiers client expriment l'alignement roulement en Paire/Impaire
@@ -204,16 +204,6 @@ def en_presence(valeur):
     if v in ("absent", "a", "non"):
         return "Absent"
     raise ValueError(f"présence « {valeur} » invalide (Présent ou Absent)")
-
-
-def en_manager(valeur):
-    v = texte(valeur)
-    if v is None or normaliser(v) in ("", "aucun", "aucune", "-"):
-        return "Aucun"
-    for m in MANAGERS_VALIDES:
-        if normaliser(m) == normaliser(v):
-            return m
-    raise ValueError(f"manager « {valeur} » invalide ({', '.join(sorted(MANAGERS_VALIDES))})")
 
 
 def en_type_paie(valeur):
@@ -292,7 +282,6 @@ def preparer_import_salaries(db, chemin, feuille, ehpad_id):
                 "matricule": matricule,
                 "nom": nom.upper(),
                 "prenom": prenom[:1].upper() + prenom[1:].lower(),
-                "manager": en_manager(val(ligne, "manager")),
                 "alignement_roulement": en_alignement_roulement(val(ligne, "alignement_roulement")),
                 "presence": en_presence(val(ligne, "presence")),
                 "type_paie": en_type_paie(val(ligne, "type_paie")),

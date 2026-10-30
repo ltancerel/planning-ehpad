@@ -17,7 +17,6 @@ export type ChampsSalarie = {
   prenom: string;
   serviceId: string;
   typePaie: "25/M" | "30/M" | "Aucun";
-  manager: string;
   alignementRoulement: string;
   presence: "Présent" | "Absent";
 };
@@ -50,7 +49,6 @@ export async function enregistrerSalarie(
     nom: champs.nom.trim().toUpperCase(),
     prenom: champs.prenom.trim(),
     type_paie: champs.typePaie,
-    manager: champs.manager || null,
     alignement_roulement: champs.alignementRoulement || null,
     presence: champs.presence,
   };

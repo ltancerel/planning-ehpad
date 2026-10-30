@@ -7,7 +7,6 @@ export type Salarie = {
   nom: string;
   prenom: string;
   service: string;
-  manager: Manager;
   groupeRoulement: GroupeRoulement;
   presence: "Présent" | "Absent";
   typePaie: TypePaie;
@@ -85,9 +84,6 @@ export const UTILISATEURS_DEMO: Utilisateur[] = [
   },
 ];
 
-export type Manager = "Aucun" | "Maîtresse de maison" | "IDEC";
-export const MANAGERS: Manager[] = ["Aucun", "Maîtresse de maison", "IDEC"];
-
 // Regroupement salarié à valeurs "Équipe A/B/C/D" (ajouté le 23/09), affiché
 // à l'écran sous le libellé "Alignement roulement" (formulaire, colonne de
 // liste, filtre) plutôt que "Équipe" — distinct du roulement horaire (type
@@ -105,147 +101,9 @@ export type FicheSalarie = {
   prenom: string;
   service: string;
   typePaie: TypePaie;
-  manager: Manager;
   groupeRoulement: GroupeRoulement;
   presence: "Présent" | "Absent";
 };
-
-// Fiches salariés de démo (noms fictifs, cf. décision de ne jamais utiliser de
-// vraies identités dans les données de démonstration).
-export const FICHES_SALARIES_DEMO: FicheSalarie[] = [
-  {
-    id: "fs1",
-    matricule: "CBRD",
-    nom: "BERNARD",
-    prenom: "Claire",
-    service: "ADMINISTRATIF",
-    typePaie: "25/M",
-    manager: "Aucun",
-    groupeRoulement: "Équipe A",
-    presence: "Présent",
-  },
-  {
-    id: "fs2",
-    matricule: "LINS",
-    nom: "LAURENT",
-    prenom: "Inès",
-    service: "ASH CDD",
-    typePaie: "30/M",
-    manager: "IDEC",
-    groupeRoulement: "Équipe B",
-    presence: "Présent",
-  },
-  {
-    id: "fs3",
-    matricule: "DUPM",
-    nom: "DUPONT",
-    prenom: "Marie",
-    service: "ADMINISTRATIF",
-    typePaie: "25/M",
-    manager: "Aucun",
-    groupeRoulement: "Équipe C",
-    presence: "Présent",
-  },
-  {
-    id: "fs4",
-    matricule: "MARJ",
-    nom: "MARTIN",
-    prenom: "Julie",
-    service: "ADMINISTRATIF",
-    typePaie: "30/M",
-    manager: "Aucun",
-    groupeRoulement: "Équipe D",
-    presence: "Présent",
-  },
-  {
-    id: "fs5",
-    matricule: "DURS",
-    nom: "DURAND",
-    prenom: "Sophie",
-    service: "ADMINISTRATIF",
-    typePaie: "25/M",
-    manager: "Aucun",
-    groupeRoulement: "Équipe A",
-    presence: "Absent",
-  },
-  {
-    id: "fs6",
-    matricule: "PETL",
-    nom: "PETIT",
-    prenom: "Léa",
-    service: "ASH CDD",
-    typePaie: "30/M",
-    manager: "IDEC",
-    groupeRoulement: "Équipe B",
-    presence: "Présent",
-  },
-  {
-    id: "fs7",
-    matricule: "ROBE",
-    nom: "ROBERT",
-    prenom: "Emma",
-    service: "ASH CDD",
-    typePaie: "25/M",
-    manager: "IDEC",
-    groupeRoulement: "Équipe C",
-    presence: "Présent",
-  },
-  {
-    id: "fs8",
-    matricule: "RICC",
-    nom: "RICHARD",
-    prenom: "Chloé",
-    service: "ASH CDD",
-    typePaie: "Aucun",
-    manager: "IDEC",
-    groupeRoulement: "Équipe D",
-    presence: "Absent",
-  },
-  {
-    id: "fs9",
-    matricule: "DUBC",
-    nom: "DUBOIS",
-    prenom: "Camille",
-    service: "ASH CDD",
-    typePaie: "30/M",
-    manager: "IDEC",
-    groupeRoulement: "Équipe A",
-    presence: "Présent",
-  },
-  {
-    id: "fs10",
-    matricule: "MORL",
-    nom: "MOREAU",
-    prenom: "Lucas",
-    service: "ASH CDD",
-    typePaie: "25/M",
-    manager: "IDEC",
-    groupeRoulement: "Équipe B",
-    presence: "Absent",
-  },
-  {
-    id: "fs11",
-    matricule: "SIMM",
-    nom: "SIMON",
-    prenom: "Manon",
-    service: "IDE",
-    typePaie: "30/M",
-    manager: "Maîtresse de maison",
-    groupeRoulement: "Équipe C",
-    presence: "Présent",
-  },
-  {
-    id: "fs12",
-    matricule: "MICA",
-    nom: "MICHEL",
-    prenom: "Anna",
-    service: "IDE",
-    typePaie: "Aucun",
-    manager: "Maîtresse de maison",
-    groupeRoulement: "Équipe D",
-    presence: "Absent",
-  },
-];
 
 // Un roulement est une structure répétitive (pattern) d'horaires sur une ou
 // plusieurs semaines (cf. CDC). Chaque semaine du motif est un bloc complet
@@ -322,13 +180,11 @@ export function affectationActuelle(
 }
 
 // Pont temporaire entre les deux représentations du salarié dans cette
-// maquette (clé = Salarie.id de la vue Planning, valeur = FicheSalarie.id de
-// l'admin) : cf. point ouvert "deux représentations distinctes du salarié".
-// Couvre désormais tous les salariés réels (hors lignes "Besoin", qui n'ont
-// pas de fiche) pour permettre à la grille Planning de retrouver le
-// roulement actuel d'un salarié ET son contrat/présence (cf. story #19 —
-// filtre d'affichage), en attendant l'unification des deux modèles au vrai
-// backend.
+// maquette (clé = Salarie.id de la vue Planning, valeur = id de fiche admin)
+// : cf. point ouvert "deux représentations distinctes du salarié". Permet à
+// la grille Planning de retrouver le roulement actuel d'un salarié (via
+// AFFECTATIONS_ROULEMENT_DEMO ci-dessous), en attendant l'unification des
+// deux modèles au vrai backend — story #35 restante.
 export const CORRESPONDANCE_SALARIE_FICHE_DEMO: Record<string, string> = {
   "1": "fs3", // DUPONT Marie
   "2": "fs4", // MARTIN Julie
@@ -343,14 +199,6 @@ export const CORRESPONDANCE_SALARIE_FICHE_DEMO: Record<string, string> = {
   "14": "fs11", // SIMON Manon
   "15": "fs12", // MICHEL Anna
 };
-
-// Fiche salarié (contrat/présence) d'un salarié de la vue Planning, via le
-// pont ci-dessus — undefined pour un salarié sans fiche (ex. lignes
-// "Besoin", qui ne sont pas de vrais salariés).
-export function ficheDuSalarie(salarieId: string): FicheSalarie | undefined {
-  const ficheId = CORRESPONDANCE_SALARIE_FICHE_DEMO[salarieId];
-  return ficheId ? FICHES_SALARIES_DEMO.find((f) => f.id === ficheId) : undefined;
-}
 
 export type JourFerie = {
   date: string; // ISO yyyy-mm-dd

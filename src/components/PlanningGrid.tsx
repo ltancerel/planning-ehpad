@@ -3,7 +3,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
-  MANAGERS,
   GROUPES_ROULEMENT,
   ROULEMENTS_DEMO,
   AFFECTATIONS_ROULEMENT_DEMO,
@@ -257,13 +256,14 @@ export default function PlanningGrid({
   }
 
   // Filtre avancé (retour client du 22/09) : chaque critère (type de paie,
-  // présence, manager, service, planning) est indépendant et se combine en
-  // ET avec les autres ; plusieurs valeurs cochées dans un même critère se
+  // présence, service, planning) est indépendant et se combine en ET avec
+  // les autres ; plusieurs valeurs cochées dans un même critère se
   // combinent en OU. Branché sur les vraies données du salarié depuis le
-  // 29/10 (retour client) — ces 4 champs sont directement sur la table
-  // salarie, plus besoin de la fiche de démo séparée qui ne couvrait que
-  // les 10 salariés mock et excluait silencieusement tout salarié réel dès
-  // qu'un de ces filtres était coché.
+  // 29/10 (retour client). Critère Manager retiré le 30/10 (retour client)
+  // : salarie.manager était une étiquette figée (Aucun/Maîtresse de
+  // maison/IDEC) sans lien avec un vrai compte — le vrai responsable se lit
+  // désormais via service.responsable_id (écran Utilisateurs), filtrable en
+  // un clic depuis le critère Service grâce au raccourci "Mes services".
   function salarieCorrespondAuxFiltres(salarie: Salarie): boolean {
     if (filtres.service.size > 0 && !filtres.service.has(salarie.service)) return false;
     if (filtres.typePaie.size > 0 && !filtres.typePaie.has(salarie.typePaie)) return false;
@@ -273,7 +273,6 @@ export default function PlanningGrid({
     ) {
       return false;
     }
-    if (filtres.manager.size > 0 && !filtres.manager.has(salarie.manager)) return false;
     if (filtres.groupeRoulement.size > 0 && !filtres.groupeRoulement.has(salarie.groupeRoulement)) {
       return false;
     }
@@ -760,7 +759,6 @@ export default function PlanningGrid({
               filtres={filtres}
               onChange={setFiltres}
               services={servicesOrdre}
-              managers={MANAGERS}
               groupesRoulement={GROUPES_ROULEMENT}
               nbResultats={salariesOrdonnes.length}
               mesServices={utilisateur.mesServices}
