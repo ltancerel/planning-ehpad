@@ -86,3 +86,55 @@ reset request.jwt.claim.sub;
 select test.ok(:'type_paie_defaut_type_paie' = 'Aucun', 'gestion salariés : le type de paie par défaut est "Aucun" à la création');
 select test.ok(:'type_paie_modifie_type_paie' = '25/M', 'gestion salariés : un administrateur peut modifier le type de paie de son salarié');
 
+-- 6) un administrateur peut renommer un service de son EHPAD (retour
+--    client du 30/10 : jusqu'ici aucun moyen de modifier un service créé)
+set role authenticated;
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+insert into public.service (id, ehpad_id, nom, ordre)
+values ('d1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1', '33333333-3333-3333-3333-333333333333', 'Temp Renommage', 101);
+update public.service set nom = 'Nouveau Nom' where id = 'd1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1';
+select nom from public.service where id = 'd1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1' \gset service_renomme_
+reset role;
+reset request.jwt.claim.sub;
+
+select test.ok(:'service_renomme_nom' = 'Nouveau Nom', 'gestion salariés : un administrateur peut renommer un service de son EHPAD');
+
+-- 7) un manager ne peut pas renommer un service (RLS filtre silencieusement, UPDATE 0 ligne)
+set role authenticated;
+set request.jwt.claim.sub = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa';
+update public.service set nom = 'Modifié par manager' where id = 'd1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1';
+select nom from public.service where id = 'd1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1' \gset service_inchange_
+reset role;
+reset request.jwt.claim.sub;
+
+select test.ok(:'service_inchange_nom' = 'Nouveau Nom', 'gestion salariés : un manager ne peut pas renommer un service (RLS filtre silencieusement, UPDATE 0 ligne)');
+
+-- 8) un administrateur ne peut pas supprimer un service encore utilisé par
+--    un salarié (salarie.service_id est "on delete restrict")
+set role authenticated;
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+
+do $$
+declare bloque boolean := false;
+begin
+  begin
+    delete from public.service where id = '77777777-7777-7777-7777-777777777777';
+  exception when foreign_key_violation then
+    bloque := true;
+  end;
+  perform test.ok(bloque, 'gestion salariés : un administrateur ne peut pas supprimer un service encore utilisé par un salarié');
+end $$;
+
+reset role;
+reset request.jwt.claim.sub;
+
+-- 9) un administrateur peut supprimer un service sans salarié rattaché
+set role authenticated;
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+delete from public.service where id = 'd1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1';
+select count(*) as n from public.service where id = 'd1d1d1d1-d1d1-d1d1-d1d1-d1d1d1d1d1d1' \gset service_supprime_
+reset role;
+reset request.jwt.claim.sub;
+
+select test.ok(:service_supprime_n = 0, 'gestion salariés : un administrateur peut supprimer un service sans salarié rattaché');
+

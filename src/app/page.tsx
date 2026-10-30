@@ -35,7 +35,7 @@ export default async function Home() {
 
   const { data: ehpad } = await supabase.from("ehpad").select("nom, logo_base64").single();
 
-  const { data: services } = await supabase.from("service").select("nom, responsable_id").order("ordre");
+  const { data: services } = await supabase.from("service").select("nom, responsable_id").order("nom");
   const mesServices = (services ?? []).filter((s) => s.responsable_id === user.id).map((s) => s.nom);
 
   const { data: joursFeriesData } = await supabase.from("jour_ferie").select("date").eq("actif", true);

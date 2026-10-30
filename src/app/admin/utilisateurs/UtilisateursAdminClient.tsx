@@ -4,7 +4,14 @@ import { useState, useTransition } from "react";
 import type { Utilisateur } from "@/lib/mock-data";
 import UtilisateursTable from "@/components/admin/UtilisateursTable";
 import UtilisateurForm from "@/components/admin/UtilisateurForm";
-import { creerService, creerUtilisateur, modifierUtilisateur, supprimerUtilisateur } from "./actions";
+import {
+  creerService,
+  creerUtilisateur,
+  modifierService,
+  modifierUtilisateur,
+  supprimerService,
+  supprimerUtilisateur,
+} from "./actions";
 
 export default function UtilisateursAdminClient({
   utilisateurs,
@@ -19,6 +26,8 @@ export default function UtilisateursAdminClient({
   const [messageConfirmation, setMessageConfirmation] = useState<string | null>(null);
   const [nouveauService, setNouveauService] = useState("");
   const [formulaireServiceOuvert, setFormulaireServiceOuvert] = useState(false);
+  const [serviceEnRenommage, setServiceEnRenommage] = useState<string | null>(null);
+  const [nomServiceRenomme, setNomServiceRenomme] = useState("");
   const [pending, demarrer] = useTransition();
 
   // Pour chaque service, qui en est déjà responsable (si quelqu'un) —
@@ -105,6 +114,29 @@ export default function UtilisateursAdminClient({
     });
   }
 
+  function ouvrirRenommageService(service: { id: string; nom: string }) {
+    setErreur(null);
+    setServiceEnRenommage(service.id);
+    setNomServiceRenomme(service.nom);
+  }
+
+  function renommerService() {
+    if (!serviceEnRenommage || !nomServiceRenomme.trim()) return;
+    demarrer(async () => {
+      const resultat = await modifierService(serviceEnRenommage, nomServiceRenomme.trim());
+      if (resultat?.error) setErreur(resultat.error);
+      else setServiceEnRenommage(null);
+    });
+  }
+
+  function supprimerServiceConfirme(service: { id: string; nom: string }) {
+    if (!confirm(`Supprimer le service « ${service.nom} » ?`)) return;
+    demarrer(async () => {
+      const resultat = await supprimerService(service.id);
+      if (resultat?.error) alert(resultat.error);
+    });
+  }
+
   return (
     <div className="relative flex h-full">
       <div className="flex-1 overflow-auto p-4">
@@ -137,11 +169,64 @@ export default function UtilisateursAdminClient({
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            {services.map((s) => (
-              <span key={s.id} className="rounded bg-white px-2 py-0.5 text-xs text-zinc-700 shadow-sm">
-                {s.nom}
-              </span>
-            ))}
+            {services.map((s) =>
+              serviceEnRenommage === s.id ? (
+                <form
+                  key={s.id}
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    renommerService();
+                  }}
+                  className="flex items-center gap-1"
+                >
+                  <input
+                    autoFocus
+                    value={nomServiceRenomme}
+                    onChange={(e) => setNomServiceRenomme(e.target.value)}
+                    className="rounded border border-zinc-300 px-1.5 py-0.5 text-xs"
+                  />
+                  <button
+                    type="submit"
+                    disabled={pending || !nomServiceRenomme.trim()}
+                    className="text-xs font-medium text-blue-600 hover:underline disabled:opacity-40"
+                  >
+                    OK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setServiceEnRenommage(null)}
+                    className="text-xs text-zinc-400 hover:underline"
+                  >
+                    Annuler
+                  </button>
+                </form>
+              ) : (
+                <span
+                  key={s.id}
+                  className="flex items-center gap-1 rounded bg-white px-2 py-0.5 text-xs text-zinc-700 shadow-sm"
+                >
+                  {s.nom}
+                  <button
+                    type="button"
+                    onClick={() => ouvrirRenommageService(s)}
+                    className="text-zinc-400 hover:text-blue-600"
+                    title={`Renommer ${s.nom}`}
+                    aria-label={`Renommer ${s.nom}`}
+                  >
+                    ✎
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => supprimerServiceConfirme(s)}
+                    className="text-zinc-400 hover:text-red-600"
+                    title={`Supprimer ${s.nom}`}
+                    aria-label={`Supprimer ${s.nom}`}
+                  >
+                    ✕
+                  </button>
+                </span>
+              )
+            )}
             {services.length === 0 && (
               <span className="text-xs italic text-zinc-400">Aucun service pour l&apos;instant.</span>
             )}

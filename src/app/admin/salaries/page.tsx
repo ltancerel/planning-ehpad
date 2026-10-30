@@ -6,7 +6,7 @@ import SalariesAdminClient from "./SalariesAdminClient";
 export default async function SalariesAdminPage() {
   const supabase = await createClient();
 
-  const { data: services } = await supabase.from("service").select("id, nom").order("ordre");
+  const { data: services } = await supabase.from("service").select("id, nom").order("nom");
 
   const { data: salariesData } = await supabase
     .from("salarie")

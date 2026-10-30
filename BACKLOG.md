@@ -1515,6 +1515,35 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   mis à jour en conséquence. Aucun impact sur les tests DB (aucune
   contrainte ne portait sur le format).
 
+- [x] **12. Trier les services par ordre alphabétique (vues Planning et Utilisateurs) + permettre de renommer/supprimer un service**
+  Retour client du 30/10 : les services s'affichaient par ordre de
+  création (colonne `service.ordre`, jamais exposée à l'écran) plutôt
+  qu'alphabétique, dans la grille Planning (groupement des lignes,
+  filtre avancé) et dans l'écran Utilisateurs (liste de pastilles,
+  liste à cocher du formulaire) — et une fois créé, aucun moyen de
+  renommer ou supprimer un service.
+  _Statut : fait._
+  - **Tri alphabétique** : simple changement de requête (`.order("nom")`
+    au lieu de `.order("ordre")`, aucun impact base de données ni
+    migration) dans `app/page.tsx` (Planning), `admin/utilisateurs/page.tsx`,
+    `admin/salaries/page.tsx` (sélecteur de service du formulaire Salarié)
+    et `admin/layout.tsx` (badge « mes services » de l'en-tête). La
+    colonne `service.ordre` reste en base (toujours alimentée à la
+    création) mais n'est plus utilisée pour l'affichage.
+  - **Renommer/supprimer un service** : nouvelles actions serveur
+    `modifierService`/`supprimerService` (`admin/utilisateurs/actions.ts`),
+    mêmes règles d'accès RLS que `creerService` (administrateur de son
+    EHPAD). `UtilisateursAdminClient.tsx` : chaque pastille de service
+    gagne un bouton renommer (édition en ligne) et un bouton supprimer
+    (confirmation, puis message clair si bloqué par
+    `salarie.service_id on delete restrict` — des salariés sont encore
+    affectés à ce service).
+  - Tests DB ajoutés dans `08_salaries_gestion.sql` (un administrateur
+    peut renommer un service de son EHPAD ; un manager ne peut pas ; un
+    administrateur ne peut pas supprimer un service encore utilisé par
+    un salarié ; un administrateur peut supprimer un service sans
+    salarié rattaché).
+
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),

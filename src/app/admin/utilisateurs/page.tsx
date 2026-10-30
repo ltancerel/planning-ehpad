@@ -19,7 +19,7 @@ export default async function UtilisateursAdminPage() {
   const { data: servicesData } = await supabase
     .from("service")
     .select("id, nom, responsable_id")
-    .order("ordre");
+    .order("nom");
 
   const utilisateurs: Utilisateur[] = (data ?? []).map((c) => ({
     id: c.id,

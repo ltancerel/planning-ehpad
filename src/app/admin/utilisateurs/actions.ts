@@ -50,6 +50,50 @@ export async function creerService(_etat: EtatAction, formData: FormData): Promi
   return undefined;
 }
 
+// Retour client du 30/10 : aucun moyen de renommer ou supprimer un service
+// une fois créé. Mêmes règles d'accès que creerService ci-dessus (RLS
+// seule, pas de verifierAutorise ici — un manager ou utilisateur n'arrive
+// de toute façon jamais sur cet écran, cf. admin/layout.tsx).
+export async function modifierService(id: string, nom: string): Promise<EtatAction> {
+  const nomTrim = nom.trim();
+  if (!nomTrim) {
+    return { error: "Le nom du service est requis." };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("service").update({ nom: nomTrim }).eq("id", id).select().single();
+
+  if (error) {
+    return { error: "Modification du service impossible : " + error.message };
+  }
+
+  revalidatePath("/admin/utilisateurs");
+  revalidatePath("/admin/salaries");
+  revalidatePath("/");
+  return undefined;
+}
+
+// salarie.service_id est "on delete restrict" (FK obligatoire, cf. modèle
+// de données) : Postgres refuse la suppression tant qu'un salarié y est
+// encore affecté — code 23503 (foreign_key_violation), traduit ici en
+// message compréhensible plutôt que de laisser remonter l'erreur SQL brute.
+export async function supprimerService(id: string): Promise<EtatAction> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("service").delete().eq("id", id).select().single();
+
+  if (error) {
+    if (error.code === "23503") {
+      return { error: "Impossible de supprimer ce service : des salariés y sont encore affectés." };
+    }
+    return { error: "Suppression du service impossible : " + error.message };
+  }
+
+  revalidatePath("/admin/utilisateurs");
+  revalidatePath("/admin/salaries");
+  revalidatePath("/");
+  return undefined;
+}
+
 async function verifierAutorise(): Promise<{ ehpadId: string } | { error: string }> {
   const supabase = await createClient();
   const {

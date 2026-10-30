@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
     .from("service")
     .select("nom")
     .eq("responsable_id", user.id)
-    .order("ordre");
+    .order("nom");
 
   if (!compte || compte.type_compte !== "administrateur") {
     return (
