@@ -95,6 +95,17 @@ def en_heure(valeur):
     raise ValueError(f"heure illisible « {valeur} » (attendu HH:MM)")
 
 
+def duree_entre(debut, fin):
+    """Durée en heures entre deux horaires HH:MM, plage traversant minuit
+    autorisée (même règle que dureeHeures() côté front, src/lib/horaire-codes.ts)."""
+    hd, md = (int(v) for v in debut.split(":"))
+    hf, mf = (int(v) for v in fin.split(":"))
+    debut_min, fin_min = hd * 60 + md, hf * 60 + mf
+    if fin_min <= debut_min:
+        fin_min += 24 * 60
+    return (fin_min - debut_min) / 60
+
+
 def en_booleen(valeur, defaut=False):
     v = normaliser(valeur)
     if v in ("", ) and defaut is not None:
@@ -426,9 +437,14 @@ def preparer_import_codes_horaires(db, chemin, feuille, ehpad_id):
                 "commentaire": texte(val(ligne, "commentaire")),
             }
 
-            # Plages horaires — categorie = travail uniquement, jusqu'à 4,
-            # remplies consécutivement à partir de plage1 (même règle que le
-            # formulaire Admin > Codes horaires).
+            # Plages horaires — categorie = travail, jusqu'à 4, remplies
+            # consécutivement à partir de plage1 (même règle que le
+            # formulaire Admin > Codes horaires). Pour categorie =
+            # evenementiel/type_evenement = normal, seule plage1 est admise :
+            # utilisée pour calculer duree_heures automatiquement (retour
+            # client du 11/11) plutôt que de la ressaisir à la main — jamais
+            # stockée en plage_horaire dans ce cas (table réservée aux codes
+            # de catégorie travail, cf. formulaire Admin).
             plages = []
             for i in (1, 2, 3, 4):
                 debut = en_heure(val(ligne, f"plage{i}_debut"))
@@ -438,34 +454,59 @@ def preparer_import_codes_horaires(db, chemin, feuille, ehpad_id):
                 if debut is None or fin is None:
                     raise ValueError(f"plage{i} incomplète (début et fin tous les deux requis)")
                 plages.append({"ordre": i, "heure_debut": debut, "heure_fin": fin})
-            if plages and categorie != "travail":
-                raise ValueError("des plages horaires sont renseignées pour une categorie autre que travail")
 
             # Événementiel/action/type_evenement/duree_heures — mêmes règles
             # que les CHECK posés en base (migration domaine C).
             action = texte(val(ligne, "action"))
             type_evenement_brut = texte(val(ligne, "type_evenement"))
-            duree_heures = texte(val(ligne, "duree_heures"))
+            duree_heures_brute = texte(val(ligne, "duree_heures"))
 
             if categorie == "evenementiel":
                 if not type_evenement_brut:
                     raise ValueError("type_evenement obligatoire pour categorie = evenementiel")
                 type_evenement = en_type_evenement(type_evenement_brut)
-                if type_evenement == "special" and duree_heures:
-                    raise ValueError("duree_heures doit rester vide pour type_evenement = special")
-                if type_evenement == "normal" and not duree_heures:
-                    raise ValueError("duree_heures obligatoire pour type_evenement = normal")
+
+                if type_evenement == "normal":
+                    if len(plages) > 1:
+                        raise ValueError(
+                            "une seule plage (plage1) est utilisée pour calculer duree_heures ; "
+                            "plage2/3/4 doivent rester vides"
+                        )
+                    if plages and duree_heures_brute:
+                        raise ValueError("remplir soit duree_heures, soit plage1_debut/plage1_fin, pas les deux")
+                    if plages:
+                        duree_heures = duree_entre(plages[0]["heure_debut"], plages[0]["heure_fin"])
+                    elif duree_heures_brute:
+                        duree_heures = float(duree_heures_brute)
+                    else:
+                        raise ValueError(
+                            "duree_heures obligatoire pour type_evenement = normal "
+                            "(directement, ou via plage1_debut/plage1_fin)"
+                        )
+                    plages = []
+                else:
+                    if plages:
+                        raise ValueError(
+                            "plage1_debut/plage1_fin ne sont utilisées que pour categorie = travail "
+                            "ou type_evenement = normal"
+                        )
+                    if type_evenement == "special" and duree_heures_brute:
+                        raise ValueError("duree_heures doit rester vide pour type_evenement = special")
+                    duree_heures = None
             else:
-                if type_evenement_brut or duree_heures or action:
+                if plages and categorie != "travail":
+                    raise ValueError("des plages horaires sont renseignées pour une categorie autre que travail")
+                if type_evenement_brut or duree_heures_brute or action:
                     raise ValueError(
                         "action/type_evenement/duree_heures doivent rester vides "
                         "hors categorie = evenementiel"
                     )
                 type_evenement = None
+                duree_heures = None
 
             code_horaire["action"] = action
             code_horaire["type_evenement"] = type_evenement
-            code_horaire["duree_heures"] = float(duree_heures) if duree_heures else None
+            code_horaire["duree_heures"] = duree_heures
 
             a_importer.append((num, code_horaire, plages))
         except ValueError as e:

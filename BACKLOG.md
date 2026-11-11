@@ -1544,6 +1544,37 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
     un salarié ; un administrateur peut supprimer un service sans
     salarié rattaché).
 
+- [x] **13. Import en masse des codes horaires : calculer duree_heures à partir des plages horaires, et griser les colonnes sans objet dans le modèle Excel**
+  Retour client du 11/11, en deux temps :
+  1. Pourquoi le modèle Excel livré le 28/10 (`codes_horaires_modele_import.xlsx`)
+     ne grise pas visuellement les colonnes qui ne s'appliquent pas à une
+     ligne donnée (plages horaires, action/type_evenement, duree_heures —
+     chacune conditionnée par `categorie`/`type_evenement`, cf. onglet
+     Instructions) ;
+  2. Pour `type_evenement = normal`, permettre de calculer `duree_heures`
+     à partir d'une plage horaire (plage1_debut/plage1_fin) plutôt que de
+     ressaisir le nombre d'heures à la main.
+  _Statut : fait._
+  - **Script** (`scripts/planning-ehpad-tool.py`, `preparer_import_codes_horaires`) :
+    pour `categorie = evenementiel` et `type_evenement = normal`, `plage1_debut`/`plage1_fin`
+    sont désormais acceptées (seule plage1, jamais stockée dans
+    `plage_horaire` — table réservée aux codes de catégorie travail, cf.
+    formulaire Admin) et utilisées pour calculer `duree_heures`
+    automatiquement (nouvelle fonction `duree_entre()`, même règle de
+    plage traversant minuit que `dureeHeures()` côté front,
+    `src/lib/horaire-codes.ts`) si `duree_heures` est laissée vide.
+    Remplir `duree_heures` directement reste possible (rétrocompatible) ;
+    remplir les deux à la fois, ou remplir plage1 pour `special`/`partiel`,
+    est rejeté avec un message explicite. Aucun changement de schéma.
+  - **Modèle Excel** (`codes_horaires_modele_import.xlsx`, fourni
+    directement au client, hors dépôt) : mise en forme conditionnelle
+    ajoutée sur les colonnes plages/action/type_evenement/duree_heures,
+    qui se grisent automatiquement ligne par ligne selon `categorie`/`type_evenement`
+    saisis — plus besoin de se référer à l'onglet Instructions pour savoir
+    quelles cellules laisser vides. Un 3<sup>e</sup> exemple (fond vert)
+    ajouté, démontrant le calcul automatique via plage1. Onglet
+    Instructions mis à jour en conséquence.
+
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
