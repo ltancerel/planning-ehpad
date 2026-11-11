@@ -1575,7 +1575,30 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
     ajouté, démontrant le calcul automatique via plage1. Onglet
     Instructions mis à jour en conséquence.
 
-**Objectif** : mettre en œuvre la stratégie d'environnements et de
+- [x] **14. Bug : le sélecteur de code de la grille Planning proposait les codes de démo au lieu des vrais codes de l'EHPAD**
+  Retour client du 11/11 : sur un EHPAD réel sans encore aucun
+  `code_horaire` configuré (salariés déjà importés), le sélecteur de code
+  d'une case Planning proposait quand même une liste de codes — alors
+  qu'elle devrait être vide.
+  _Cause_ : `HoraireCodeSelector` (`src/components/HoraireCodeSelector.tsx`)
+  acceptait une prop `codes` optionnelle, avec comme valeur par défaut la
+  liste de démo `HORAIRE_CODES` (`src/lib/horaire-codes.ts`, héritée de la
+  maquette d'origine, jamais nettoyée depuis le passage sur le vrai
+  backend). `PlanningGrid.tsx` reçoit bien les vrais `codesHoraires` de
+  l'EHPAD connecté (chargés dans `app/page.tsx`), mais oubliait de les
+  transmettre au composant lors de ses deux usages (édition d'une case,
+  édition en sélection multiple) — retombant donc silencieusement sur la
+  liste de démo. `RoulementForm.tsx` (écran Admin > Roulements), lui,
+  passait déjà `codes={codesHoraires}` correctement.
+  _Statut : fait._ `codes` transmise dans les deux usages de
+  `HoraireCodeSelector` dans `PlanningGrid.tsx`. La prop `codes` est
+  désormais obligatoire (plus de valeur par défaut, import `HORAIRE_CODES`
+  retiré du composant) : un oubli similaire sera désormais détecté par
+  `tsc` à la compilation plutôt que de retomber silencieusement sur des
+  données fictives. Pas de test e2e ajouté (le sélecteur n'est accessible
+  qu'authentifié, hors périmètre des tests e2e de ce dépôt — cf.
+  `supabase/tests/README.md`) ; vérifié par `tsc`/`eslint`/`build`.
+
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
 mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le

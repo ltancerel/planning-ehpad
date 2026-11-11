@@ -1122,6 +1122,7 @@ export default function PlanningGrid({
           <HoraireCodeSelector
             position={positionEdition}
             aUneValeur={editionAUneValeur}
+            codes={codesHoraires}
             valeurActuelle={valeurActuelleEdition}
             actionRoulement={
               roulementPourEdition
@@ -1174,6 +1175,7 @@ export default function PlanningGrid({
               {selecteurCodeMultipleOuvert ? (
                 <HoraireCodeSelector
                   position={{ top: positionActionSelection.top, left: positionActionSelection.left, width: 220 }}
+                  codes={codesHoraires}
                   valeursActuelles={valeursSelection}
                   onChoisir={(code) => code && appliquerCodeSelectionMultiple(code)}
                   onFermer={annulerSelection}

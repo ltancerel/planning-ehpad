@@ -2,7 +2,6 @@
 
 import { useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import {
-  HORAIRE_CODES,
   estCodePartiel,
   peutAjouterInformatif,
   peutAjouterEvenementiel,
@@ -28,11 +27,11 @@ const LIBELLE_GROUPE_CATEGORIE: Record<HoraireCategorie, string> = {
 type HoraireCodeSelectorProps = {
   position: PositionSelecteur;
   aUneValeur?: boolean;
-  /** Liste des codes proposés — les vrais codes horaires de l'EHPAD connecté
-   * quand l'appelant les a déjà chargés (ex. formulaire Roulement), sinon la
-   * liste de démo (écran Planning, dont l'édition des cases reste mock à ce
-   * stade). */
-  codes?: HoraireCode[];
+  /** Les vrais codes horaires de l'EHPAD connecté — toujours fournis par
+   * l'appelant (PlanningGrid, RoulementForm), jamais de liste de démo par
+   * défaut : un EHPAD sans codes configurés doit afficher "Aucun code
+   * trouvé", pas une liste fictive (retour client du 11/11). */
+  codes: HoraireCode[];
   /** Masque les codes événementiels (superposition) — non pertinents hors du
    * planning réel, ex. dans un roulement qui définit un motif récurrent. */
   masquerEvenementiels?: boolean;
@@ -75,7 +74,7 @@ type HoraireCodeSelectorProps = {
 export default function HoraireCodeSelector({
   position,
   aUneValeur,
-  codes = HORAIRE_CODES,
+  codes,
   masquerEvenementiels,
   valeurActuelle,
   valeursActuelles,
