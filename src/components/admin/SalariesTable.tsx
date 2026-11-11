@@ -1,6 +1,8 @@
 "use client";
 
 import type { FicheSalarie } from "@/lib/mock-data";
+import { useTri } from "@/lib/useTri";
+import ThTriable from "./ThTriable";
 
 type SalariesTableProps = {
   salaries: FicheSalarie[];
@@ -8,23 +10,49 @@ type SalariesTableProps = {
   onSupprimer: (salarie: FicheSalarie) => void;
 };
 
+type ColonneTriable = "matricule" | "nom" | "prenom" | "service" | "typePaie" | "groupeRoulement" | "presence";
+
 export default function SalariesTable({ salaries, onModifier, onSupprimer }: SalariesTableProps) {
+  const { lignesTriees, colonne, sens, trierPar } = useTri<FicheSalarie, ColonneTriable>(salaries, {
+    matricule: (s) => s.matricule,
+    nom: (s) => s.nom,
+    prenom: (s) => s.prenom,
+    service: (s) => s.service,
+    typePaie: (s) => s.typePaie,
+    groupeRoulement: (s) => s.groupeRoulement,
+    presence: (s) => s.presence,
+  });
+
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
         <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium text-zinc-500">
-          <th className="px-3 py-2">Matricule</th>
-          <th className="px-3 py-2">Nom</th>
-          <th className="px-3 py-2">Prénom</th>
-          <th className="px-3 py-2">Service</th>
-          <th className="px-3 py-2">Type de paie</th>
-          <th className="px-3 py-2">Alignement roulement</th>
-          <th className="px-3 py-2">Présence</th>
+          <ThTriable colonne="matricule" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Matricule
+          </ThTriable>
+          <ThTriable colonne="nom" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Nom
+          </ThTriable>
+          <ThTriable colonne="prenom" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Prénom
+          </ThTriable>
+          <ThTriable colonne="service" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Service
+          </ThTriable>
+          <ThTriable colonne="typePaie" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Type de paie
+          </ThTriable>
+          <ThTriable colonne="groupeRoulement" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Alignement roulement
+          </ThTriable>
+          <ThTriable colonne="presence" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Présence
+          </ThTriable>
           <th className="px-3 py-2" />
         </tr>
       </thead>
       <tbody>
-        {salaries.map((salarie) => (
+        {lignesTriees.map((salarie) => (
           <tr key={salarie.id} className="border-b border-zinc-100 hover:bg-zinc-50">
             <td className="px-3 py-2">
               <span className="inline-block rounded bg-zinc-100 px-2 py-0.5 text-xs font-semibold text-zinc-700">

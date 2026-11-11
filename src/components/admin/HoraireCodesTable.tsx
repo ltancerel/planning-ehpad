@@ -2,6 +2,8 @@
 
 import type { HoraireCode } from "@/lib/horaire-codes";
 import { dureeHeures } from "@/lib/horaire-codes";
+import { useTri } from "@/lib/useTri";
+import ThTriable from "./ThTriable";
 
 const LIBELLE_CATEGORIE: Record<HoraireCode["categorie"], string> = {
   travail: "Travail",
@@ -21,28 +23,58 @@ type HoraireCodesTableProps = {
   onSupprimer: (code: HoraireCode) => void;
 };
 
+type ColonneTriable = "code" | "intitule" | "categorie" | "plages" | "heures" | "type" | "commentaire";
+
 function resumePlages(code: HoraireCode): string {
   if (!code.plages?.length) return "—";
   return code.plages.map((p) => `${p.debut}-${p.fin}`).join(", ");
 }
 
+function heuresParJour(code: HoraireCode): number {
+  return code.categorie === "travail" ? dureeHeures(code.plages) : 0;
+}
+
 export default function HoraireCodesTable({ codes, onModifier, onSupprimer }: HoraireCodesTableProps) {
+  const { lignesTriees, colonne, sens, trierPar } = useTri<HoraireCode, ColonneTriable>(codes, {
+    code: (c) => c.code,
+    intitule: (c) => c.intitule,
+    categorie: (c) => LIBELLE_CATEGORIE[c.categorie],
+    plages: (c) => resumePlages(c),
+    heures: (c) => heuresParJour(c),
+    type: (c) => (c.typeEvenement ? LIBELLE_TYPE_EVENEMENT[c.typeEvenement] : ""),
+    commentaire: (c) => c.commentaire ?? "",
+  });
+
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
         <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium text-zinc-500">
-          <th className="px-3 py-2">Code</th>
-          <th className="px-3 py-2">Intitulé</th>
-          <th className="px-3 py-2">Catégorie</th>
-          <th className="px-3 py-2">Plages</th>
-          <th className="px-3 py-2">Heures/jour</th>
-          <th className="px-3 py-2">Type</th>
-          <th className="px-3 py-2">Commentaire</th>
+          <ThTriable colonne="code" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Code
+          </ThTriable>
+          <ThTriable colonne="intitule" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Intitulé
+          </ThTriable>
+          <ThTriable colonne="categorie" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Catégorie
+          </ThTriable>
+          <ThTriable colonne="plages" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Plages
+          </ThTriable>
+          <ThTriable colonne="heures" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Heures/jour
+          </ThTriable>
+          <ThTriable colonne="type" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Type
+          </ThTriable>
+          <ThTriable colonne="commentaire" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Commentaire
+          </ThTriable>
           <th className="px-3 py-2" />
         </tr>
       </thead>
       <tbody>
-        {codes.map((code) => (
+        {lignesTriees.map((code) => (
           <tr key={code.code} className="border-b border-zinc-100 hover:bg-zinc-50">
             <td className="px-3 py-2">
               <span

@@ -3,6 +3,8 @@
 import { useMemo } from "react";
 import type { Roulement } from "@/lib/mock-data";
 import type { HoraireCode } from "@/lib/horaire-codes";
+import { useTri } from "@/lib/useTri";
+import ThTriable from "./ThTriable";
 
 const JOURS = ["L", "Ma", "M", "J", "V", "S", "D"];
 
@@ -13,23 +15,34 @@ type RoulementsTableProps = {
   onSupprimer: (roulement: Roulement) => void;
 };
 
+type ColonneTriable = "nom" | "semaines";
+
 export default function RoulementsTable({ roulements, codesHoraires, onModifier, onSupprimer }: RoulementsTableProps) {
   const codesParCode = useMemo(
     () => Object.fromEntries(codesHoraires.map((h) => [h.code.toUpperCase(), h])),
     [codesHoraires]
   );
+  const { lignesTriees, colonne, sens, trierPar } = useTri<Roulement, ColonneTriable>(roulements, {
+    nom: (r) => r.nom,
+    semaines: (r) => r.nbSemaines,
+  });
+
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
         <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium text-zinc-500">
-          <th className="px-3 py-2">Nom</th>
-          <th className="px-3 py-2">Semaines</th>
+          <ThTriable colonne="nom" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Nom
+          </ThTriable>
+          <ThTriable colonne="semaines" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Semaines
+          </ThTriable>
           <th className="px-3 py-2">Aperçu</th>
           <th className="px-3 py-2" />
         </tr>
       </thead>
       <tbody>
-        {roulements.map((roulement) => (
+        {lignesTriees.map((roulement) => (
           <tr key={roulement.id} className="border-b border-zinc-100 hover:bg-zinc-50">
             <td className="px-3 py-2 font-medium">{roulement.nom}</td>
             <td className="px-3 py-2 text-zinc-600">{roulement.nbSemaines}</td>

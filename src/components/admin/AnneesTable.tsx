@@ -2,26 +2,45 @@
 
 import type { AnneePlanifiee } from "@/lib/mock-data";
 import { estAnneeBissextile } from "@/lib/jours-feries";
+import { useTri } from "@/lib/useTri";
+import ThTriable from "./ThTriable";
 
 type AnneesTableProps = {
   annees: AnneePlanifiee[];
   onModifier: (annee: AnneePlanifiee) => void;
 };
 
+type ColonneTriable = "annee" | "jourDemarrage" | "type" | "joursFeriesActifs";
+
 export default function AnneesTable({ annees, onModifier }: AnneesTableProps) {
+  const { lignesTriees, colonne, sens, trierPar } = useTri<AnneePlanifiee, ColonneTriable>(annees, {
+    annee: (a) => a.annee,
+    jourDemarrage: (a) => a.jourDemarrage,
+    type: (a) => estAnneeBissextile(a.annee),
+    joursFeriesActifs: (a) => a.joursFeries.filter((j) => j.actif).length,
+  });
+
   return (
     <table className="w-full border-collapse text-sm">
       <thead>
         <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs font-medium text-zinc-500">
-          <th className="px-3 py-2">Année</th>
-          <th className="px-3 py-2">Jour de démarrage</th>
-          <th className="px-3 py-2">Type</th>
-          <th className="px-3 py-2">Jours fériés actifs</th>
+          <ThTriable colonne="annee" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Année
+          </ThTriable>
+          <ThTriable colonne="jourDemarrage" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Jour de démarrage
+          </ThTriable>
+          <ThTriable colonne="type" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Type
+          </ThTriable>
+          <ThTriable colonne="joursFeriesActifs" colonneActive={colonne} sens={sens} onTrier={trierPar}>
+            Jours fériés actifs
+          </ThTriable>
           <th className="px-3 py-2" />
         </tr>
       </thead>
       <tbody>
-        {annees.map((annee) => {
+        {lignesTriees.map((annee) => {
           const bissextile = estAnneeBissextile(annee.annee);
           const nbActifs = annee.joursFeries.filter((j) => j.actif).length;
           return (

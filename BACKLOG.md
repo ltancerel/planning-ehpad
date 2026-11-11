@@ -1599,6 +1599,29 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   qu'authentifié, hors périmètre des tests e2e de ce dépôt — cf.
   `supabase/tests/README.md`) ; vérifié par `tsc`/`eslint`/`build`.
 
+- [x] **15. Permettre le tri des tableaux Admin (Utilisateurs, Salariés, Codes horaires, Roulements, Années)**
+  Retour client du 11/11 : aucun des tableaux de ces 5 écrans ne
+  permettait de classer les lignes par ordre alphabétique ou
+  alphanumérique en cliquant sur un en-tête de colonne (flèche de tri
+  classique).
+  _Statut : fait._ Hook partagé `useTri` (`src/lib/useTri.ts`) et
+  composant d'en-tête partagé `ThTriable` (`src/components/admin/ThTriable.tsx`)
+  : clic sur une colonne = tri croissant, reclic = inverse le sens, clic
+  sur une autre colonne repart en croissant. Comparaison alphanumérique
+  « naturelle » (`localeCompare` avec `numeric: true`, ex. code `70A`
+  avant `185`) plutôt que l'ordre lexical pur. Branché sur les colonnes
+  pertinentes de `UtilisateursTable.tsx`, `SalariesTable.tsx`,
+  `HoraireCodesTable.tsx` (dont une colonne calculée, Heures/jour, triée
+  numériquement), `RoulementsTable.tsx` (Nom/Semaines — Aperçu non
+  trié, non pertinent) et `AnneesTable.tsx`. Aucun impact base de
+  données. Vérifié visuellement dans un vrai navigateur (page de test
+  temporaire avec données de démo, supprimée avant commit) : tri
+  croissant/décroissant et tri alphanumérique des codes horaires
+  confirmés par capture d'écran, avant suppression de la page de test.
+  Pas de test e2e ajouté (écrans authentifiés, hors périmètre des tests
+  e2e de ce dépôt) ; vérifié par `tsc`/`eslint`/`build`.
+
+**Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
 mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
