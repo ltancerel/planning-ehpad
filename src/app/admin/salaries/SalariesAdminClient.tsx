@@ -8,7 +8,7 @@ import {
   type FicheSalarie,
 } from "@/lib/mock-data";
 import SalariesTable from "@/components/admin/SalariesTable";
-import SalarieForm, { type ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
+import SalarieForm, { type ServiceAvecResponsable, type ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
 import { enregistrerSalarie, supprimerSalarie, type ChampsSalarie } from "./actions";
 
 export default function SalariesAdminClient({
@@ -16,7 +16,7 @@ export default function SalariesAdminClient({
   services,
 }: {
   salaries: ValeurInitialeSalarie[];
-  services: { id: string; nom: string }[];
+  services: ServiceAvecResponsable[];
 }) {
   const [panneau, setPanneau] = useState<"ferme" | "creation" | "edition">("ferme");
   const [salarieEnEdition, setSalarieEnEdition] = useState<ValeurInitialeSalarie | undefined>(undefined);

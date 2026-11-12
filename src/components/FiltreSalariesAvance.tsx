@@ -150,6 +150,7 @@ export function FiltreSalariesBouton({
   filtres,
   onChange,
   services,
+  managers,
   groupesRoulement,
   nbResultats,
   mesServices,
@@ -157,6 +158,12 @@ export function FiltreSalariesBouton({
   filtres: FiltresAvances;
   onChange: (f: FiltresAvances) => void;
   services: string[];
+  // Comptes responsables d'au moins un service (service.responsable_id),
+  // avec la liste des services dont chacun est responsable — alimente le
+  // raccourci "Filtrer par manager" ci-dessous (retour client du 12/11,
+  // rétablit l'ancien filtre Manager, cette fois dérivé du service plutôt
+  // qu'un champ salarié.manager déconnecté de tout compte réel).
+  managers: { id: string; nom: string; services: string[] }[];
   groupesRoulement: GroupeRoulement[];
   nbResultats: number;
   // Services dont le compte connecté est responsable (retour client du
@@ -236,6 +243,23 @@ export function FiltreSalariesBouton({
                   </button>
                 )}
               </div>
+              {managers.length > 0 && (
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const manager = managers.find((m) => m.id === e.target.value);
+                    if (manager) onChange({ ...filtres, service: new Set(manager.services) });
+                  }}
+                  className="mb-1.5 w-full rounded border border-zinc-300 px-1.5 py-1 text-xs text-zinc-600"
+                >
+                  <option value="">Filtrer par manager…</option>
+                  {managers.map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.nom}
+                    </option>
+                  ))}
+                </select>
+              )}
               <div className="flex flex-col gap-1">
                 {services.map((option) => (
                   <label key={option} className="flex cursor-pointer items-center gap-1.5 text-sm text-zinc-700">

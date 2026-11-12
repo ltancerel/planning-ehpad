@@ -6,7 +6,16 @@ import SalariesAdminClient from "./SalariesAdminClient";
 export default async function SalariesAdminPage() {
   const supabase = await createClient();
 
-  const { data: services } = await supabase.from("service").select("id, nom").order("nom");
+  const { data: servicesData } = await supabase
+    .from("service")
+    .select("id, nom, responsable:responsable_id(nom, prenom)")
+    .order("nom");
+
+  const services = (servicesData ?? []).map((s) => ({
+    id: s.id,
+    nom: s.nom,
+    responsableNom: s.responsable ? `${s.responsable.prenom} ${s.responsable.nom}` : null,
+  }));
 
   const { data: salariesData } = await supabase
     .from("salarie")
@@ -27,5 +36,5 @@ export default async function SalariesAdminPage() {
     presence: s.presence === "Absent" ? "Absent" : "Présent",
   }));
 
-  return <SalariesAdminClient salaries={salaries} services={services ?? []} />;
+  return <SalariesAdminClient salaries={salaries} services={services} />;
 }

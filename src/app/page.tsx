@@ -35,8 +35,31 @@ export default async function Home() {
 
   const { data: ehpad } = await supabase.from("ehpad").select("nom, logo_base64").single();
 
-  const { data: services } = await supabase.from("service").select("nom, responsable_id").order("nom");
-  const mesServices = (services ?? []).filter((s) => s.responsable_id === user.id).map((s) => s.nom);
+  const { data: servicesData } = await supabase
+    .from("service")
+    .select("nom, responsable_id, responsable:responsable_id(nom, prenom)")
+    .order("nom");
+  const services = servicesData ?? [];
+  const mesServices = services.filter((s) => s.responsable_id === user.id).map((s) => s.nom);
+
+  // Un manager/administrateur peut être responsable de plusieurs services
+  // (service.responsable_id) : regroupés ici pour le filtre "Manager" du
+  // planning, qui sélectionne en un clic tous les services d'un manager
+  // donné — retour client du 12/11 (rétablit l'ancien filtre manager,
+  // mais dérivé du service plutôt qu'un champ salarié.manager déconnecté).
+  const managersParId = new Map<string, { id: string; nom: string; services: string[] }>();
+  for (const s of services) {
+    if (!s.responsable_id || !s.responsable) continue;
+    const existant = managersParId.get(s.responsable_id);
+    if (existant) existant.services.push(s.nom);
+    else
+      managersParId.set(s.responsable_id, {
+        id: s.responsable_id,
+        nom: `${s.responsable.prenom} ${s.responsable.nom}`,
+        services: [s.nom],
+      });
+  }
+  const managers = [...managersParId.values()].sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
 
   const { data: joursFeriesData } = await supabase.from("jour_ferie").select("date").eq("actif", true);
   const joursFeries = (joursFeriesData ?? []).map((j) => j.date);
@@ -84,7 +107,8 @@ export default async function Home() {
   return (
     <PlanningGrid
       salaries={salaries}
-      servicesOrdre={(services ?? []).map((s) => s.nom)}
+      servicesOrdre={services.map((s) => s.nom)}
+      managers={managers}
       codesHoraires={codesHoraires}
       joursFeries={joursFeries}
       ehpad={{ nom: ehpad?.nom ?? "", logo: ehpad?.logo_base64 ?? null }}

@@ -14,10 +14,12 @@ function capitaliser(texte: string): string {
 
 export type ValeurInitialeSalarie = FicheSalarie & { serviceId: string };
 
+export type ServiceAvecResponsable = { id: string; nom: string; responsableNom: string | null };
+
 type SalarieFormProps = {
   valeurInitiale?: ValeurInitialeSalarie;
   matriculesExistants: string[];
-  services: { id: string; nom: string }[];
+  services: ServiceAvecResponsable[];
   roulements: Roulement[];
   affectationsRoulement: AffectationRoulement[];
   onValider: (champs: ChampsSalarie) => void;
@@ -47,6 +49,7 @@ export default function SalarieForm({
   const [presence, setPresence] = useState<FicheSalarie["presence"]>(valeurInitiale?.presence ?? "Présent");
   const [erreur, setErreur] = useState<string | null>(null);
   const [panneauRoulementOuvert, setPanneauRoulementOuvert] = useState(false);
+  const serviceChoisi = services.find((s) => s.id === serviceId);
   const dateReferenceISO = formatDateISO(new Date());
   const roulementActuel = affectationActuelle(affectationsRoulement, dateReferenceISO);
   const nomRoulementActuel = roulementActuel
@@ -113,6 +116,9 @@ export default function SalarieForm({
                 </option>
               ))}
             </select>
+            <p className="mt-1 text-[11px] text-zinc-400">
+              Manager : {serviceChoisi?.responsableNom ?? "aucun pour ce service — à affecter depuis l'écran Utilisateurs"}
+            </p>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-700">

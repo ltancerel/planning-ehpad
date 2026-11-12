@@ -86,6 +86,7 @@ type ClasseJour = "ferie" | "weekend" | "normal";
 export default function PlanningGrid({
   salaries,
   servicesOrdre,
+  managers,
   codesHoraires,
   joursFeries,
   ehpad,
@@ -93,6 +94,7 @@ export default function PlanningGrid({
 }: {
   salaries: Salarie[];
   servicesOrdre: string[];
+  managers: { id: string; nom: string; services: string[] }[];
   codesHoraires: HoraireCode[];
   joursFeries: string[];
   ehpad: { nom: string; logo: string | null };
@@ -759,6 +761,7 @@ export default function PlanningGrid({
               filtres={filtres}
               onChange={setFiltres}
               services={servicesOrdre}
+              managers={managers}
               groupesRoulement={GROUPES_ROULEMENT}
               nbResultats={salariesOrdonnes.length}
               mesServices={utilisateur.mesServices}

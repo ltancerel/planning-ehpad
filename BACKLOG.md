@@ -1640,7 +1640,7 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   `validation_emargement`/`journee_historique` (tout `on delete cascade`
   depuis `salarie`, mais rien n'en dépendait encore).
 
-- [ ] **18. Rétablir l'affichage du Manager à la création d'un salarié + filtre Manager dans le planning**
+- [x] **18. Rétablir l'affichage du Manager à la création d'un salarié + filtre Manager dans le planning**
   Retour client du 12/11 : le client indique être revenu sur son propre
   choix du 30/10 (suppression de `salarie.manager`, cf. story de ce
   jour-là) — la sélection d'un Manager à la création d'un salarié et le
@@ -1654,7 +1654,22 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   automatiquement du service choisi ; le filtre Planning gagne un
   critère Manager qui regroupe en un clic tous les services dont ce
   Manager est responsable.
-  _Statut : à faire._
+  _Statut : fait._ `SalarieForm.tsx` affiche désormais, en lecture
+  seule sous le champ Service, le nom du responsable du service
+  sélectionné (`service.responsable_id` résolu par jointure dans
+  `admin/salaries/page.tsx`, "aucun pour ce service" si le service n'a
+  pas encore de responsable). `app/page.tsx` regroupe les services par
+  responsable en une liste `managers` ; `FiltreSalariesAvance.tsx`
+  (`FiltreSalariesBouton`) gagne un menu « Filtrer par manager » dans la
+  section Service, qui présélectionne en un clic tous les services de ce
+  manager — même mécanisme que le raccourci « Mes services » existant,
+  généralisé à n'importe quel manager plutôt que seulement le compte
+  connecté. Vérifié visuellement dans un vrai navigateur (page de test
+  temporaire, données de démo, supprimée avant commit) : dérivation du
+  Manager à la création d'un salarié et application du filtre confirmées
+  par capture d'écran. Aucun impact base de données, aucune migration.
+  Pas de test e2e ajouté (écrans authentifiés, hors périmètre des tests
+  e2e de ce dépôt) ; vérifié par `tsc`/`eslint`/`build`.
 
 - [x] **19. Retirer code_horaire.action, jamais affiché dans l'application**
   Question du client du 12/11 sur l'usage du champ Action, éditable dans
