@@ -1077,7 +1077,7 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   [Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
   (domaine A, note « identifiant ») republié en conséquence._
 
-- [ ] **3. Brancher les écrans Administration sur le backend** _(issue #34)_
+- [x] **3. Brancher les écrans Administration sur le backend** _(issue #34)_
   Comptes/utilisateurs, salariés, codes horaires, roulements, années/jours
   fériés, identité EHPAD, gestion des EHPAD par l'Administrateur Système,
   profil utilisateur.
@@ -1283,6 +1283,17 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   parcours authentifiés ne sont pas couverts par la suite automatisée,
   cf. note dans `connexion.spec.ts` — vérification manuelle ajoutée à
   `STAGING_CHECKLIST.md`)._
+  _**Clos le 12/11** : la note d'ouverture ci-dessus (« Statut : partiel »)
+  datait du 25/09, avant que la quasi-totalité de la story ne soit
+  branchée dans la même journée (voir le détail ci-dessus) — jamais remise
+  à jour depuis. Vérifié le 12/11 par relecture du code réel : les 8
+  écrans de la story (Comptes/Utilisateurs, Salariés, Codes horaires,
+  Roulements, Années/jours fériés, Identité EHPAD, gestion des EHPAD par
+  l'Administrateur Système, Profil utilisateur) tournent tous sur le vrai
+  backend, aucun mock restant dans leur périmètre propre. Le seul point
+  encore mock trouvé en vérifiant (`roulementActuelDuSalarie`,
+  l'assignation d'un roulement à un salarié) relève explicitement de la
+  story #4/#35 ci-dessous, pas de celle-ci._
 
 - [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,
@@ -1378,6 +1389,25 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   `appliquer_roulement` à concevoir et écrire. 4 nouveaux tests DB. 74
   tests DB, 7 e2e (rien de nouveau automatisable sans session réelle, cf.
   `STAGING_CHECKLIST.md`), tous verts._
+  _**Revérifié le 12/11**, à la demande du client, avant de clore cette
+  story en même temps que la #3 ci-dessus : toujours vrai, un seul point
+  reste mock. Grille planning (édition des cases, sélection multiple,
+  effacement de plage), émargement mensuel/annuel et validation tournent
+  tous sur le vrai backend (`journee`, `journee_evenementiel_plage`,
+  `validation_emargement`), confirmé par lecture du code
+  (`src/app/planning-actions.ts`, `src/app/emargement/actions.ts`).
+  Reste uniquement l'**application d'un roulement** — le raccourci sur
+  une case vide et l'action groupée sur une sélection mono-jour lisent
+  encore `ROULEMENTS_DEMO`/`AFFECTATIONS_ROULEMENT_DEMO`
+  (`roulementActuelDuSalarie`, `PlanningGrid.tsx`), et le panneau
+  d'assignation d'un roulement sur la fiche Salarié
+  (`RoulementSalariePanel`) écrit seulement en `useState` local
+  (`SalariesAdminClient.tsx`), jamais en base. Aucune ligne
+  `affectation_roulement` n'est lue ni écrite nulle part dans
+  l'application, et la RPC `appliquer_roulement` n'existe pas (seulement
+  anticipée en commentaire dans la migration traçabilité du 24/09). Story
+  **laissée ouverte** pour cette seule raison — pas de quoi la clore tant
+  que ce point n'est pas traité._
 
 - [x] **5. Déployer en production** _(issue #36)_
   Projet Vercel connecté à `main`, domaine Vercel par défaut, variables
