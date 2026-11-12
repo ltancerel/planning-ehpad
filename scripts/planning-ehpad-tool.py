@@ -230,7 +230,7 @@ def en_type_paie(valeur):
 def en_alignement_roulement(valeur):
     v = texte(valeur)
     if v is None:
-        return "Équipe A"  # défaut applicatif, cf. SalarieForm.tsx
+        return None  # Aucun — colonne nullable, cf. SalarieForm.tsx (retour client du 12/11)
     if v in ALIGNEMENT_PAIRE_IMPAIRE:
         return ALIGNEMENT_PAIRE_IMPAIRE[v]
     for g in GROUPES_ROULEMENT_VALIDES:

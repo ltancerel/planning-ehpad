@@ -19,7 +19,7 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
     prenom: (s) => s.prenom,
     service: (s) => s.service,
     typePaie: (s) => s.typePaie,
-    groupeRoulement: (s) => s.groupeRoulement,
+    groupeRoulement: (s) => s.groupeRoulement ?? "",
     presence: (s) => s.presence,
   });
 
@@ -71,7 +71,7 @@ export default function SalariesTable({ salaries, onModifier, onSupprimer }: Sal
                 {salarie.typePaie}
               </span>
             </td>
-            <td className="px-3 py-2 text-zinc-600">{salarie.groupeRoulement}</td>
+            <td className="px-3 py-2 text-zinc-600">{salarie.groupeRoulement ?? "—"}</td>
             <td className="px-3 py-2">
               <span
                 className={`inline-block rounded px-1.5 py-0.5 text-xs font-medium ${

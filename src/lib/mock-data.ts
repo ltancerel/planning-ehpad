@@ -6,7 +6,7 @@ export type Salarie = {
   nom: string;
   prenom: string;
   service: string;
-  groupeRoulement: GroupeRoulement;
+  groupeRoulement: GroupeRoulement | null;
   presence: "Présent" | "Absent";
   typePaie: TypePaie;
 };
@@ -43,6 +43,10 @@ export type Utilisateur = {
 // liste, filtre) plutôt que "Équipe" — distinct du roulement horaire (type
 // Roulement ci-dessous, motif d'horaires assigné via AffectationRoulement),
 // d'où le nom GroupeRoulement/GROUPES_ROULEMENT malgré des valeurs "Équipe".
+// Optionnel (retour client du 12/11) : un salarié peut n'appartenir à
+// aucune équipe — colonne alignement_roulement déjà nullable en base, sans
+// CHECK restreignant ses valeurs ; "Aucun" se représente par `null`,
+// jamais comme une 5e valeur du type/tableau ci-dessous.
 export type GroupeRoulement = "Équipe A" | "Équipe B" | "Équipe C" | "Équipe D";
 export const GROUPES_ROULEMENT: GroupeRoulement[] = ["Équipe A", "Équipe B", "Équipe C", "Équipe D"];
 
@@ -55,7 +59,7 @@ export type FicheSalarie = {
   prenom: string;
   service: string;
   typePaie: TypePaie;
-  groupeRoulement: GroupeRoulement;
+  groupeRoulement: GroupeRoulement | null;
   presence: "Présent" | "Absent";
 };
 

@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
-import { GROUPES_ROULEMENT, type GroupeRoulement, type Salarie, type TypePaie } from "@/lib/mock-data";
+import { type GroupeRoulement, type Salarie, type TypePaie } from "@/lib/mock-data";
 import type { HoraireCategorie, HoraireCode, TypeEvenement, ValeurCellule } from "@/lib/horaire-codes";
 import { formatDateISO, genererPeriode, lundiDeLaSemaine, lundiLePlusProche, parseDateISO } from "@/lib/dates";
 import { chargerPlanningReel } from "@/app/planning-actions";
@@ -76,7 +76,7 @@ export default async function EmargementPage({
     nom: salarieRow.nom,
     prenom: salarieRow.prenom,
     service: salarieRow.service?.nom ?? "",
-    groupeRoulement: (salarieRow.alignement_roulement as GroupeRoulement | null) ?? GROUPES_ROULEMENT[0],
+    groupeRoulement: salarieRow.alignement_roulement as GroupeRoulement | null,
     presence: salarieRow.presence === "Absent" ? ("Absent" as const) : ("Présent" as const),
     typePaie: salarieRow.type_paie as TypePaie,
   };

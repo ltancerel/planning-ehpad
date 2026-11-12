@@ -43,8 +43,8 @@ export default function SalarieForm({
   const [prenom, setPrenom] = useState(valeurInitiale?.prenom ?? "");
   const [serviceId, setServiceId] = useState(valeurInitiale?.serviceId ?? services[0]?.id ?? "");
   const [typePaie, setTypePaie] = useState<FicheSalarie["typePaie"]>(valeurInitiale?.typePaie ?? "Aucun");
-  const [groupeRoulement, setGroupeRoulement] = useState<GroupeRoulement>(
-    valeurInitiale?.groupeRoulement ?? GROUPES_ROULEMENT[0]
+  const [groupeRoulement, setGroupeRoulement] = useState<GroupeRoulement | null>(
+    valeurInitiale?.groupeRoulement ?? null
   );
   const [presence, setPresence] = useState<FicheSalarie["presence"]>(valeurInitiale?.presence ?? "Présent");
   const [erreur, setErreur] = useState<string | null>(null);
@@ -85,7 +85,7 @@ export default function SalarieForm({
       prenom: capitaliser(prenom.trim()),
       serviceId,
       typePaie,
-      alignementRoulement: groupeRoulement,
+      alignementRoulement: groupeRoulement ?? "",
       presence,
     });
   }
@@ -168,10 +168,11 @@ export default function SalarieForm({
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-700">Alignement roulement</label>
           <select
-            value={groupeRoulement}
-            onChange={(e) => setGroupeRoulement(e.target.value as GroupeRoulement)}
+            value={groupeRoulement ?? ""}
+            onChange={(e) => setGroupeRoulement(e.target.value ? (e.target.value as GroupeRoulement) : null)}
             className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
           >
+            <option value="">Aucun</option>
             {GROUPES_ROULEMENT.map((eq) => (
               <option key={eq} value={eq}>
                 {eq}

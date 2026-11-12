@@ -282,7 +282,10 @@ export default function PlanningGrid({
     ) {
       return false;
     }
-    if (filtres.groupeRoulement.size > 0 && !filtres.groupeRoulement.has(salarie.groupeRoulement)) {
+    if (
+      filtres.groupeRoulement.size > 0 &&
+      (!salarie.groupeRoulement || !filtres.groupeRoulement.has(salarie.groupeRoulement))
+    ) {
       return false;
     }
 

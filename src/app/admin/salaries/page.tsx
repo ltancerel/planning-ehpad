@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { GROUPES_ROULEMENT, type GroupeRoulement, type TypePaie } from "@/lib/mock-data";
+import { type GroupeRoulement, type TypePaie } from "@/lib/mock-data";
 import { construireRoulements, grouperAffectationsParSalarie } from "@/lib/roulements";
 import type { ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
 import SalariesAdminClient from "./SalariesAdminClient";
@@ -33,7 +33,7 @@ export default async function SalariesAdminPage() {
     service: s.service?.nom ?? "",
     serviceId: s.service?.id ?? "",
     typePaie: s.type_paie as TypePaie,
-    groupeRoulement: (s.alignement_roulement as GroupeRoulement | null) ?? GROUPES_ROULEMENT[0],
+    groupeRoulement: s.alignement_roulement as GroupeRoulement | null,
     presence: s.presence === "Absent" ? "Absent" : "Présent",
   }));
 
