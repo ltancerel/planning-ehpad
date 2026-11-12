@@ -391,12 +391,29 @@ def en_categorie(valeur):
     raise ValueError(f"categorie « {valeur} » invalide ({', '.join(sorted(CATEGORIES_VALIDES))})")
 
 
+# Libellés affichés à l'écran depuis le 12/11 (HoraireCodeForm.tsx, renommage
+# "special"/"normal" -> "Avec/Sans maintien de salaire") — le client remplit
+# ce qu'il voit dans l'interface, pas la valeur interne. Les valeurs internes
+# restent aussi acceptées (TYPES_EVENEMENT_VALIDES ci-dessus), pour un fichier
+# déjà rempli avec l'ancien vocabulaire.
+LIBELLES_TYPE_EVENEMENT = {
+    "avec maintien de salaire": "special",
+    "sans maintien de salaire": "normal",
+    "partiel": "partiel",
+}
+
+
 def en_type_evenement(valeur):
     v = normaliser(valeur)
+    if v in LIBELLES_TYPE_EVENEMENT:
+        return LIBELLES_TYPE_EVENEMENT[v]
     for t in TYPES_EVENEMENT_VALIDES:
         if normaliser(t) == v:
             return t
-    raise ValueError(f"type_evenement « {valeur} » invalide ({', '.join(sorted(TYPES_EVENEMENT_VALIDES))})")
+    raise ValueError(
+        f"type_evenement « {valeur} » invalide "
+        f"(Avec maintien de salaire / Sans maintien de salaire / Partiel)"
+    )
 
 
 def preparer_import_codes_horaires(db, chemin, feuille, ehpad_id):
@@ -483,7 +500,7 @@ def preparer_import_codes_horaires(db, chemin, feuille, ehpad_id):
                         duree_heures = float(duree_heures_brute)
                     else:
                         raise ValueError(
-                            "duree_heures obligatoire pour type_evenement = normal "
+                            "duree_heures obligatoire pour type_evenement = Sans maintien de salaire "
                             "(directement, ou via plage1_debut/plage1_fin)"
                         )
                     plages = []
@@ -491,10 +508,10 @@ def preparer_import_codes_horaires(db, chemin, feuille, ehpad_id):
                     if plages:
                         raise ValueError(
                             "plage1_debut/plage1_fin ne sont utilisées que pour categorie = travail "
-                            "ou type_evenement = normal"
+                            "ou type_evenement = Sans maintien de salaire"
                         )
                     if type_evenement == "special" and duree_heures_brute:
-                        raise ValueError("duree_heures doit rester vide pour type_evenement = special")
+                        raise ValueError("duree_heures doit rester vide pour type_evenement = Avec maintien de salaire")
                     duree_heures = None
             else:
                 if plages and categorie != "travail":
