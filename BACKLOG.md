@@ -1693,6 +1693,30 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   [Artifact Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
   (domaine C) mis à jour en conséquence.
 
+- [x] **20. Audit de cohérence de la documentation (Synthèse fonctionnelle + Modèle de données)**
+  Demande client du 12/11 : vérifier que la [Synthèse fonctionnelle](https://claude.ai/artifact/EdZ5SpA6gM6kTx7qpYgvTo)
+  et le [Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  restent cohérents entre eux et avec l'état réel (schéma PROD, code).
+  _Statut : fait._ Audit mené par un agent dédié (lecture intégrale des
+  deux documents, confrontation au schéma PROD réel via
+  `information_schema`/`pg_constraint`/`pg_policies`, et à BACKLOG.md).
+  Résultat : le Modèle de données était exact à une note près (RLS
+  décrite comme « pas encore implémentée » alors qu'elle l'est depuis le
+  23/09, migration `20260924000008_rls.sql`) ; la Synthèse fonctionnelle,
+  non touchée depuis le 22/09, était massivement datée (maquette sans
+  backend réel, rôle Manager absent, ancien modèle de codes horaires à 4
+  catégories avec superposition/complément, contrat CDD/CDI, filtre
+  Manager par étiquette fixe, service au singulier).
+  Les deux documents ont été réécrits en cohérence l'un avec l'autre,
+  sans redondance&nbsp;: la Synthèse fonctionnelle décrit désormais le
+  fonctionnement réel des écrans (rôle Manager, 3 types de codes
+  évènementiels avec leurs libellés du 12/11, type de paie, Manager
+  dérivé du service, tri des tableaux Admin, services multi-responsable)
+  et renvoie au Modèle de données pour le détail du schéma plutôt que de
+  le dupliquer ; le Modèle de données renvoie symétriquement à la
+  Synthèse fonctionnelle pour la description côté écrans/parcours. Note
+  RLS corrigée.
+
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),
