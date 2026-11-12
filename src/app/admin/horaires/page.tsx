@@ -8,7 +8,7 @@ export default async function HorairesAdminPage() {
   const { data } = await supabase
     .from("code_horaire")
     .select(
-      "id, code, intitule, categorie, couleur_fond, couleur_texte, commentaire, afficher_vue_annuelle, action, type_evenement, duree_heures, plage_horaire(heure_debut, heure_fin, ordre)"
+      "id, code, intitule, categorie, couleur_fond, couleur_texte, commentaire, afficher_vue_annuelle, type_evenement, duree_heures, plage_horaire(heure_debut, heure_fin, ordre)"
     )
     .order("code");
 
@@ -21,7 +21,6 @@ export default async function HorairesAdminPage() {
     couleurTexte: c.couleur_texte,
     commentaire: c.commentaire ?? undefined,
     afficherVueAnnuelle: c.afficher_vue_annuelle,
-    action: c.action ?? undefined,
     typeEvenement: (c.type_evenement as TypeEvenement | null) ?? undefined,
     duree: c.duree_heures ?? undefined,
     plages:

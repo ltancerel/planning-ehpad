@@ -28,7 +28,6 @@ export type HoraireCode = {
   commentaire?: string;
   plages?: Plage[];
   // Champs spécifiques aux codes événementiels (categorie === "evenementiel")
-  action?: string;
   typeEvenement?: TypeEvenement;
   // Uniquement pour typeEvenement === "normal" : durée fixe (en heures) qui
   // remplace celle du code de travail superposé.
@@ -172,7 +171,6 @@ export const HORAIRE_CODES: HoraireCode[] = [
     categorie: "evenementiel",
     couleurFond: "#60a5fa",
     couleurTexte: "#1e3a8a",
-    action: "Remplace l'affichage du code de travail, garde ses heures",
     typeEvenement: "special",
     afficherVueAnnuelle: true,
   },
@@ -182,7 +180,6 @@ export const HORAIRE_CODES: HoraireCode[] = [
     categorie: "evenementiel",
     couleurFond: "#f97316",
     couleurTexte: "#ffffff",
-    action: "Remplace l'affichage du code de travail, garde ses heures",
     typeEvenement: "special",
     afficherVueAnnuelle: true,
   },
@@ -192,7 +189,6 @@ export const HORAIRE_CODES: HoraireCode[] = [
     categorie: "evenementiel",
     couleurFond: "#ef4444",
     couleurTexte: "#ffffff",
-    action: "Remplace l'affichage du code de travail, garde ses heures",
     typeEvenement: "special",
     afficherVueAnnuelle: true,
   },
@@ -202,7 +198,6 @@ export const HORAIRE_CODES: HoraireCode[] = [
     categorie: "evenementiel",
     couleurFond: "#a1a1aa",
     couleurTexte: "#ffffff",
-    action: "Remplace l'affichage du code de travail, garde ses heures",
     typeEvenement: "special",
     afficherVueAnnuelle: true,
   },
@@ -215,7 +210,6 @@ export const HORAIRE_CODES: HoraireCode[] = [
     categorie: "evenementiel",
     couleurFond: "#dc2626",
     couleurTexte: "#ffffff",
-    action: "Remplace le code de travail (barré) et sa durée",
     typeEvenement: "normal",
     duree: 0,
     afficherVueAnnuelle: true,
@@ -230,7 +224,6 @@ export const HORAIRE_CODES: HoraireCode[] = [
     categorie: "evenementiel",
     couleurFond: "#fed7aa",
     couleurTexte: "#713f12",
-    action: "Complète le code horaire sur une plage saisie à la volée",
     typeEvenement: "partiel",
   },
   {
@@ -239,7 +232,6 @@ export const HORAIRE_CODES: HoraireCode[] = [
     categorie: "evenementiel",
     couleurFond: "#bbf7d0",
     couleurTexte: "#14532d",
-    action: "Complète le code horaire sur une plage saisie à la volée",
     typeEvenement: "partiel",
   },
   {
@@ -248,7 +240,6 @@ export const HORAIRE_CODES: HoraireCode[] = [
     categorie: "evenementiel",
     couleurFond: "#fca5a5",
     couleurTexte: "#7f1d1d",
-    action: "Complète le code horaire sur une plage saisie à la volée",
     typeEvenement: "partiel",
   },
 ];

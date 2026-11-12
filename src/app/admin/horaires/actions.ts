@@ -29,7 +29,6 @@ export async function enregistrerCodeHoraire(
     couleur_texte: code.couleurTexte,
     commentaire: code.commentaire ?? null,
     afficher_vue_annuelle: code.afficherVueAnnuelle ?? false,
-    action: code.categorie === "evenementiel" ? (code.action ?? null) : null,
     type_evenement: code.categorie === "evenementiel" ? code.typeEvenement : null,
     duree_heures: code.categorie === "evenementiel" && code.typeEvenement === "normal" ? code.duree : null,
   };

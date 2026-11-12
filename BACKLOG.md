@@ -1630,6 +1630,54 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   `HoraireCodeForm.tsx` (`TYPES_EVENEMENT`) et `HoraireCodesTable.tsx`
   (`LIBELLE_TYPE_EVENEMENT`).
 
+- [x] **17. Effacer tous les salariés de PROD pour repartir d'un import complet**
+  Demande explicite du client du 12/11, en préparation du changement
+  Manager ci-dessous (story #18) : les 103 salariés de l'EHPAD réel sont
+  supprimés, un nouvel import complet (avec Manager) sera refait ensuite.
+  _Statut : fait._ `delete from public.salarie;` exécuté directement (pas
+  une migration — opération sur les données, pas sur le schéma). Vérifié
+  avant et après : 0 ligne dans `journee`/`affectation_roulement`/
+  `validation_emargement`/`journee_historique` (tout `on delete cascade`
+  depuis `salarie`, mais rien n'en dépendait encore).
+
+- [ ] **18. Rétablir l'affichage du Manager à la création d'un salarié + filtre Manager dans le planning**
+  Retour client du 12/11 : le client indique être revenu sur son propre
+  choix du 30/10 (suppression de `salarie.manager`, cf. story de ce
+  jour-là) — la sélection d'un Manager à la création d'un salarié et le
+  filtre Manager du planning lui manquent.
+  _Analyse d'impact présentée avant tout code_ (cf. AGENTS.md) : plutôt
+  que de recréer `salarie.manager` (l'étiquette libre Aucun / Maîtresse
+  de maison / IDEC déconnectée de tout compte réel, à l'origine du bug
+  des managers fictifs de la story du 30/10), le client a choisi l'option
+  dérivée de `service.responsable_id` (aucune nouvelle colonne, aucune
+  migration) : le Manager affiché à la création d'un salarié se déduit
+  automatiquement du service choisi ; le filtre Planning gagne un
+  critère Manager qui regroupe en un clic tous les services dont ce
+  Manager est responsable.
+  _Statut : à faire._
+
+- [x] **19. Retirer code_horaire.action, jamais affiché dans l'application**
+  Question du client du 12/11 sur l'usage du champ Action, éditable dans
+  le formulaire Code horaire : constat fait en répondant à la question
+  — `action` est chargé par toutes les requêtes mais n'est affiché nulle
+  part (ni tableau des codes, ni sélecteur de code du planning, ni
+  émargement), une note jamais branchée à l'écran. Le client a choisi de
+  le supprimer plutôt que de lui trouver un usage.
+  _Statut : fait._ Migration `20261112000001_supprimer_action_code_horaire.sql`
+  (0 valeur non nulle en PROD vérifiée avant), appliquée sur PROD,
+  auditée (`get_advisors`, propre). Retiré du type `HoraireCode`, du
+  formulaire (`HoraireCodeForm.tsx`), des requêtes
+  (`app/page.tsx`, `app/emargement/page.tsx`, `admin/horaires/page.tsx`,
+  `admin/horaires/actions.ts`) et du script d'import en masse
+  (`scripts/planning-ehpad-tool.py` — une colonne "Action" encore
+  présente dans un fichier client est désormais ignorée silencieusement,
+  même principe que "Manager"/"Contrat Actif"). Modèle Excel
+  (`codes_horaires_modele_import.xlsx`, fourni directement au client)
+  mis à jour : colonne retirée, mise en forme conditionnelle et onglet
+  Instructions ajustés en conséquence.
+  [Artifact Modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+  (domaine C) mis à jour en conséquence.
+
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),

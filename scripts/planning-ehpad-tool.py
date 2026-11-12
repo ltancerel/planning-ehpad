@@ -345,6 +345,11 @@ def executer_import_salaries(db, ehpad_id, a_importer):
 # Import des codes horaires (même format que le modèle Excel du 28/10)
 # =====================================================================
 
+# "Action" (texte libre jamais affiché nulle part dans l'application,
+# retiré le 12/11 — cf. migration 20261112000001) n'est plus reconnue :
+# une colonne de ce nom encore présente dans un fichier client est
+# silencieusement ignorée, même principe que "Manager"/"Contrat Actif"
+# pour les salariés.
 COLONNES_CODES_HORAIRES = {
     "code": "code",
     "intitule": "intitule",
@@ -361,7 +366,6 @@ COLONNES_CODES_HORAIRES = {
     "plage3_fin": "plage3_fin",
     "plage4_debut": "plage4_debut",
     "plage4_fin": "plage4_fin",
-    "action": "action",
     "type_evenement": "type_evenement",
     "duree_heures": "duree_heures",
 }
@@ -455,9 +459,8 @@ def preparer_import_codes_horaires(db, chemin, feuille, ehpad_id):
                     raise ValueError(f"plage{i} incomplète (début et fin tous les deux requis)")
                 plages.append({"ordre": i, "heure_debut": debut, "heure_fin": fin})
 
-            # Événementiel/action/type_evenement/duree_heures — mêmes règles
-            # que les CHECK posés en base (migration domaine C).
-            action = texte(val(ligne, "action"))
+            # Événementiel/type_evenement/duree_heures — mêmes règles que les
+            # CHECK posés en base (migration domaine C).
             type_evenement_brut = texte(val(ligne, "type_evenement"))
             duree_heures_brute = texte(val(ligne, "duree_heures"))
 
@@ -496,15 +499,14 @@ def preparer_import_codes_horaires(db, chemin, feuille, ehpad_id):
             else:
                 if plages and categorie != "travail":
                     raise ValueError("des plages horaires sont renseignées pour une categorie autre que travail")
-                if type_evenement_brut or duree_heures_brute or action:
+                if type_evenement_brut or duree_heures_brute:
                     raise ValueError(
-                        "action/type_evenement/duree_heures doivent rester vides "
+                        "type_evenement/duree_heures doivent rester vides "
                         "hors categorie = evenementiel"
                     )
                 type_evenement = None
                 duree_heures = None
 
-            code_horaire["action"] = action
             code_horaire["type_evenement"] = type_evenement
             code_horaire["duree_heures"] = duree_heures
 

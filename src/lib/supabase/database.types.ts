@@ -129,7 +129,6 @@ export type Database = {
       }
       code_horaire: {
         Row: {
-          action: string | null
           afficher_vue_annuelle: boolean
           categorie: string
           code: string
@@ -143,7 +142,6 @@ export type Database = {
           type_evenement: string | null
         }
         Insert: {
-          action?: string | null
           afficher_vue_annuelle?: boolean
           categorie: string
           code: string
@@ -157,7 +155,6 @@ export type Database = {
           type_evenement?: string | null
         }
         Update: {
-          action?: string | null
           afficher_vue_annuelle?: boolean
           categorie?: string
           code?: string

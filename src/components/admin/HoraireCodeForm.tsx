@@ -58,7 +58,6 @@ export default function HoraireCodeForm({
   const [plages, setPlages] = useState<Plage[]>(
     valeurInitiale?.plages?.length ? valeurInitiale.plages : [PLAGE_VIDE]
   );
-  const [action, setAction] = useState(valeurInitiale?.action ?? "Se superpose au code horaire");
   const [typeEvenement, setTypeEvenement] = useState<TypeEvenement>(
     valeurInitiale?.typeEvenement ?? "special"
   );
@@ -121,7 +120,6 @@ export default function HoraireCodeForm({
       nouveauCode.plages = plages.filter((p) => p.debut && p.fin);
     }
     if (categorie === "evenementiel") {
-      nouveauCode.action = action.trim() || undefined;
       nouveauCode.typeEvenement = typeEvenement;
       if (typeEvenement === "normal") {
         nouveauCode.duree = Number(duree) || 0;
@@ -243,14 +241,6 @@ export default function HoraireCodeForm({
 
         {categorie === "evenementiel" && (
           <div className="space-y-3 rounded border border-zinc-200 p-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-700">Action</label>
-              <input
-                value={action}
-                onChange={(e) => setAction(e.target.value)}
-                className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
-              />
-            </div>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-700">Type d&apos;évènement</label>
               <div className="space-y-2">
