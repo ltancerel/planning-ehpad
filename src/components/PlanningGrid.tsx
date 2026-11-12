@@ -4,10 +4,8 @@ import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "r
 import Link from "next/link";
 import {
   GROUPES_ROULEMENT,
-  ROULEMENTS_DEMO,
-  AFFECTATIONS_ROULEMENT_DEMO,
-  CORRESPONDANCE_SALARIE_FICHE_DEMO,
   affectationActuelle,
+  type AffectationRoulement,
   type Roulement,
   type Salarie,
   type ProfilUtilisateur,
@@ -38,7 +36,12 @@ import {
 } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
-import { chargerPlanningReel, enregistrerJournees, effacerJournees } from "@/app/planning-actions";
+import {
+  chargerPlanningReel,
+  enregistrerJournees,
+  effacerJournees,
+  appliquerRoulementAction,
+} from "@/app/planning-actions";
 
 // Fenêtre visible toujours à 4 semaines (retour client du 24/09) ; le
 // nombre de semaines chargées (au-delà, avec ascenseur horizontal) est lui
@@ -77,12 +80,12 @@ type ClasseJour = "ferie" | "weekend" | "normal";
 // enregistrerJournees/effacerJournees, cf. src/app/planning-actions.ts —
 // nécessairement client, pas côté serveur au premier rendu : la période
 // affichée par défaut dépend de préférences mémorisées en localStorage,
-// jamais connues avant l'hydratation). Seule l'application d'un roulement
-// (raccourci sur une case vide, action groupée) tourne encore sur les
-// données de démo (`ROULEMENTS_DEMO`/`AFFECTATIONS_ROULEMENT_DEMO`) : dépend
-// de l'assignation réelle d'un roulement à un salarié, pas encore branchée
-// (écran Salariés), et d'une nouvelle RPC `appliquer_roulement` à écrire —
-// incrément suivant.
+// jamais connues avant l'hydratation). Dernier incrément (12/11, story #35) :
+// l'application d'un roulement (raccourci sur une case vide, action
+// groupée) lit désormais roulements/affectationsRoulement (réels, chargés
+// par src/app/page.tsx) et persiste via la RPC appliquer_roulement
+// (appliquerRoulementAction, cf. src/app/planning-actions.ts) — même
+// écriture optimiste + repli en cas d'échec que le reste de la grille.
 export default function PlanningGrid({
   salaries,
   servicesOrdre,
@@ -91,6 +94,8 @@ export default function PlanningGrid({
   joursFeries,
   ehpad,
   utilisateur,
+  roulements,
+  affectationsRoulement,
 }: {
   salaries: Salarie[];
   servicesOrdre: string[];
@@ -99,6 +104,8 @@ export default function PlanningGrid({
   joursFeries: string[];
   ehpad: { nom: string; logo: string | null };
   utilisateur: ProfilUtilisateur;
+  roulements: Roulement[];
+  affectationsRoulement: Record<string, AffectationRoulement[]>;
 }) {
   const codesParCode = useMemo(
     () => Object.fromEntries(codesHoraires.map((h) => [h.code.toUpperCase(), h])),
@@ -407,11 +414,9 @@ export default function PlanningGrid({
   }
 
   function roulementActuelDuSalarie(salarieId: string): Roulement | undefined {
-    const ficheId = CORRESPONDANCE_SALARIE_FICHE_DEMO[salarieId];
-    if (!ficheId) return undefined;
-    const affectations = AFFECTATIONS_ROULEMENT_DEMO[ficheId] ?? [];
+    const affectations = affectationsRoulement[salarieId] ?? [];
     const actuelle = affectationActuelle(affectations, formatDateISO(new Date()));
-    return actuelle ? ROULEMENTS_DEMO.find((r) => r.id === actuelle.roulementId) : undefined;
+    return actuelle ? roulements.find((r) => r.id === actuelle.roulementId) : undefined;
   }
 
   // Évalue (sans rien modifier) le motif d'un roulement pour un salarié, sur
@@ -481,12 +486,21 @@ export default function PlanningGrid({
     return { editions: nouvelles, bloque: false };
   }
 
+  // Écriture optimiste comme choisirCode/appliquerCodeSelectionMultiple :
+  // la grille applique d'abord le motif localement (feedback instantané,
+  // via evaluerProjectionRoulement — qui bloque déjà si une édition locale
+  // non encore persistée occupe une des semaines), puis appliquerRoulementAction
+  // (RPC appliquer_roulement) persiste réellement et revérifie côté serveur
+  // (ferme la fenêtre de concurrence avec un autre poste qui aurait rempli
+  // la même semaine entre-temps) — en cas de refus ou d'erreur, les cases
+  // concernées reviennent à leur valeur d'avant l'application.
   function appliquerRoulementDepuisEdition(semaineDepart: number) {
     if (!cellEnEdition) return;
     const [salarieId, dateISO] = cellEnEdition.split("__");
     const roulement = roulementActuelDuSalarie(salarieId);
     if (!roulement) return;
     const lundi = lundiDeLaSemaine(parseDateISO(dateISO));
+    const lundiISO = formatDateISO(lundi);
     const resultat = evaluerProjectionRoulement(editions, salarieId, lundi, roulement, semaineDepart);
     if (resultat.bloque) {
       alert(
@@ -496,8 +510,31 @@ export default function PlanningGrid({
       );
       return;
     }
+
+    const indexDepart = Math.min(Math.max(semaineDepart - 1, 0), roulement.nbSemaines - 1);
+    const nbSemainesAAppliquer = roulement.nbSemaines - indexDepart;
+    const precedentes: Record<string, ValeurCellule | undefined> = {};
+    for (let j = 0; j < nbSemainesAAppliquer * 7; j++) {
+      const jour = new Date(lundi);
+      jour.setDate(jour.getDate() + j);
+      const cle = `${salarieId}__${formatDateISO(jour)}`;
+      precedentes[cle] = cle in editions ? editions[cle] : planningBase[cle];
+    }
+
     setEditions(resultat.editions);
     fermerEdition();
+    demarrerPersistance(async () => {
+      const reponse = await appliquerRoulementAction(salarieId, lundiISO, semaineDepart);
+      if (reponse.error || !reponse.applique) {
+        setEditions((prev) => ({ ...prev, ...precedentes }));
+        setErreurPersistance(
+          reponse.error ??
+            `Impossible d'appliquer le roulement : la semaine du ${formatJourMois(
+              parseDateISO(reponse.semaineBloqueeISO!)
+            )} a été planifiée entre-temps.`
+        );
+      }
+    });
   }
 
   function demarrerSelection(salarieId: string, dateISO: string) {
@@ -585,17 +622,55 @@ export default function PlanningGrid({
   function appliquerRoulementGroupe() {
     if (!ancreSelection || !survolSelection || ancreSelection.dateISO !== survolSelection.dateISO) return;
     const lundi = lundiDeLaSemaine(parseDateISO(ancreSelection.dateISO));
+    const lundiISO = formatDateISO(lundi);
     const salarieIds = celluleEnSelection().map((c) => c.salarieId);
+
+    const candidats: string[] = [];
+    const precedentes: Record<string, ValeurCellule | undefined> = {};
     setEditions((prev) => {
       let nouvelles = prev;
       for (const salarieId of salarieIds) {
         const roulement = roulementActuelDuSalarie(salarieId);
         if (!roulement) continue;
-        nouvelles = evaluerProjectionRoulement(nouvelles, salarieId, lundi, roulement).editions;
+        const resultat = evaluerProjectionRoulement(nouvelles, salarieId, lundi, roulement);
+        if (resultat.bloque) continue;
+        for (let j = 0; j < roulement.nbSemaines * 7; j++) {
+          const jour = new Date(lundi);
+          jour.setDate(jour.getDate() + j);
+          const cle = `${salarieId}__${formatDateISO(jour)}`;
+          precedentes[cle] = cle in nouvelles ? nouvelles[cle] : planningBase[cle];
+        }
+        nouvelles = resultat.editions;
+        candidats.push(salarieId);
       }
       return nouvelles;
     });
     annulerSelection();
+
+    demarrerPersistance(async () => {
+      const echecs: string[] = [];
+      for (const salarieId of candidats) {
+        const reponse = await appliquerRoulementAction(salarieId, lundiISO, 1);
+        if (reponse.error || !reponse.applique) echecs.push(salarieId);
+      }
+      if (echecs.length === 0) return;
+
+      setErreurPersistance(
+        "Roulement non appliqué (planifié entre-temps) pour : " +
+          echecs
+            .map((id) => salaries.find((s) => s.id === id))
+            .filter((s): s is Salarie => Boolean(s))
+            .map((s) => `${s.nom} ${s.prenom}`)
+            .join(", ")
+      );
+      setEditions((prev) => {
+        const restaurees = { ...prev };
+        for (const [cle, valeur] of Object.entries(precedentes)) {
+          if (echecs.includes(cle.split("__")[0])) restaurees[cle] = valeur;
+        }
+        return restaurees;
+      });
+    });
   }
 
   // Pas de confirmation : ni l'effacement d'une seule case (bouton "Vider la

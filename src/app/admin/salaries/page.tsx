@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { GROUPES_ROULEMENT, type GroupeRoulement, type TypePaie } from "@/lib/mock-data";
+import { construireRoulements, grouperAffectationsParSalarie } from "@/lib/roulements";
 import type { ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
 import SalariesAdminClient from "./SalariesAdminClient";
 
@@ -36,5 +37,28 @@ export default async function SalariesAdminPage() {
     presence: s.presence === "Absent" ? "Absent" : "Présent",
   }));
 
-  return <SalariesAdminClient salaries={salaries} services={services} />;
+  // Roulements réels (motif + affectations), branchés le 12/11 (story #35
+  // dernier incrément) — jusqu'ici ce panneau lisait ROULEMENTS_DEMO/
+  // AFFECTATIONS_ROULEMENT_DEMO et n'écrivait qu'en état local React.
+  const { data: roulementsData } = await supabase
+    .from("roulement")
+    .select(
+      "id, nom, nb_semaines, roulement_jour(semaine_index, jour_semaine, code:code_horaire_id(code))"
+    )
+    .order("nom");
+  const roulements = construireRoulements(roulementsData ?? []);
+
+  const { data: affectationsData } = await supabase
+    .from("affectation_roulement")
+    .select("id, salarie_id, roulement_id, date_debut, date_fin");
+  const affectationsRoulement = grouperAffectationsParSalarie(affectationsData ?? []);
+
+  return (
+    <SalariesAdminClient
+      salaries={salaries}
+      services={services}
+      roulements={roulements}
+      affectationsRoulement={affectationsRoulement}
+    />
+  );
 }

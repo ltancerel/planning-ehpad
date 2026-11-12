@@ -161,6 +161,36 @@ export async function enregistrerJournees(lignes: LigneJournee[]): Promise<{ err
   return {};
 }
 
+// Applique un roulement assigné (RPC appliquer_roulement, story #35 dernier
+// incrément) : persiste réellement le motif sur journee, avec la règle
+// "tout ou rien" déjà revérifiée côté serveur (cf. la migration de la RPC) —
+// PlanningGrid affiche d'abord la même projection côté client pour un
+// retour instantané, puis appelle cette action pour l'écriture réelle.
+export async function appliquerRoulementAction(
+  salarieId: string,
+  lundiISO: string,
+  semaineDepart: number
+): Promise<{ applique?: boolean; semaineBloqueeISO?: string | null; error?: string }> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("appliquer_roulement", {
+    p_salarie_id: salarieId,
+    p_lundi_debut: lundiISO,
+    p_semaine_depart: semaineDepart,
+  });
+  if (error) {
+    return { error: "Application du roulement impossible : " + error.message };
+  }
+
+  const ligne = data?.[0];
+  if (!ligne) {
+    return { error: "Application du roulement impossible : réponse inattendue du serveur." };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/emargement");
+  return { applique: ligne.applique, semaineBloqueeISO: ligne.semaine_bloquee };
+}
+
 // Efface une ou plusieurs cases (remise en "jamais planifiée", pas juste
 // vidée — cf. commentaire dans PlanningGrid). Le filtre OR porte sur des
 // paires (salarie_id, date) précises : salarieId vient toujours d'un

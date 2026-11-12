@@ -1,30 +1,32 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  ROULEMENTS_DEMO,
-  AFFECTATIONS_ROULEMENT_DEMO,
-  type AffectationRoulement,
-  type FicheSalarie,
-} from "@/lib/mock-data";
+import type { AffectationRoulement, FicheSalarie, Roulement } from "@/lib/mock-data";
 import SalariesTable from "@/components/admin/SalariesTable";
 import SalarieForm, { type ServiceAvecResponsable, type ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
-import { enregistrerSalarie, supprimerSalarie, type ChampsSalarie } from "./actions";
+import {
+  enregistrerSalarie,
+  supprimerSalarie,
+  assignerRoulement,
+  type ChampsSalarie,
+  type ChampsAffectationRoulement,
+} from "./actions";
 
 export default function SalariesAdminClient({
   salaries,
   services,
+  roulements,
+  affectationsRoulement,
 }: {
   salaries: ValeurInitialeSalarie[];
   services: ServiceAvecResponsable[];
+  roulements: Roulement[];
+  affectationsRoulement: Record<string, AffectationRoulement[]>;
 }) {
   const [panneau, setPanneau] = useState<"ferme" | "creation" | "edition">("ferme");
   const [salarieEnEdition, setSalarieEnEdition] = useState<ValeurInitialeSalarie | undefined>(undefined);
   const [erreur, setErreur] = useState<string | null>(null);
   const [messageConfirmation, setMessageConfirmation] = useState<string | null>(null);
-  const [affectationsParSalarie, setAffectationsParSalarie] = useState<
-    Record<string, AffectationRoulement[]>
-  >(AFFECTATIONS_ROULEMENT_DEMO);
   const [, demarrer] = useTransition();
 
   function ouvrirCreation() {
@@ -66,11 +68,16 @@ export default function SalariesAdminClient({
     });
   }
 
-  function assignerRoulement(salarieId: string, donnees: Omit<AffectationRoulement, "id">) {
-    setAffectationsParSalarie((prev) => ({
-      ...prev,
-      [salarieId]: [...(prev[salarieId] ?? []), { ...donnees, id: `aff-${Date.now()}` }],
-    }));
+  function onAssignerRoulement(salarieId: string, donnees: Omit<AffectationRoulement, "id">) {
+    const champs: ChampsAffectationRoulement = {
+      roulementId: donnees.roulementId,
+      dateDebut: donnees.dateDebut,
+      dateFin: donnees.dateFin,
+    };
+    demarrer(async () => {
+      const resultat = await assignerRoulement(salarieId, champs);
+      if (resultat.error) alert(resultat.error);
+    });
   }
 
   return (
@@ -117,10 +124,10 @@ export default function SalariesAdminClient({
               valeurInitiale={salarieEnEdition}
               matriculesExistants={salaries.map((s) => s.matricule)}
               services={services}
-              roulements={ROULEMENTS_DEMO}
-              affectationsRoulement={affectationsParSalarie[salarieEnEdition?.id ?? ""] ?? []}
+              roulements={roulements}
+              affectationsRoulement={affectationsRoulement[salarieEnEdition?.id ?? ""] ?? []}
               onValider={enregistrer}
-              onAssignerRoulement={(donnees) => assignerRoulement(salarieEnEdition!.id, donnees)}
+              onAssignerRoulement={(donnees) => onAssignerRoulement(salarieEnEdition!.id, donnees)}
               onAnnuler={fermerPanneau}
             />
           </div>

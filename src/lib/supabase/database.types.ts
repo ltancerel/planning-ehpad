@@ -790,6 +790,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      appliquer_roulement: {
+        Args: {
+          p_lundi_debut: string
+          p_salarie_id: string
+          p_semaine_depart?: number
+        }
+        Returns: {
+          applique: boolean
+          semaine_bloquee: string
+        }[]
+      }
       auth_ehpad_id: { Args: never; Returns: string }
       auth_type_compte: { Args: never; Returns: string }
       calculer_paques: { Args: { p_annee: number }; Returns: string }
@@ -800,6 +811,18 @@ export type Database = {
           annee_planifiee_id: string
           jours_feries_crees: number
         }[]
+      }
+      inserer_log_audit: {
+        Args: {
+          p_detail?: Json
+          p_ehpad_id: string
+          p_entite: string
+          p_entite_id: string
+          p_message: string
+          p_source: string
+          p_type_operation: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

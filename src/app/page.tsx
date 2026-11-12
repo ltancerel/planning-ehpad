@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import PlanningGrid from "@/components/PlanningGrid";
 import { GROUPES_ROULEMENT, type GroupeRoulement, type ProfilUtilisateur, type TypePaie } from "@/lib/mock-data";
+import { construireRoulements, grouperAffectationsParSalarie } from "@/lib/roulements";
 import type { HoraireCategorie, HoraireCode, TypeEvenement } from "@/lib/horaire-codes";
 
 const LABEL_TYPE_COMPTE: Record<string, ProfilUtilisateur["typeUtilisateur"]> = {
@@ -79,6 +80,24 @@ export default async function Home() {
     typePaie: s.type_paie as TypePaie,
   }));
 
+  // Roulements réels (motif + affectations), branchés le 12/11 (story #35
+  // dernier incrément) — jusqu'ici PlanningGrid lisait ROULEMENTS_DEMO/
+  // AFFECTATIONS_ROULEMENT_DEMO. motif[s][j] reprend le même format que la
+  // maquette (code court, "" = repos) pour ne pas changer evaluerProjectionRoulement.
+  const { data: roulementsData } = await supabase
+    .from("roulement")
+    .select(
+      "id, nom, nb_semaines, roulement_jour(semaine_index, jour_semaine, code:code_horaire_id(code))"
+    )
+    .order("nom");
+
+  const roulements = construireRoulements(roulementsData ?? []);
+
+  const { data: affectationsData } = await supabase
+    .from("affectation_roulement")
+    .select("id, salarie_id, roulement_id, date_debut, date_fin");
+  const affectationsRoulement = grouperAffectationsParSalarie(affectationsData ?? []);
+
   const { data: codesData } = await supabase
     .from("code_horaire")
     .select(
@@ -111,6 +130,8 @@ export default async function Home() {
       managers={managers}
       codesHoraires={codesHoraires}
       joursFeries={joursFeries}
+      roulements={roulements}
+      affectationsRoulement={affectationsRoulement}
       ehpad={{ nom: ehpad?.nom ?? "", logo: ehpad?.logo_base64 ?? null }}
       utilisateur={{
         nom: compte.nom,

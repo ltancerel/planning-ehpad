@@ -85,3 +85,38 @@ export async function supprimerSalarie(id: string): Promise<{ error?: string }> 
   revalidatePath("/");
   return {};
 }
+
+export type ChampsAffectationRoulement = {
+  roulementId: string;
+  dateDebut: string;
+  dateFin?: string;
+};
+
+// Assignation réelle d'un roulement à un salarié (story #35 dernier
+// incrément) — remplace l'ancien état local React de SalariesAdminClient
+// (perdu au rechargement). RLS réserve l'écriture sur affectation_roulement
+// à l'administrateur, comme les autres tables de configuration.
+export async function assignerRoulement(
+  salarieId: string,
+  champs: ChampsAffectationRoulement
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("affectation_roulement")
+    .insert({
+      salarie_id: salarieId,
+      roulement_id: champs.roulementId,
+      date_debut: champs.dateDebut,
+      date_fin: champs.dateFin || null,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    return { error: "Assignation du roulement impossible : " + error.message };
+  }
+
+  revalidatePath("/admin/salaries");
+  revalidatePath("/");
+  return {};
+}

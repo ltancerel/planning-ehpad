@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { UTILISATEUR_CONNECTE } from "@/lib/mock-data";
 import { logout } from "@/app/compte/actions";
 
 type UtilisateurMenu = {
@@ -16,13 +15,8 @@ function initiales({ nom, prenom }: { nom: string; prenom: string }): string {
   return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase();
 }
 
-// `utilisateur` fourni = session réelle (zone branchée sur le backend,
-// cf. story #34) : affiche l'identité réelle et une vraie déconnexion.
-// Non fourni = repli mock (zones pas encore branchées, ex. PlanningGrid).
-export default function UserMenu({ utilisateur: utilisateurProp }: { utilisateur?: UtilisateurMenu }) {
+export default function UserMenu({ utilisateur }: { utilisateur: UtilisateurMenu }) {
   const [ouvert, setOuvert] = useState(false);
-  const reel = Boolean(utilisateurProp);
-  const utilisateur = utilisateurProp ?? UTILISATEUR_CONNECTE;
 
   return (
     <div className="relative">
@@ -68,17 +62,11 @@ export default function UserMenu({ utilisateur: utilisateurProp }: { utilisateur
               </div>
             </dl>
 
-            {reel ? (
-              <form action={logout} className="mt-3 border-t border-zinc-100 pt-2">
-                <button type="submit" className="text-xs font-medium text-zinc-600 hover:underline">
-                  Se déconnecter
-                </button>
-              </form>
-            ) : (
-              <p className="mt-3 border-t border-zinc-100 pt-2 text-[11px] text-zinc-400">
-                Profil en lecture seule (maquette)
-              </p>
-            )}
+            <form action={logout} className="mt-3 border-t border-zinc-100 pt-2">
+              <button type="submit" className="text-xs font-medium text-zinc-600 hover:underline">
+                Se déconnecter
+              </button>
+            </form>
           </div>
         </>
       )}

@@ -1295,7 +1295,7 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   l'assignation d'un roulement à un salarié) relève explicitement de la
   story #4/#35 ci-dessous, pas de celle-ci._
 
-- [ ] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
+- [x] **4. Brancher les écrans Planning & Émargement sur le backend** _(issue #35)_
   Grille planning, application d'un roulement (RPC), effacement de plage,
   émargement mensuel/annuel, validation.
   _Démarré le 25/09, à la demande du client, pour que « EHPAD Validation »
@@ -1408,6 +1408,44 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   anticipée en commentaire dans la migration traçabilité du 24/09). Story
   **laissée ouverte** pour cette seule raison — pas de quoi la clore tant
   que ce point n'est pas traité._
+  _**Clôturée le 12/11**, à la demande du client (« il ne faut plus aucun
+  truc de démo ») : dernier point traité. Nouvelle RPC
+  `appliquer_roulement` (SECURITY INVOKER — écritures sur `journee` déjà
+  protégées par les RLS existantes, administrateur ET manager), reproduit
+  à l'identique côté serveur la règle "tout ou rien" et le mécanisme
+  `semaine_depart` déjà en place côté client
+  (`evaluerProjectionRoulement`), pour fermer la fenêtre de concurrence
+  d'une vérification faite seulement côté client. Traçabilité : `journee`
+  étant exclue du trigger générique `log_audit`, une ligne de synthèse est
+  insérée explicitement par la RPC, via un nouveau helper
+  `inserer_log_audit` (SECURITY DEFINER, même principe que
+  `auth_ehpad_id`/`est_administrateur_systeme`) — durci dans un second
+  temps (migration séparée) après que `get_advisors` a signalé, juste
+  après la première application, qu'une fonction SECURITY DEFINER qui
+  écrit ne doit pas être appelable sans garde-fou en RPC direct : borne
+  désormais `p_ehpad_id` à celui du compte appelant (ou à
+  l'Administrateur Système), sans quoi n'importe quel compte authentifié
+  aurait pu forger une ligne `log_audit` pour un autre établissement. 10
+  nouveaux tests DB pour `appliquer_roulement`, 3 pour ce garde-fou — 96
+  tests DB, 7 e2e, tous verts. `PlanningGrid.tsx` et
+  `SalariesAdminClient.tsx` lisent désormais `roulement`/
+  `affectation_roulement` réels (chargés par `src/app/page.tsx` et
+  `src/app/admin/salaries/page.tsx`, via un helper partagé
+  `src/lib/roulements.ts`) et persistent réellement (raccourci mono-case,
+  action groupée, et panneau d'assignation sur la fiche Salarié —
+  `assignerRoulement`, `src/app/admin/salaries/actions.ts`) avec la même
+  écriture optimiste + repli en cas d'échec que le reste de la grille.
+  Suppression de tout le code de démo devenu mort :
+  `ROULEMENTS_DEMO`/`AFFECTATIONS_ROULEMENT_DEMO`/
+  `CORRESPONDANCE_SALARIE_FICHE_DEMO` (`src/lib/mock-data.ts`), et, sans
+  lien avec cette story mais constatés morts à la même occasion (zéro
+  consommateur, vérifié par grep) : `SALARIES`, `JOURS_FERIES_2026`,
+  `genererPlanningDemo`, `PLANNING_DEMO`, `SERVICES_ORDRE`,
+  `SERVICE_BESOINS`, `ANNEES_DEMO`, `UTILISATEURS_DEMO`, `DEMO_DEBUT`,
+  `DEMO_FIN`, et le repli `UTILISATEUR_CONNECTE` de `UserMenu`
+  (`utilisateur` devient une prop obligatoire, les deux seuls appelants la
+  fournissant déjà toujours). Plus aucune donnée de démo dans
+  l'application réelle._
 
 - [x] **5. Déployer en production** _(issue #36)_
   Projet Vercel connecté à `main`, domaine Vercel par défaut, variables

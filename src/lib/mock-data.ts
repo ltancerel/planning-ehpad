@@ -1,5 +1,4 @@
-import type { ValeurCellule } from "./horaire-codes";
-import { formatDateISO, genererPeriode } from "./dates";
+import { formatDateISO } from "./dates";
 import { genererJoursFeriesFixes, genererJoursFeriesConfigurables } from "./jours-feries";
 
 export type Salarie = {
@@ -24,16 +23,6 @@ export type ProfilUtilisateur = {
   poste: string;
 };
 
-// Utilisateur connecté (mock — pas d'authentification réelle à ce stade)
-export const UTILISATEUR_CONNECTE: ProfilUtilisateur = {
-  nom: "Hontaa",
-  prenom: "Virginie",
-  typeUtilisateur: "Administrateur",
-  service: "Administration",
-  mesServices: ["Administration"],
-  poste: "Direction",
-};
-
 export type Utilisateur = {
   id: string;
   identifiant: string; // 3 lettres majuscules
@@ -48,41 +37,6 @@ export type Utilisateur = {
   services: string[];
   poste: string;
 };
-
-// Utilisateurs de démo (noms/emails fictifs — cf. décision de ne jamais utiliser
-// de vraies identités dans les données de démonstration).
-export const UTILISATEURS_DEMO: Utilisateur[] = [
-  {
-    id: "u1",
-    identifiant: "TMO",
-    nom: "MOREL",
-    prenom: "Thomas",
-    email: "thomas.morel@example.fr",
-    typeUtilisateur: "Administrateur",
-    services: ["ADMINISTRATIF"],
-    poste: "Direction",
-  },
-  {
-    id: "u2",
-    identifiant: "SLA",
-    nom: "LAMBERT",
-    prenom: "Sophie",
-    email: "sophie.lambert@example.fr",
-    typeUtilisateur: "Manager",
-    services: ["IDE", "ASH CDD"],
-    poste: "Infirmière coordinatrice",
-  },
-  {
-    id: "u3",
-    identifiant: "JDU",
-    nom: "DURAND",
-    prenom: "Julien",
-    email: "julien.durand@example.fr",
-    typeUtilisateur: "Utilisateur",
-    services: [],
-    poste: "Agent",
-  },
-];
 
 // Regroupement salarié à valeurs "Équipe A/B/C/D" (ajouté le 23/09), affiché
 // à l'écran sous le libellé "Alignement roulement" (formulaire, colonne de
@@ -116,35 +70,6 @@ export type Roulement = {
   motif: string[][];
 };
 
-export const ROULEMENTS_DEMO: Roulement[] = [
-  {
-    id: "r1",
-    nom: "ASH matin/soir (2 semaines)",
-    nbSemaines: 2,
-    motif: [
-      ["60S", "60S", "60S", "60S", "60S", "", ""],
-      ["70A", "70A", "70A", "70A", "70A", "", ""],
-    ],
-  },
-  {
-    id: "r2",
-    nom: "IDE fixe (1 semaine)",
-    nbSemaines: 1,
-    motif: [["SEC", "SEC", "SEC", "SEC", "SEC", "", ""]],
-  },
-  {
-    id: "r3",
-    nom: "Administratif (4 semaines)",
-    nbSemaines: 4,
-    motif: [
-      ["SEC", "SEC", "SEC", "SEC", "SEC", "", ""],
-      ["SEC", "SEC", "SEC", "SEC", "", "", ""],
-      ["OK", "OK", "OK", "OK", "OK", "", ""],
-      ["OK", "OK", "OK", "OK", "", "", ""],
-    ],
-  },
-];
-
 // Affectation d'un roulement à un salarié sur une période donnée (cf. story
 // « Appliquer un roulement à un salarié »). dateDebut est toujours un lundi ;
 // dateFin absente = affectation en cours. Un salarié n'a par défaut aucun
@@ -154,16 +79,6 @@ export type AffectationRoulement = {
   roulementId: string;
   dateDebut: string; // ISO, lundi
   dateFin?: string; // ISO
-};
-
-// Historique des affectations par salarié (clé = FicheSalarie.id). Un salarié
-// sans entrée n'a jamais eu de roulement assigné.
-export const AFFECTATIONS_ROULEMENT_DEMO: Record<string, AffectationRoulement[]> = {
-  fs1: [
-    { id: "aff1", roulementId: "r2", dateDebut: "2025-01-06", dateFin: "2025-05-25" },
-    { id: "aff2", roulementId: "r1", dateDebut: "2025-06-02" },
-  ],
-  fs4: [{ id: "aff3", roulementId: "r3", dateDebut: "2025-06-02" }],
 };
 
 export function affectationsRecentesDabord(affectations: AffectationRoulement[]): AffectationRoulement[] {
@@ -178,27 +93,6 @@ export function affectationActuelle(
     (a) => a.dateDebut <= dateReferenceISO && (!a.dateFin || a.dateFin >= dateReferenceISO)
   );
 }
-
-// Pont temporaire entre les deux représentations du salarié dans cette
-// maquette (clé = Salarie.id de la vue Planning, valeur = id de fiche admin)
-// : cf. point ouvert "deux représentations distinctes du salarié". Permet à
-// la grille Planning de retrouver le roulement actuel d'un salarié (via
-// AFFECTATIONS_ROULEMENT_DEMO ci-dessous), en attendant l'unification des
-// deux modèles au vrai backend — story #35 restante.
-export const CORRESPONDANCE_SALARIE_FICHE_DEMO: Record<string, string> = {
-  "1": "fs3", // DUPONT Marie
-  "2": "fs4", // MARTIN Julie
-  "3": "fs1", // BERNARD Claire
-  "4": "fs5", // DURAND Sophie
-  "8": "fs6", // PETIT Léa
-  "9": "fs7", // ROBERT Emma
-  "10": "fs8", // RICHARD Chloé
-  "11": "fs9", // DUBOIS Camille
-  "12": "fs10", // MOREAU Lucas
-  "13": "fs2", // LAURENT Inès
-  "14": "fs11", // SIMON Manon
-  "15": "fs12", // MICHEL Anna
-};
 
 export type JourFerie = {
   date: string; // ISO yyyy-mm-dd
@@ -229,170 +123,4 @@ export function genererJoursFeriesDefaut(annee: number): JourFerie[] {
       actif: true,
     })),
   ].sort((a, b) => a.date.localeCompare(b.date));
-}
-
-// Année déjà planifiée dans la démo (cohérente avec les jours fériés utilisés
-// dans la vue Planning).
-export const ANNEES_DEMO: AnneePlanifiee[] = [
-  {
-    id: "a2026",
-    annee: 2026,
-    jourDemarrage: "2026-01-01",
-    joursFeries: genererJoursFeriesDefaut(2026),
-  },
-];
-
-export const SERVICES_ORDRE = ["ADMINISTRATIF", "ASH BESOINS", "ASH CDD", "IDE"];
-
-// Service exclusivement composé de lignes "Besoin" non attachées à un salarié
-// réel, utilisées pour signaler des besoins à couvrir (cf. CDC). Leurs cellules
-// restent vides dans les données de démo (voir genererPlanningDemo plus bas).
-export const SERVICE_BESOINS = "ASH BESOINS";
-
-// Noms volontairement génériques (patronymes les plus courants en France) pour
-// bien signaler des données fictives et éviter toute homonymie avec un salarié réel.
-// Type minimal distinct de Salarie (plus riche, utilisé par les écrans réels) :
-// ces données de démo n'ont pas de manager/roulement/présence/type de paie.
-type SalarieDemo = { id: string; nom: string; prenom: string; service: string };
-export const SALARIES: SalarieDemo[] = [
-  { id: "1", nom: "DUPONT", prenom: "Marie", service: "ADMINISTRATIF" },
-  { id: "2", nom: "MARTIN", prenom: "Julie", service: "ADMINISTRATIF" },
-  { id: "3", nom: "BERNARD", prenom: "Claire", service: "ADMINISTRATIF" },
-  { id: "4", nom: "DURAND", prenom: "Sophie", service: "ADMINISTRATIF" },
-  { id: "5", nom: "BESOIN", prenom: "ASH 1", service: SERVICE_BESOINS },
-  { id: "6", nom: "BESOIN", prenom: "ASH 2", service: SERVICE_BESOINS },
-  { id: "7", nom: "BESOIN", prenom: "ASH 3", service: SERVICE_BESOINS },
-  { id: "8", nom: "PETIT", prenom: "Léa", service: "ASH CDD" },
-  { id: "9", nom: "ROBERT", prenom: "Emma", service: "ASH CDD" },
-  { id: "10", nom: "RICHARD", prenom: "Chloé", service: "ASH CDD" },
-  { id: "11", nom: "DUBOIS", prenom: "Camille", service: "ASH CDD" },
-  { id: "12", nom: "MOREAU", prenom: "Lucas", service: "ASH CDD" },
-  { id: "13", nom: "LAURENT", prenom: "Inès", service: "ASH CDD" },
-  { id: "14", nom: "SIMON", prenom: "Manon", service: "IDE" },
-  { id: "15", nom: "MICHEL", prenom: "Anna", service: "IDE" },
-].sort((a, b) => {
-  const serviceOrdre = SERVICES_ORDRE.indexOf(a.service) - SERVICES_ORDRE.indexOf(b.service);
-  if (serviceOrdre !== 0) return serviceOrdre;
-  return a.nom.localeCompare(b.nom) || a.prenom.localeCompare(b.prenom);
-});
-
-// Jours fériés fixes 2026 (à titre de démo)
-export const JOURS_FERIES_2026 = new Set([
-  "2026-01-01",
-  "2026-05-01",
-  "2026-05-08",
-  "2026-05-14",
-  "2026-05-25",
-  "2026-07-14",
-  "2026-08-15",
-  "2026-11-01",
-  "2026-11-11",
-  "2026-12-25",
-]);
-
-function seedAleatoire(seed: number) {
-  let x = seed;
-  return () => {
-    x = (x * 1103515245 + 12345) & 0x7fffffff;
-    return x / 0x7fffffff;
-  };
-}
-
-const CODES_TRAVAIL_DEMO = ["60S", "70A", "185", "SEC", "OK"];
-const CODE_REPOS_DEMO = "."; // informatif, jamais un code travail — voir note ci-dessous
-// Codes évènementiels "special"/"normal" (se superposent à un code travail
-// déjà présent, cf. redéfinition du 23/09 — un évènementiel ne s'applique
-// jamais sur une cellule vide). Les codes "partiel" (ABT/HSP/CARP) exigent
-// une ou plusieurs plages saisies à la volée, non générées aléatoirement ici
-// — cf. EXEMPLES_EMARGEMENT plus bas pour des cas déterministes.
-const CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO = ["CP", "MAL", "CARJ", "ABA", "ABI"];
-
-export function genererPlanningDemo(salaries: SalarieDemo[], dates: string[]): Record<string, ValeurCellule> {
-  const rng = seedAleatoire(42);
-  const planning: Record<string, ValeurCellule> = {};
-  for (const salarie of salaries) {
-    for (const date of dates) {
-      const tirage = rng();
-      if (tirage < 0.12) continue; // jamais remplie
-
-      const cle = `${salarie.id}__${date}`;
-      // Jour de repos : code informatif seul, jamais de code évènementiel
-      // dessus (un évènementiel exige un travail, cf. redéfinition du
-      // 23/09 — ancien bug de démo corrigé le 23/09 : REPOS figurait à
-      // tort dans le pool des codes travail, produisant des cellules
-      // CP/MAL superposées à un "travail" qui n'en était pas un).
-      if (rng() < 0.15) {
-        planning[cle] = { informatif: CODE_REPOS_DEMO };
-        continue;
-      }
-      const travail = CODES_TRAVAIL_DEMO[Math.floor(rng() * CODES_TRAVAIL_DEMO.length)];
-      if (rng() < 0.15) {
-        const evenementiel =
-          CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO[Math.floor(rng() * CODES_EVENEMENTIEL_SUPERPOSABLE_DEMO.length)];
-        planning[cle] = { travail, evenementiel };
-      } else {
-        planning[cle] = { travail };
-      }
-    }
-  }
-  return planning;
-}
-
-// Données de démo générées une seule fois sur une plage fixe, indépendante de la
-// période actuellement affichée (permet de naviguer librement sans "trous").
-// S'arrête fin septembre 2026 : le mois suivant (octobre) reste vide pour qu'un
-// utilisateur puisse s'y projeter et planifier librement pendant la démo.
-// Partagées entre la vue planning et la vue émargement pour rester cohérentes.
-export const DEMO_DEBUT = new Date(2025, 0, 1);
-export const DEMO_FIN = new Date(2026, 8, 30);
-const DEMO_NB_JOURS = Math.round((DEMO_FIN.getTime() - DEMO_DEBUT.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-export const PLANNING_DEMO = genererPlanningDemo(
-  SALARIES.filter((s) => s.service !== SERVICE_BESOINS),
-  genererPeriode(DEMO_DEBUT, DEMO_NB_JOURS).map(formatDateISO)
-);
-
-// Exemples déterministes d'évènements sur septembre 2026 (mois par défaut de
-// la vue émargement), forcés après la génération aléatoire pour garantir la
-// présence des différents cas sur chaque salarié : mêmes dates/codes pour
-// tous (retour client du 17/09 : "dupliquer la même vue pour chaque salarié,
-// je n'ai pas besoin de plusieurs exemples").
-const EXEMPLE_TRAVAIL = "70A"; // 07:00-13:00 / 14:00-19:00
-const EXEMPLES_EMARGEMENT: { date: string; valeur: ValeurCellule }[] = [
-  // "special" : le travail est effacé de l'affichage (pleine cellule CP/MAL)
-  // mais ses heures restent comptées (retour client du 23/09).
-  { date: "2026-09-03", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "CP" } }, // congés
-  { date: "2026-09-08", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "MAL" } }, // maladie
-  // "normal" : le travail reste visible mais barré, remplacé par la durée
-  // propre du code évènementiel (ABI : 0h).
-  { date: "2026-09-10", valeur: { travail: EXEMPLE_TRAVAIL, evenementiel: "ABI" } }, // absence injustifiée
-  {
-    date: "2026-09-15",
-    valeur: {
-      travail: EXEMPLE_TRAVAIL,
-      evenementiel: "ABT",
-      evenementielPlages: [{ debut: "07:00", fin: "09:00" }], // absence temporaire (heures en moins)
-    },
-  },
-  {
-    date: "2026-09-22",
-    valeur: {
-      travail: EXEMPLE_TRAVAIL,
-      evenementiel: "HSP",
-      // Heures supplémentaires sur 2 plages le même jour (retour client du
-      // 22/09 : un complément à la volée peut porter plusieurs plages).
-      evenementielPlages: [
-        { debut: "06:00", fin: "07:00" },
-        { debut: "19:00", fin: "21:00" },
-      ],
-    },
-  },
-  // Code informatif : jamais d'heures propres. En dessous du travail s'il y
-  // en a un (24/09), en pleine case sinon (25/09) — cf. retour client du 23/09.
-  { date: "2026-09-24", valeur: { travail: EXEMPLE_TRAVAIL, informatif: "ABS" } },
-  { date: "2026-09-25", valeur: { informatif: "." } },
-];
-for (const salarie of SALARIES.filter((s) => s.service !== SERVICE_BESOINS)) {
-  for (const { date, valeur } of EXEMPLES_EMARGEMENT) {
-    PLANNING_DEMO[`${salarie.id}__${date}`] = valeur;
-  }
 }

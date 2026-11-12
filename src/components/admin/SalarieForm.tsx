@@ -206,10 +206,6 @@ export default function SalarieForm({
               </button>
             )}
           </div>
-          <p className="mt-2 text-[11px] text-zinc-400">
-            Pas encore relié à la base (story #35 restante) — assignation locale à cet écran
-            uniquement pour l&apos;instant.
-          </p>
         </div>
 
         <div>
