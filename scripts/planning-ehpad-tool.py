@@ -566,13 +566,10 @@ def executer_import_codes_horaires(db, ehpad_id, a_importer):
 # Import des roulements (retour client du 12/11 — motif + jours)
 # =====================================================================
 
-# Même convention d'en-têtes techniques que COLONNES_CODES_HORAIRES. "code"
-# n'est qu'un repère pour le client dans son propre fichier (le modèle
-# n'a pas de colonne équivalente en base, cf. table roulement) : utilisé
-# uniquement pour détecter un doublon dans le fichier, jamais stocké.
-# "intitule" devient roulement.nom (seul champ de nom réellement en base),
-# donc vérifié en plus contre les roulements déjà existants dans
-# l'établissement — même rôle que "code" pour code_horaire.
+# Même convention d'en-têtes techniques que COLONNES_CODES_HORAIRES.
+# "intitule" devient roulement.nom (seul champ de nom en base, pas de
+# colonne "code" équivalente — retirée du fichier le 12/11, sans usage),
+# vérifié contre les roulements déjà existants dans l'établissement.
 JOURS_SEMAINE = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 # Marge au-delà du modèle actuel (4 semaines) : si un fichier a moins de
 # colonnes semaineN_*, elles sont simplement absentes de `col` (non
@@ -581,7 +578,7 @@ MAX_SEMAINES_ROULEMENT = 12
 
 
 def _colonnes_roulements():
-    colonnes = {"code": "code", "intitule": "intitule", "nb_semaines": "nb de semaines"}
+    colonnes = {"intitule": "intitule", "nb_semaines": "nb de semaines"}
     for n in range(1, MAX_SEMAINES_ROULEMENT + 1):
         for j in JOURS_SEMAINE:
             colonnes[f"semaine{n}_{j}"] = f"semaine{n}_{j}"
@@ -589,7 +586,7 @@ def _colonnes_roulements():
 
 
 COLONNES_ROULEMENTS = _colonnes_roulements()
-OBLIGATOIRES_ROULEMENTS = ["code", "intitule", "nb_semaines"]
+OBLIGATOIRES_ROULEMENTS = ["intitule", "nb_semaines"]
 
 
 def en_nb_semaines(valeur, semaines_disponibles):
@@ -635,20 +632,15 @@ def preparer_import_roulements(db, chemin, feuille, ehpad_id):
         return ligne[i] if i is not None and i < len(ligne) else None
 
     a_importer, erreurs, deja_presents, vides = [], [], 0, 0
-    codes_vus, intitules_vus = set(), set()
+    intitules_vus = set()
     for num, ligne in lignes:
         if all(c in (None, "") for c in ligne):
             vides += 1
             continue
         try:
-            code = texte(val(ligne, "code"))
             intitule = texte(val(ligne, "intitule"))
-            if not code or not intitule:
-                raise ValueError("code ou intitulé vide")
-
-            if normaliser(code) in codes_vus:
-                raise ValueError(f"code {code} en double dans le fichier")
-            codes_vus.add(normaliser(code))
+            if not intitule:
+                raise ValueError("intitulé vide")
 
             if normaliser(intitule) in noms_existants:
                 deja_presents += 1
