@@ -1,9 +1,17 @@
 # Outils d'import en masse
 
-`planning-ehpad-tool.py` : import en masse de salariés et/ou de codes
-horaires depuis un fichier Excel, directement dans `planning-ehpad-prod`
-(Supabase). Pensé pour être lancé par le client lui-même, depuis son propre
-poste/serveur — aucune donnée n'est envoyée ailleurs que vers sa base.
+`planning-ehpad-tool.py` : import en masse de salariés, de codes horaires
+et/ou de roulements depuis un fichier Excel, directement dans
+`planning-ehpad-prod` (Supabase). Pensé pour être lancé par le client
+lui-même, depuis son propre poste/serveur — aucune donnée n'est envoyée
+ailleurs que vers sa base.
+
+Dépendances entre fichiers : un roulement référence des codes horaires déjà
+existants (catégorie travail), un salarié peut référencer un roulement déjà
+existant — toujours vérifiés contre ce qui est déjà en base, jamais contre
+un autre fichier importé dans le même lancement. Pour un établissement tout
+juste créé, importer dans l'ordre (chacun avec `--import` avant de lancer le
+suivant) : codes horaires → roulements → salariés.
 
 ```bash
 pip3 install openpyxl requests   # une seule fois
@@ -25,4 +33,4 @@ produisait que du SQL à coller manuellement) — le client a repartagé le
 29/10 un script d'origine du 28/10 (jamais committé au dépôt), qui écrit
 directement en base via l'API Supabase ; `planning-ehpad-tool.py` le reprend
 et l'étend (remplacement contrat → type_paie du 29/10, ajout de l'import des
-codes horaires).
+codes horaires, puis des roulements le 12/11).

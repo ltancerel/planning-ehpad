@@ -5,8 +5,9 @@ poste/serveur, aucune donnée n'est envoyée ailleurs que vers votre propre base
 
 Reprend et étend le script d'import de salariés du 28/10 : remplace la notion
 de contrat (CDD/CDI, table contrat) par le champ type_paie (25/M, 30/M, Aucun
-— migration du 29/10), et ajoute un deuxième mode d'import pour les codes
-horaires (même format que le modèle Excel livré le 28/10).
+— migration du 29/10), ajoute un deuxième mode d'import pour les codes
+horaires (même format que le modèle Excel livré le 28/10), et un troisième
+pour les roulements (motif + jours, retour client du 12/11).
 
 Par défaut (ou avec --test), le script ne fait qu'un test à blanc : il lit le
 ou les fichiers, valide toutes les lignes et affiche un rapport, sans rien
@@ -21,9 +22,10 @@ Usage :
   # test à blanc (par défaut)
   python3 planning-ehpad-tool.py --ehpad "Nom de l'EHPAD" --salaries salaries.xlsx
   python3 planning-ehpad-tool.py --ehpad "Nom de l'EHPAD" --codes-horaires codes.xlsx
+  python3 planning-ehpad-tool.py --ehpad "Nom de l'EHPAD" --roulements roulements.xlsx
   python3 planning-ehpad-tool.py --ehpad "Nom de l'EHPAD" --salaries s.xlsx --codes-horaires c.xlsx
 
-  # import réel (les deux options ci-dessus peuvent aussi prendre --import)
+  # import réel (les trois options ci-dessus peuvent aussi prendre --import)
   python3 planning-ehpad-tool.py --ehpad "Nom de l'EHPAD" --salaries salaries.xlsx --import
 
   # inspection des en-têtes d'un fichier (aucune écriture, pas de clé requise)
@@ -560,6 +562,168 @@ def executer_import_codes_horaires(db, ehpad_id, a_importer):
     return importes, echecs
 
 
+# =====================================================================
+# Import des roulements (retour client du 12/11 — motif + jours)
+# =====================================================================
+
+# Même convention d'en-têtes techniques que COLONNES_CODES_HORAIRES. "code"
+# n'est qu'un repère pour le client dans son propre fichier (le modèle
+# n'a pas de colonne équivalente en base, cf. table roulement) : utilisé
+# uniquement pour détecter un doublon dans le fichier, jamais stocké.
+# "intitule" devient roulement.nom (seul champ de nom réellement en base),
+# donc vérifié en plus contre les roulements déjà existants dans
+# l'établissement — même rôle que "code" pour code_horaire.
+JOURS_SEMAINE = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
+# Marge au-delà du modèle actuel (4 semaines) : si un fichier a moins de
+# colonnes semaineN_*, elles sont simplement absentes de `col` (non
+# obligatoires) et donc ignorées — aucune limite artificielle imposée ici.
+MAX_SEMAINES_ROULEMENT = 12
+
+
+def _colonnes_roulements():
+    colonnes = {"code": "code", "intitule": "intitule", "nb_semaines": "nb de semaines"}
+    for n in range(1, MAX_SEMAINES_ROULEMENT + 1):
+        for j in JOURS_SEMAINE:
+            colonnes[f"semaine{n}_{j}"] = f"semaine{n}_{j}"
+    return colonnes
+
+
+COLONNES_ROULEMENTS = _colonnes_roulements()
+OBLIGATOIRES_ROULEMENTS = ["code", "intitule", "nb_semaines"]
+
+
+def en_nb_semaines(valeur, semaines_disponibles):
+    v = texte(valeur)
+    try:
+        n = int(float(v))
+    except (TypeError, ValueError):
+        raise ValueError(f"nb de semaines « {valeur} » invalide (entier attendu)")
+    if n < 1:
+        raise ValueError("nb de semaines doit être au moins 1")
+    if n > semaines_disponibles:
+        raise ValueError(
+            f"nb de semaines ({n}) dépasse le nombre de semaines disponibles dans ce fichier "
+            f"({semaines_disponibles}) — colonnes semaine{semaines_disponibles + 1}_* absentes"
+        )
+    return n
+
+
+def preparer_import_roulements(db, chemin, feuille, ehpad_id):
+    entetes, lignes = lire_excel(chemin, feuille)
+    col = indexer_colonnes(entetes, COLONNES_ROULEMENTS, OBLIGATOIRES_ROULEMENTS, os.path.basename(chemin))
+
+    semaines_disponibles = 0
+    for n in range(1, MAX_SEMAINES_ROULEMENT + 1):
+        if f"semaine{n}_lundi" in col:
+            semaines_disponibles = n
+        else:
+            break
+    if semaines_disponibles == 0:
+        sys.exit(f"[{os.path.basename(chemin)}] Aucune colonne « semaine1_lundi » (etc.) trouvée.")
+
+    noms_existants = {normaliser(r["nom"])
+                       for r in db.lire("roulement", select="nom", ehpad_id=f"eq.{ehpad_id}")}
+    # Seuls les codes de catégorie travail sont des motifs valides pour un
+    # roulement (cf. trigger de cohérence, domaine D) — même restriction que
+    # resoudreCodesHoraires côté formulaire Admin (src/app/admin/roulements/actions.ts).
+    codes_travail = {normaliser(c["code"]): c["id"]
+                      for c in db.lire("code_horaire", select="id,code",
+                                        ehpad_id=f"eq.{ehpad_id}", categorie="eq.travail")}
+
+    def val(ligne, champ):
+        i = col.get(champ)
+        return ligne[i] if i is not None and i < len(ligne) else None
+
+    a_importer, erreurs, deja_presents, vides = [], [], 0, 0
+    codes_vus, intitules_vus = set(), set()
+    for num, ligne in lignes:
+        if all(c in (None, "") for c in ligne):
+            vides += 1
+            continue
+        try:
+            code = texte(val(ligne, "code"))
+            intitule = texte(val(ligne, "intitule"))
+            if not code or not intitule:
+                raise ValueError("code ou intitulé vide")
+
+            if normaliser(code) in codes_vus:
+                raise ValueError(f"code {code} en double dans le fichier")
+            codes_vus.add(normaliser(code))
+
+            if normaliser(intitule) in noms_existants:
+                deja_presents += 1
+                continue
+            if normaliser(intitule) in intitules_vus:
+                raise ValueError(f"intitulé « {intitule} » en double dans le fichier")
+            intitules_vus.add(normaliser(intitule))
+
+            nb_semaines = en_nb_semaines(val(ligne, "nb_semaines"), semaines_disponibles)
+
+            # Jours au-delà de nb_semaines : doivent rester vides (cohérence
+            # avec la valeur déclarée, plutôt que silencieusement ignorés).
+            for s in range(nb_semaines, semaines_disponibles):
+                for j in JOURS_SEMAINE:
+                    brut = texte(val(ligne, f"semaine{s + 1}_{j}"))
+                    if brut is not None and brut != ".":
+                        raise ValueError(
+                            f"semaine{s + 1}_{j} renseignée alors que nb de semaines = {nb_semaines}"
+                        )
+
+            # "." ou case vide = repos (pas de ligne roulement_jour, même
+            # convention que lignesRoulementJour côté formulaire Admin : un
+            # jour sans code n'a simplement pas de ligne).
+            jours = []
+            for s in range(nb_semaines):
+                for j_index, j in enumerate(JOURS_SEMAINE):
+                    brut = texte(val(ligne, f"semaine{s + 1}_{j}"))
+                    if brut is None or brut == ".":
+                        continue
+                    cle = normaliser(brut)
+                    if cle not in codes_travail:
+                        raise ValueError(
+                            f"code horaire « {brut} » (semaine {s + 1}, {j}) introuvable "
+                            f"parmi les codes de travail de l'établissement"
+                        )
+                    jours.append({
+                        "semaine_index": s,
+                        "jour_semaine": j_index,
+                        "code_horaire_id": codes_travail[cle],
+                    })
+
+            roulement = {"ehpad_id": ehpad_id, "nom": intitule, "nb_semaines": nb_semaines}
+            a_importer.append((num, roulement, jours))
+        except ValueError as e:
+            erreurs.append((num, str(e)))
+
+    rapport = [
+        f"[{os.path.basename(chemin)}] roulements — à importer : {len(a_importer)}, "
+        f"déjà présents : {deja_presents}, lignes vides : {vides}, erreurs : {len(erreurs)}",
+    ]
+    for num, msg in erreurs:
+        rapport.append(f"    ligne {num} : {msg}")
+    return a_importer, erreurs, rapport
+
+
+def executer_import_roulements(db, ehpad_id, a_importer):
+    importes, echecs = 0, []
+    for num, roulement, jours in a_importer:
+        roulement_id = None
+        try:
+            roulement_id = db.inserer("roulement", roulement)
+            for jour in jours:
+                db.inserer("roulement_jour", {**jour, "roulement_id": roulement_id})
+            importes += 1
+        except RuntimeError as e:
+            echecs.append((num, str(e)))
+            if roulement_id:
+                db.supprimer("roulement_jour", roulement_id=roulement_id)
+                db.supprimer("roulement", id=roulement_id)
+
+    _journaliser(db, ehpad_id, "roulement", importes, echecs,
+                 f"Import Excel roulements : {importes} créé(s), {len(echecs)} échec(s)")
+    return importes, echecs
+
+
 def _journaliser(db, ehpad_id, entite, importes, echecs, message):
     try:
         db.inserer("log_audit", {
@@ -583,13 +747,14 @@ def _journaliser(db, ehpad_id, entite, importes, echecs, message):
 
 def main():
     p = argparse.ArgumentParser(
-        description="Import en masse (salariés et/ou codes horaires) dans planning-ehpad-prod",
+        description="Import en masse (salariés, codes horaires et/ou roulements) dans planning-ehpad-prod",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
     p.add_argument("--ehpad", help="nom de l'EHPAD tel qu'enregistré dans l'application")
     p.add_argument("--salaries", metavar="FICHIER", help="fichier Excel des salariés à importer")
     p.add_argument("--codes-horaires", metavar="FICHIER", help="fichier Excel des codes horaires à importer")
+    p.add_argument("--roulements", metavar="FICHIER", help="fichier Excel des roulements à importer")
     p.add_argument("--feuille", help="nom de l'onglet à lire (par défaut : l'onglet actif de chaque fichier)")
     p.add_argument("--entetes", action="store_true",
                     help="affiche seulement les en-têtes des fichiers fournis et quitte (pas d'accès base)")
@@ -598,11 +763,18 @@ def main():
     mode.add_argument("--import", dest="executer", action="store_true", help="écrit réellement dans la base")
     args = p.parse_args()
 
-    if not args.salaries and not args.codes_horaires:
-        sys.exit("Donnez au moins --salaries ou --codes-horaires.")
+    if not args.salaries and not args.codes_horaires and not args.roulements:
+        sys.exit("Donnez au moins --salaries, --codes-horaires ou --roulements.")
 
+    # Dépendances entre fichiers (un roulement référence des codes horaires
+    # de catégorie travail déjà existants ; un salarié peut référencer un
+    # roulement déjà existant) : toujours résolues contre ce qui est déjà en
+    # base au moment de la préparation, jamais contre un autre fichier
+    # importé dans le même lancement. Pour un établissement tout juste
+    # créé, importer dans l'ordre codes horaires -> roulements -> salariés,
+    # chacun avec --import avant de lancer le suivant.
     if args.entetes:
-        for chemin in (args.salaries, args.codes_horaires):
+        for chemin in (args.salaries, args.codes_horaires, args.roulements):
             if not chemin:
                 continue
             entetes, _ = lire_excel(chemin, args.feuille)
@@ -627,19 +799,24 @@ def main():
     rapport_complet = []
     a_importer_salaries = erreurs_salaries = None
     a_importer_codes = erreurs_codes = None
+    a_importer_roulements = erreurs_roulements = None
 
-    if args.salaries:
-        a_importer_salaries, erreurs_salaries, rapport = preparer_import_salaries(
-            db, args.salaries, args.feuille, ehpad_id)
-        rapport_complet += rapport
     if args.codes_horaires:
         a_importer_codes, erreurs_codes, rapport = preparer_import_codes_horaires(
             db, args.codes_horaires, args.feuille, ehpad_id)
         rapport_complet += rapport
+    if args.roulements:
+        a_importer_roulements, erreurs_roulements, rapport = preparer_import_roulements(
+            db, args.roulements, args.feuille, ehpad_id)
+        rapport_complet += rapport
+    if args.salaries:
+        a_importer_salaries, erreurs_salaries, rapport = preparer_import_salaries(
+            db, args.salaries, args.feuille, ehpad_id)
+        rapport_complet += rapport
 
     print("\n".join(rapport_complet))
 
-    y_a_t_il_des_erreurs = bool(erreurs_salaries) or bool(erreurs_codes)
+    y_a_t_il_des_erreurs = bool(erreurs_salaries) or bool(erreurs_codes) or bool(erreurs_roulements)
     if y_a_t_il_des_erreurs:
         sys.exit("\nCorrigez les erreurs ci-dessus puis relancez. Rien n'a été écrit.")
 
@@ -647,14 +824,19 @@ def main():
         print("\nTest à blanc terminé, rien n'a été écrit. Relancez avec --import pour importer réellement.")
         return
 
-    if a_importer_salaries is not None:
-        importes, echecs = executer_import_salaries(db, ehpad_id, a_importer_salaries)
-        print(f"\nSalariés importés : {importes}, échecs : {len(echecs)}")
-        for num, msg in echecs:
-            print(f"  ligne {num} : {msg}")
     if a_importer_codes is not None:
         importes, echecs = executer_import_codes_horaires(db, ehpad_id, a_importer_codes)
         print(f"\nCodes horaires importés : {importes}, échecs : {len(echecs)}")
+        for num, msg in echecs:
+            print(f"  ligne {num} : {msg}")
+    if a_importer_roulements is not None:
+        importes, echecs = executer_import_roulements(db, ehpad_id, a_importer_roulements)
+        print(f"\nRoulements importés : {importes}, échecs : {len(echecs)}")
+        for num, msg in echecs:
+            print(f"  ligne {num} : {msg}")
+    if a_importer_salaries is not None:
+        importes, echecs = executer_import_salaries(db, ehpad_id, a_importer_salaries)
+        print(f"\nSalariés importés : {importes}, échecs : {len(echecs)}")
         for num, msg in echecs:
             print(f"  ligne {num} : {msg}")
 
