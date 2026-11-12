@@ -12,8 +12,8 @@ const LIBELLE_CATEGORIE: Record<HoraireCode["categorie"], string> = {
 };
 
 const LIBELLE_TYPE_EVENEMENT: Record<NonNullable<HoraireCode["typeEvenement"]>, string> = {
-  special: "Spécial",
-  normal: "Normal",
+  special: "Avec maintien de salaire",
+  normal: "Sans maintien de salaire",
   partiel: "Partiel",
 };
 

@@ -1621,6 +1621,15 @@ domaine personnalisé pour l'instant). Ajoutée le 17/09, suite à l'EPIC
   Pas de test e2e ajouté (écrans authentifiés, hors périmètre des tests
   e2e de ce dépôt) ; vérifié par `tsc`/`eslint`/`build`.
 
+- [x] **16. Renommer les libellés des types d'évènement "Spécial"/"Normal"**
+  Retour client du 12/11 : "Spécial" devient "Avec maintien de salaire",
+  "Normal" devient "Sans maintien de salaire" — "Partiel" inchangé.
+  Changement de libellé d'affichage uniquement : la valeur stockée en
+  base (`code_horaire.type_evenement`, `special`/`normal`/`partiel`)
+  reste inchangée, aucune migration. Mis à jour dans
+  `HoraireCodeForm.tsx` (`TYPES_EVENEMENT`) et `HoraireCodesTable.tsx`
+  (`LIBELLE_TYPE_EVENEMENT`).
+
 **Objectif** : mettre en œuvre la stratégie d'environnements et de
 sauvegarde déjà conçue dans l'EPIC « Fondations architecturales » (#23,
 stories #28/#29 — [artifact Environnements](https://claude.ai/artifact/VPWH7mf82USJpNKajXagEf)),

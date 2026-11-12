@@ -15,13 +15,13 @@ const CATEGORIES: { valeur: HoraireCategorie; libelle: string }[] = [
 const TYPES_EVENEMENT: { valeur: TypeEvenement; libelle: string; description: string }[] = [
   {
     valeur: "special",
-    libelle: "Spécial",
+    libelle: "Avec maintien de salaire",
     description:
       "Se superpose au code de travail et efface son affichage (la cellule montre uniquement ce code, en pleine cellule) — mais garde ses heures : le décompte reste celui du code de travail, visible au survol. Pas de durée propre.",
   },
   {
     valeur: "normal",
-    libelle: "Normal",
+    libelle: "Sans maintien de salaire",
     description:
       "Se superpose au code de travail, qui reste visible mais barré. Sa durée propre remplace entièrement celle du code de travail.",
   },
