@@ -12,6 +12,7 @@ export default function HorairesAdminClient({ codes }: { codes: HoraireCodeReel[
   const [panneau, setPanneau] = useState<"ferme" | "creation" | "edition">("ferme");
   const [codeEnEdition, setCodeEnEdition] = useState<HoraireCodeReel | undefined>(undefined);
   const [erreur, setErreur] = useState<string | null>(null);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
   const [pending, demarrer] = useTransition();
 
   function ouvrirCreation() {
@@ -40,6 +41,8 @@ export default function HorairesAdminClient({ codes }: { codes: HoraireCodeReel[
         return;
       }
       fermerPanneau();
+      setConfirmation(`Code « ${code.code} » enregistré.`);
+      setTimeout(() => setConfirmation(null), 4000);
     });
   }
 
@@ -73,6 +76,12 @@ export default function HorairesAdminClient({ codes }: { codes: HoraireCodeReel[
         {erreur && (
           <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
             {erreur}
+          </div>
+        )}
+
+        {confirmation && (
+          <div className="mb-3 rounded border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
+            {confirmation}
           </div>
         )}
 
