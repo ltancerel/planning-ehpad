@@ -7,10 +7,11 @@ import type { GroupeRoulement, TypePaie } from "@/lib/mock-data";
 // l'ancien sélecteur à choix unique (Tous / Présents / Contrat actif / ...)
 // par des critères combinables indépendamment (ET entre critères, OU entre
 // valeurs d'un même critère) — ex. Type de paie 25/M ET Présent, ou Type de
-// paie 25/M ET (Présent OU Absent). Inspiré du panneau de filtres
-// d'HelloWork : un bouton "Filtres" ouvre une fenêtre à sections, les
-// filtres actifs s'affichent ensuite sous forme de jetons retirables
-// individuellement.
+// paie 25/M ET (Présent OU Absent). Un bouton "Filtres" ouvre une fenêtre à
+// sections ; le badge bleu sur ce bouton (nombre de critères actifs) est le
+// seul rappel affiché sur l'écran — pas de bandeau listant les filtres
+// actifs sous l'en-tête (retour client du 13/11 : à l'utilisateur de savoir
+// ce qu'il a filtré, les éléments filtrés ne doivent pas rester visibles).
 export type Presence = "present" | "absent";
 export type EtatPlanning = "avec" | "sans";
 
@@ -51,53 +52,6 @@ function avecValeurBasculee<T>(ensemble: Set<T>, valeur: T): Set<T> {
   if (copie.has(valeur)) copie.delete(valeur);
   else copie.add(valeur);
   return copie;
-}
-
-// Une puce = un critère actif, retirable individuellement sans rouvrir le
-// panneau — cf. les filtres appliqués d'HelloWork sous la barre de recherche.
-type Puce = { cle: string; libelle: string; retirer: () => void };
-
-function pucesActives(
-  filtres: FiltresAvances,
-  onChange: (f: FiltresAvances) => void
-): Puce[] {
-  const puces: Puce[] = [];
-  for (const v of filtres.typePaie) {
-    puces.push({
-      cle: `typePaie-${v}`,
-      libelle: `Paie ${LIBELLES_TYPE_PAIE[v]}`,
-      retirer: () => onChange({ ...filtres, typePaie: avecValeurBasculee(filtres.typePaie, v) }),
-    });
-  }
-  for (const v of filtres.presence) {
-    puces.push({
-      cle: `presence-${v}`,
-      libelle: LIBELLES_PRESENCE[v],
-      retirer: () => onChange({ ...filtres, presence: avecValeurBasculee(filtres.presence, v) }),
-    });
-  }
-  for (const v of filtres.groupeRoulement) {
-    puces.push({
-      cle: `groupeRoulement-${v}`,
-      libelle: v,
-      retirer: () => onChange({ ...filtres, groupeRoulement: avecValeurBasculee(filtres.groupeRoulement, v) }),
-    });
-  }
-  for (const v of filtres.service) {
-    puces.push({
-      cle: `service-${v}`,
-      libelle: v,
-      retirer: () => onChange({ ...filtres, service: avecValeurBasculee(filtres.service, v) }),
-    });
-  }
-  for (const v of filtres.planning) {
-    puces.push({
-      cle: `planning-${v}`,
-      libelle: LIBELLES_PLANNING[v],
-      retirer: () => onChange({ ...filtres, planning: avecValeurBasculee(filtres.planning, v) }),
-    });
-  }
-  return puces;
 }
 
 function FunnelIcon() {
@@ -305,42 +259,3 @@ export function FiltreSalariesBouton({
   );
 }
 
-export function FiltresActifsChips({
-  filtres,
-  onChange,
-}: {
-  filtres: FiltresAvances;
-  onChange: (f: FiltresAvances) => void;
-}) {
-  const puces = pucesActives(filtres, onChange);
-  if (puces.length === 0) return null;
-  return (
-    <div className="flex flex-wrap items-center gap-1.5 border-t border-zinc-100 bg-zinc-50 px-4 py-1.5">
-      {puces.map((puce) => (
-        <span
-          key={puce.cle}
-          className="flex items-center gap-1 rounded-full border border-zinc-300 bg-white py-0.5 pl-2.5 pr-1.5 text-xs text-zinc-700"
-        >
-          {puce.libelle}
-          <button
-            type="button"
-            onClick={puce.retirer}
-            aria-label={`Retirer le filtre ${puce.libelle}`}
-            className="flex h-4 w-4 items-center justify-center rounded-full text-zinc-400 hover:bg-zinc-100 hover:text-zinc-700"
-          >
-            ✕
-          </button>
-        </span>
-      ))}
-      {puces.length > 1 && (
-        <button
-          type="button"
-          onClick={() => onChange(filtresVides())}
-          className="text-xs font-medium text-zinc-500 underline decoration-zinc-300 underline-offset-2 hover:text-zinc-800"
-        >
-          Réinitialiser
-        </button>
-      )}
-    </div>
-  );
-}

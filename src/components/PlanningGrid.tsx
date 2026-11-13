@@ -12,7 +12,6 @@ import {
 } from "@/lib/mock-data";
 import {
   FiltreSalariesBouton,
-  FiltresActifsChips,
   filtresVides,
   type FiltresAvances,
 } from "@/components/FiltreSalariesAvance";
@@ -939,7 +938,6 @@ export default function PlanningGrid({
             <UserMenu utilisateur={utilisateur} />
           </div>
         </div>
-        <FiltresActifsChips filtres={filtres} onChange={setFiltres} />
       </header>
 
       {erreurPersistance && (
