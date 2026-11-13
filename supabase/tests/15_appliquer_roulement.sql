@@ -128,9 +128,85 @@ select test.ok(
   'appliquer_roulement : refuse tout (tout ou rien) si la semaine est déjà remplie, et signale la bonne semaine'
 );
 
+-- 6) un jour de motif en catégorie informatif (retour client du 13/11,
+--    élargissement travail -> travail/informatif) s'écrit dans
+--    code_informatif_id, jamais dans code_travail_id — motif/salarié/
+--    semaine dédiés pour ne pas mélanger avec les cas travail ci-dessus.
+insert into public.roulement (id, ehpad_id, nom, nb_semaines)
+values ('f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', '33333333-3333-3333-3333-333333333333',
+        'Test appliquer_roulement (informatif)', 1);
+insert into public.roulement_jour (roulement_id, semaine_index, jour_semaine, code_horaire_id) values
+  ('f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', 0, 0, '44444444-4444-4444-4444-444444444444'),
+  ('f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', 0, 1, '55555555-5555-5555-5555-555555555555');
+
+insert into public.salarie (id, ehpad_id, service_id, matricule, nom, prenom, presence)
+values ('f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5', '33333333-3333-3333-3333-333333333333',
+        '77777777-7777-7777-7777-777777777777', 'GGGG', 'Informatif', 'Test', 'Présent');
+
+insert into public.affectation_roulement (id, salarie_id, roulement_id, date_debut)
+values ('f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6', 'f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5',
+        'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4', date_trunc('week', current_date)::date);
+
+select (date_trunc('week', current_date + interval '35 days'))::date as lundi2 \gset
+
+set role authenticated;
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+select applique, semaine_bloquee from public.appliquer_roulement(
+  'f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5', :'lundi2'::date, 1
+) \gset informatif_
+reset role;
+reset request.jwt.claim.sub;
+
+select test.ok(:'informatif_applique'::boolean, 'appliquer_roulement : applique=true pour un motif mêlant travail et informatif');
+
+select (code_travail_id = '44444444-4444-4444-4444-444444444444' and code_informatif_id is null) as ok
+from public.journee
+where salarie_id = 'f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5' and date = :'lundi2'::date \gset verif_lundi2_
+select test.ok(
+  :'verif_lundi2_ok'::boolean,
+  'appliquer_roulement : le jour travail du motif écrit bien dans code_travail_id'
+);
+
+select (code_informatif_id = '55555555-5555-5555-5555-555555555555' and code_travail_id is null) as ok
+from public.journee
+where salarie_id = 'f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5' and date = (:'lundi2'::date + 1) \gset verif_mardi2_
+select test.ok(
+  :'verif_mardi2_ok'::boolean,
+  'appliquer_roulement : le jour informatif du motif écrit bien dans code_informatif_id, jamais code_travail_id'
+);
+
+-- 7) tout ou rien : un code_informatif_id déjà posé (sans code_travail_id)
+--    bloque aussi toute l'application, pas seulement un code_travail_id —
+--    semaine dédiée, jamais touchée par les cas précédents.
+select (date_trunc('week', current_date + interval '42 days'))::date as lundi3 \gset
+
+insert into public.journee (salarie_id, date, code_informatif_id)
+values ('f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5', (:'lundi3'::date + 1), '55555555-5555-5555-5555-555555555555');
+
+set role authenticated;
+set request.jwt.claim.sub = '22222222-2222-2222-2222-222222222222';
+select applique, semaine_bloquee from public.appliquer_roulement(
+  'f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5', :'lundi3'::date, 1
+) \gset bloque_informatif_
+reset role;
+reset request.jwt.claim.sub;
+
+select test.ok(
+  not :'bloque_informatif_applique'::boolean and :'bloque_informatif_semaine_bloquee' = :'lundi3',
+  'appliquer_roulement : la règle tout ou rien bloque aussi sur un code_informatif_id déjà posé'
+);
+
 -- Nettoyage
 delete from public.journee where salarie_id = '88888888-8888-8888-8888-888888888888'
   and date in (:'lundi'::date, :'lundi'::date + 1, :'lundi'::date + 7);
-delete from public.affectation_roulement where id = 'f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2';
-delete from public.salarie where id = 'f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3';
-delete from public.roulement where id = 'f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1';
+-- Sans filtre de date : appliquer_roulement écrit aussi les jours de repos
+-- (mercredi à dimanche) qui n'ont pas de ligne roulement_jour dédiée, pas
+-- seulement les 2 jours du motif ci-dessus — salarié créé uniquement pour
+-- ce test, aucune autre donnée à préserver.
+delete from public.journee where salarie_id = 'f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5';
+delete from public.affectation_roulement where id in
+  ('f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2', 'f6f6f6f6-f6f6-f6f6-f6f6-f6f6f6f6f6f6');
+delete from public.salarie where id in
+  ('f3f3f3f3-f3f3-f3f3-f3f3-f3f3f3f3f3f3', 'f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5');
+delete from public.roulement where id in
+  ('f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1', 'f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4');

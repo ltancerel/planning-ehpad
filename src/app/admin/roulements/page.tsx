@@ -6,16 +6,18 @@ import RoulementsAdminClient from "./RoulementsAdminClient";
 export default async function RoulementsAdminPage() {
   const supabase = await createClient();
 
+  // Travail ET informatif (retour client du 13/11 — un motif de roulement
+  // peut désormais porter un code informatif, en plus du code de travail).
   const { data: codes } = await supabase
     .from("code_horaire")
     .select("code, intitule, categorie, couleur_fond, couleur_texte")
-    .eq("categorie", "travail")
+    .in("categorie", ["travail", "informatif"])
     .order("code");
 
   const codesHoraires: HoraireCode[] = (codes ?? []).map((c) => ({
     code: c.code,
     intitule: c.intitule,
-    categorie: "travail",
+    categorie: c.categorie as HoraireCode["categorie"],
     couleurFond: c.couleur_fond,
     couleurTexte: c.couleur_texte,
   }));

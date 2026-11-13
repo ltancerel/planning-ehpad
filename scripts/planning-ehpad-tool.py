@@ -620,12 +620,13 @@ def preparer_import_roulements(db, chemin, feuille, ehpad_id):
 
     noms_existants = {normaliser(r["nom"])
                        for r in db.lire("roulement", select="nom", ehpad_id=f"eq.{ehpad_id}")}
-    # Seuls les codes de catégorie travail sont des motifs valides pour un
-    # roulement (cf. trigger de cohérence, domaine D) — même restriction que
-    # resoudreCodesHoraires côté formulaire Admin (src/app/admin/roulements/actions.ts).
+    # Travail ET informatif sont des motifs valides pour un roulement (cf.
+    # trigger de cohérence, domaine D, élargi le 13/11) — même restriction
+    # que resoudreCodesHoraires côté formulaire Admin
+    # (src/app/admin/roulements/actions.ts).
     codes_travail = {normaliser(c["code"]): c["id"]
                       for c in db.lire("code_horaire", select="id,code",
-                                        ehpad_id=f"eq.{ehpad_id}", categorie="eq.travail")}
+                                        ehpad_id=f"eq.{ehpad_id}", categorie="in.(travail,informatif)")}
 
     def val(ligne, champ):
         i = col.get(champ)
@@ -674,7 +675,7 @@ def preparer_import_roulements(db, chemin, feuille, ehpad_id):
                     if cle not in codes_travail:
                         raise ValueError(
                             f"code horaire « {brut} » (semaine {s + 1}, {j}) introuvable "
-                            f"parmi les codes de travail de l'établissement"
+                            f"parmi les codes de travail ou informatifs de l'établissement"
                         )
                     jours.append({
                         "semaine_index": s,

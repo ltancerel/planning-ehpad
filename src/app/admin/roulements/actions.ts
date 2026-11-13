@@ -19,7 +19,7 @@ async function resoudreCodesHoraires(
     .from("code_horaire")
     .select("id, code")
     .eq("ehpad_id", ehpadId)
-    .eq("categorie", "travail")
+    .in("categorie", ["travail", "informatif"])
     .in("code", codesUtilises);
 
   if (error) {
@@ -33,7 +33,7 @@ async function resoudreCodesHoraires(
   if (manquants.length > 0) {
     return {
       codesParId: {},
-      error: `Code(s) horaire introuvable(s) parmi les codes de travail de l'établissement : ${manquants.join(", ")}.`,
+      error: `Code(s) horaire introuvable(s) parmi les codes de travail ou informatifs de l'établissement : ${manquants.join(", ")}.`,
     };
   }
 

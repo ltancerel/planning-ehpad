@@ -470,7 +470,15 @@ export default function PlanningGrid({
     }
 
     for (const joursDeLaSemaine of semaines) {
-      if (joursDeLaSemaine.some((jour) => Boolean(valeurDe(jour)?.travail))) {
+      // Un code informatif déjà posé bloque aussi (retour client du 13/11,
+      // même règle élargie que côté serveur, appliquer_roulement) — pas
+      // seulement un code de travail.
+      if (
+        joursDeLaSemaine.some((jour) => {
+          const valeur = valeurDe(jour);
+          return Boolean(valeur?.travail) || Boolean(valeur?.informatif);
+        })
+      ) {
         return { editions: editionsBase, bloque: true, semaineBloqueeISO: formatDateISO(joursDeLaSemaine[0]) };
       }
     }
@@ -483,7 +491,14 @@ export default function PlanningGrid({
         const code = roulement.motif[semaineIndex][jourIndex];
         const cle = `${salarieId}__${formatDateISO(jour)}`;
         const existante = valeurDe(jour);
-        nouvelles = { ...nouvelles, [cle]: code ? { ...existante, travail: code } : {} };
+        // Un jour de motif en catégorie informatif s'écrit dans .informatif,
+        // pas .travail (retour client du 13/11) — le reste (travail, ou
+        // repos si le jour n'a aucun code) ne change pas.
+        const categorie = code ? codesParCode[code.toUpperCase()]?.categorie : undefined;
+        nouvelles = {
+          ...nouvelles,
+          [cle]: code ? { ...existante, [categorie === "informatif" ? "informatif" : "travail"]: code } : {},
+        };
       }
     });
     return { editions: nouvelles, bloque: false };

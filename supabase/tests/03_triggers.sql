@@ -1,20 +1,37 @@
 -- Triggers — cf. notes de conception (cascade, cohérence catégorie,
 -- traçabilité) et migrations 0001/0004/0005/0007.
 
--- Cohérence catégorie ↔ code horaire référencé (roulement_jour doit
--- pointer vers un code de catégorie travail)
-select test.doit_echouer(
-  $$insert into public.roulement_jour (roulement_id, semaine_index, jour_semaine, code_horaire_id)
-    values ('66666666-6666-6666-6666-666666666666', 0, 0, '55555555-5555-5555-5555-555555555555')$$,
-  'roulement_jour refuse un code_horaire_id de catégorie informatif (attend travail)'
+-- Cohérence catégorie ↔ code horaire référencé (roulement_jour accepte
+-- travail et informatif — élargi le 13/11, retour client, pour permettre un
+-- motif de roulement avec un code informatif ; tout le reste (ex.
+-- évènementiel) reste refusé).
+insert into public.roulement_jour (roulement_id, semaine_index, jour_semaine, code_horaire_id)
+values ('66666666-6666-6666-6666-666666666666', 0, 0, '55555555-5555-5555-5555-555555555555');
+
+select test.ok(
+  (select count(*) from public.roulement_jour
+   where roulement_id = '66666666-6666-6666-6666-666666666666' and jour_semaine = 0) = 1,
+  'roulement_jour accepte désormais un code_horaire_id de catégorie informatif'
 );
 
 insert into public.roulement_jour (roulement_id, semaine_index, jour_semaine, code_horaire_id)
-values ('66666666-6666-6666-6666-666666666666', 0, 0, '44444444-4444-4444-4444-444444444444');
+values ('66666666-6666-6666-6666-666666666666', 0, 1, '44444444-4444-4444-4444-444444444444');
 
 select test.ok(
-  (select count(*) from public.roulement_jour where roulement_id = '66666666-6666-6666-6666-666666666666') = 1,
-  'roulement_jour accepte un code_horaire_id de catégorie travail'
+  (select count(*) from public.roulement_jour where roulement_id = '66666666-6666-6666-6666-666666666666') = 2,
+  'roulement_jour accepte toujours un code_horaire_id de catégorie travail'
+);
+
+-- Fixture locale (catégorie évènementielle, jamais utilisée ailleurs) :
+-- vérifie que le trigger continue bien à refuser une catégorie hors
+-- travail/informatif, plutôt que d'avoir été relâché sans discernement.
+insert into public.code_horaire (id, ehpad_id, code, intitule, couleur_fond, couleur_texte, categorie, type_evenement)
+values ('77777777-aaaa-aaaa-aaaa-777777777777', '33333333-3333-3333-3333-333333333333', 'EVTROUL', 'Test', '#fff', '#000', 'evenementiel', 'special');
+
+select test.doit_echouer(
+  $$insert into public.roulement_jour (roulement_id, semaine_index, jour_semaine, code_horaire_id)
+    values ('66666666-6666-6666-6666-666666666666', 0, 2, '77777777-aaaa-aaaa-aaaa-777777777777')$$,
+  'roulement_jour refuse toujours un code_horaire_id de catégorie évènementielle'
 );
 
 -- Cascade de désactivation d'un EHPAD sur ses comptes
