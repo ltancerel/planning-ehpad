@@ -198,34 +198,45 @@ export default function HoraireCodeForm({
               <span className="text-xs text-zinc-500">Total calculé : {heuresCalculees}h</span>
             </div>
             <div className="space-y-2">
-              {plages.map((plage, index) => (
-                <div key={index} className="flex items-center gap-2">
-                  <input
-                    type="time"
-                    lang="fr-FR"
-                    value={plage.debut}
-                    onChange={(e) => changerPlage(index, "debut", e.target.value)}
-                    className="rounded border border-zinc-300 px-2 py-1 text-sm"
-                  />
-                  <span className="text-zinc-400">→</span>
-                  <input
-                    type="time"
-                    lang="fr-FR"
-                    value={plage.fin}
-                    onChange={(e) => changerPlage(index, "fin", e.target.value)}
-                    className="rounded border border-zinc-300 px-2 py-1 text-sm"
-                  />
-                  {plages.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => retirerPlage(index)}
-                      className="ml-1 text-xs text-red-500 hover:text-red-700"
-                    >
-                      Retirer
-                    </button>
-                  )}
-                </div>
-              ))}
+              {plages.map((plage, index) => {
+                const incomplete = Boolean(plage.debut) !== Boolean(plage.fin);
+                return (
+                  <div key={index}>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="time"
+                        lang="fr-FR"
+                        value={plage.debut}
+                        onChange={(e) => changerPlage(index, "debut", e.target.value)}
+                        className="rounded border border-zinc-300 px-2 py-1 text-sm"
+                      />
+                      <span className="text-zinc-400">→</span>
+                      <input
+                        type="time"
+                        lang="fr-FR"
+                        value={plage.fin}
+                        onChange={(e) => changerPlage(index, "fin", e.target.value)}
+                        className="rounded border border-zinc-300 px-2 py-1 text-sm"
+                      />
+                      {plages.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => retirerPlage(index)}
+                          className="ml-1 text-xs text-red-500 hover:text-red-700"
+                        >
+                          Retirer
+                        </button>
+                      )}
+                    </div>
+                    {incomplete && (
+                      <p className="mt-1 text-xs text-amber-600">
+                        Heure manquante : cette plage n&apos;est pas comptée dans le total tant que
+                        les deux heures ne sont pas saisies en entier (ex. « 03 », pas juste « 3 »).
+                      </p>
+                    )}
+                  </div>
+                );
+              })}
               {plages.length < 4 && (
                 <button
                   type="button"
