@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { HoraireCategorie, HoraireCode, Plage, TypeEvenement } from "@/lib/horaire-codes";
 import { dureeHeures } from "@/lib/horaire-codes";
 import { PALETTE_FOND, PALETTE_TEXTE } from "@/lib/palette";
@@ -35,6 +35,17 @@ const TYPES_EVENEMENT: { valeur: TypeEvenement; libelle: string; description: st
 
 const PLAGE_VIDE: Plage = { debut: "", fin: "" };
 
+// Safari renvoie une valeur vide pour un input type="time" tant qu'un
+// segment (heures ou minutes) n'est pas saisi sur 2 chiffres complets,
+// même quand quelque chose s'affiche à l'écran — une valeur contrôlée
+// (value=) s'y fait régulièrement écraser au milieu de la frappe. On
+// passe en non contrôlé (defaultValue) avec une clé stable par plage
+// (indépendante de sa position, pour survivre à l'ajout/suppression
+// d'une autre plage), on ignore les valeurs vides transitoires côté
+// onChange, et onBlur sert de filet pour capter la valeur finale même
+// si Safari n'a pas renvoyé d'onChange complet pendant la frappe.
+type PlageEditable = Plage & { cle: number };
+
 type HoraireCodeFormProps = {
   valeurInitiale?: HoraireCode;
   codesExistants: string[];
@@ -55,8 +66,10 @@ export default function HoraireCodeForm({
   const [couleurFond, setCouleurFond] = useState(valeurInitiale?.couleurFond ?? PALETTE_FOND[0]);
   const [couleurTexte, setCouleurTexte] = useState(valeurInitiale?.couleurTexte ?? PALETTE_TEXTE[0]);
   const [commentaire, setCommentaire] = useState(valeurInitiale?.commentaire ?? "");
-  const [plages, setPlages] = useState<Plage[]>(
-    valeurInitiale?.plages?.length ? valeurInitiale.plages : [PLAGE_VIDE]
+  const plagesInitiales = valeurInitiale?.plages?.length ? valeurInitiale.plages : [PLAGE_VIDE];
+  const prochaineCle = useRef(plagesInitiales.length);
+  const [plages, setPlages] = useState<PlageEditable[]>(() =>
+    plagesInitiales.map((p, i) => ({ ...p, cle: i }))
   );
   const [typeEvenement, setTypeEvenement] = useState<TypeEvenement>(
     valeurInitiale?.typeEvenement ?? "special"
@@ -79,16 +92,30 @@ export default function HoraireCodeForm({
     setCode(saisie.toUpperCase().replace(/[^A-Z0-9.?]/g, "").slice(0, 5));
   }
 
-  function changerPlage(index: number, champ: keyof Plage, valeur: string) {
-    setPlages((prev) => prev.map((p, i) => (i === index ? { ...p, [champ]: valeur } : p)));
+  function committerPlage(cle: number, champ: keyof Plage, valeur: string) {
+    setPlages((prev) => prev.map((p) => (p.cle === cle ? { ...p, [champ]: valeur } : p)));
+  }
+
+  // onChange : ignore la valeur vide transitoire que Safari renvoie en
+  // cours de frappe (cf. commentaire plus haut) — sinon elle écrase la
+  // vraie valeur déjà saisie à chaque caractère tapé dans l'autre champ.
+  function changerPlage(cle: number, champ: keyof Plage, valeur: string) {
+    if (!valeur) return;
+    committerPlage(cle, champ, valeur);
+  }
+
+  // onBlur : filet de sécurité, toujours appliqué (y compris une valeur
+  // vide si l'utilisateur quitte le champ sans l'avoir complété).
+  function quitterChampPlage(cle: number, champ: keyof Plage, valeur: string) {
+    committerPlage(cle, champ, valeur);
   }
 
   function ajouterPlage() {
-    if (plages.length < 4) setPlages((prev) => [...prev, PLAGE_VIDE]);
+    if (plages.length < 4) setPlages((prev) => [...prev, { ...PLAGE_VIDE, cle: prochaineCle.current++ }]);
   }
 
-  function retirerPlage(index: number) {
-    setPlages((prev) => prev.filter((_, i) => i !== index));
+  function retirerPlage(cle: number) {
+    setPlages((prev) => prev.filter((p) => p.cle !== cle));
   }
 
   function valider() {
@@ -117,7 +144,9 @@ export default function HoraireCodeForm({
     };
 
     if (categorie === "travail") {
-      nouveauCode.plages = plages.filter((p) => p.debut && p.fin);
+      nouveauCode.plages = plages
+        .filter((p) => p.debut && p.fin)
+        .map(({ debut, fin }) => ({ debut, fin }));
     }
     if (categorie === "evenementiel") {
       nouveauCode.typeEvenement = typeEvenement;
@@ -198,30 +227,32 @@ export default function HoraireCodeForm({
               <span className="text-xs text-zinc-500">Total calculé : {heuresCalculees}h</span>
             </div>
             <div className="space-y-2">
-              {plages.map((plage, index) => {
+              {plages.map((plage) => {
                 const incomplete = Boolean(plage.debut) !== Boolean(plage.fin);
                 return (
-                  <div key={index}>
+                  <div key={plage.cle}>
                     <div className="flex items-center gap-2">
                       <input
                         type="time"
                         lang="fr-FR"
-                        value={plage.debut}
-                        onChange={(e) => changerPlage(index, "debut", e.target.value)}
+                        defaultValue={plage.debut}
+                        onChange={(e) => changerPlage(plage.cle, "debut", e.target.value)}
+                        onBlur={(e) => quitterChampPlage(plage.cle, "debut", e.target.value)}
                         className="rounded border border-zinc-300 px-2 py-1 text-sm"
                       />
                       <span className="text-zinc-400">→</span>
                       <input
                         type="time"
                         lang="fr-FR"
-                        value={plage.fin}
-                        onChange={(e) => changerPlage(index, "fin", e.target.value)}
+                        defaultValue={plage.fin}
+                        onChange={(e) => changerPlage(plage.cle, "fin", e.target.value)}
+                        onBlur={(e) => quitterChampPlage(plage.cle, "fin", e.target.value)}
                         className="rounded border border-zinc-300 px-2 py-1 text-sm"
                       />
                       {plages.length > 1 && (
                         <button
                           type="button"
-                          onClick={() => retirerPlage(index)}
+                          onClick={() => retirerPlage(plage.cle)}
                           className="ml-1 text-xs text-red-500 hover:text-red-700"
                         >
                           Retirer
