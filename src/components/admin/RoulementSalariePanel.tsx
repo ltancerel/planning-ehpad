@@ -1,14 +1,14 @@
 "use client";
 
 import type { AffectationRoulement, Roulement } from "@/lib/mock-data";
-import RoulementSalarieSection from "@/components/admin/RoulementSalarieSection";
+import RoulementSalarieSection, { type AssignationRoulement } from "@/components/admin/RoulementSalarieSection";
 
 type RoulementSalariePanelProps = {
   nomComplet: string;
   roulements: Roulement[];
   affectations: AffectationRoulement[];
   dateReferenceISO: string;
-  onAssigner: (donnees: Omit<AffectationRoulement, "id">) => void;
+  onAssigner: (donnees: AssignationRoulement) => void;
   onFermer: () => void;
 };
 

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import type { AffectationRoulement, FicheSalarie, Roulement } from "@/lib/mock-data";
 import SalariesTable from "@/components/admin/SalariesTable";
 import SalarieForm, { type ServiceAvecResponsable, type ValeurInitialeSalarie } from "@/components/admin/SalarieForm";
+import type { AssignationRoulement } from "@/components/admin/RoulementSalarieSection";
 import {
   enregistrerSalarie,
   supprimerSalarie,
@@ -68,12 +69,8 @@ export default function SalariesAdminClient({
     });
   }
 
-  function onAssignerRoulement(salarieId: string, donnees: Omit<AffectationRoulement, "id">) {
-    const champs: ChampsAffectationRoulement = {
-      roulementId: donnees.roulementId,
-      dateDebut: donnees.dateDebut,
-      dateFin: donnees.dateFin,
-    };
+  function onAssignerRoulement(salarieId: string, donnees: AssignationRoulement) {
+    const champs: ChampsAffectationRoulement = { roulementId: donnees.roulementId };
     demarrer(async () => {
       const resultat = await assignerRoulement(salarieId, champs);
       if (resultat.error) alert(resultat.error);

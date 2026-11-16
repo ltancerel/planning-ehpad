@@ -88,14 +88,21 @@ export async function supprimerSalarie(id: string): Promise<{ error?: string }> 
 
 export type ChampsAffectationRoulement = {
   roulementId: string;
-  dateDebut: string;
-  dateFin?: string;
 };
 
 // Assignation réelle d'un roulement à un salarié (story #35 dernier
 // incrément) — remplace l'ancien état local React de SalariesAdminClient
 // (perdu au rechargement). RLS réserve l'écriture sur affectation_roulement
 // à l'administrateur, comme les autres tables de configuration.
+//
+// date_debut prend effet immédiatement (date du jour, calculée ici plutôt
+// que saisie par l'admin — retour client du 16/11 : la seule chose que
+// date_debut détermine est quel roulement est actuellement en vigueur pour
+// le salarié, cf. appliquer_roulement ; la semaine réellement écrite sur le
+// planning est un paramètre distinct, choisi par le manager en cliquant sur
+// la bonne semaine dans l'écran Planning — l'admin n'a donc pas besoin de
+// saisir de date ici). Pas de date_fin : un changement de roulement se fait
+// simplement en assignant un nouveau roulement, qui devient le plus récent.
 export async function assignerRoulement(
   salarieId: string,
   champs: ChampsAffectationRoulement
@@ -106,8 +113,7 @@ export async function assignerRoulement(
     .insert({
       salarie_id: salarieId,
       roulement_id: champs.roulementId,
-      date_debut: champs.dateDebut,
-      date_fin: champs.dateFin || null,
+      date_debut: new Date().toISOString().slice(0, 10),
     })
     .select()
     .single();

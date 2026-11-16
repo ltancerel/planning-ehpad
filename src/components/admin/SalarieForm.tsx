@@ -5,6 +5,7 @@ import type { AffectationRoulement, GroupeRoulement, FicheSalarie, Roulement } f
 import { GROUPES_ROULEMENT, affectationActuelle } from "@/lib/mock-data";
 import { formatDateISO, formatJourMois, parseDateISO } from "@/lib/dates";
 import RoulementSalariePanel from "@/components/admin/RoulementSalariePanel";
+import type { AssignationRoulement } from "@/components/admin/RoulementSalarieSection";
 import type { ChampsSalarie } from "@/app/admin/salaries/actions";
 
 function capitaliser(texte: string): string {
@@ -23,7 +24,7 @@ type SalarieFormProps = {
   roulements: Roulement[];
   affectationsRoulement: AffectationRoulement[];
   onValider: (champs: ChampsSalarie) => void;
-  onAssignerRoulement: (donnees: Omit<AffectationRoulement, "id">) => void;
+  onAssignerRoulement: (donnees: AssignationRoulement) => void;
   onAnnuler: () => void;
 };
 

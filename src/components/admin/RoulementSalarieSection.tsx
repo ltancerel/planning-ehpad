@@ -3,17 +3,19 @@
 import { useState } from "react";
 import type { AffectationRoulement, Roulement } from "@/lib/mock-data";
 import { affectationActuelle, affectationsRecentesDabord } from "@/lib/mock-data";
-import { lundiDeLaSemaine, formatDateISO, formatJourMois, parseDateISO } from "@/lib/dates";
+import { formatJourMois, parseDateISO } from "@/lib/dates";
 
 function formatDateAffichee(dateISO: string): string {
   return formatJourMois(parseDateISO(dateISO));
 }
 
+export type AssignationRoulement = { roulementId: string };
+
 type RoulementSalarieSectionProps = {
   roulements: Roulement[];
   affectations: AffectationRoulement[];
   dateReferenceISO: string;
-  onAssigner: (donnees: Omit<AffectationRoulement, "id">) => void;
+  onAssigner: (donnees: AssignationRoulement) => void;
 };
 
 export default function RoulementSalarieSection({
@@ -23,8 +25,6 @@ export default function RoulementSalarieSection({
   onAssigner,
 }: RoulementSalarieSectionProps) {
   const [roulementChoisiId, setRoulementChoisiId] = useState(roulements[0]?.id ?? "");
-  const [dateDebut, setDateDebut] = useState(formatDateISO(lundiDeLaSemaine(parseDateISO(dateReferenceISO))));
-  const [dateFin, setDateFin] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
 
   const actuelle = affectationActuelle(affectations, dateReferenceISO);
@@ -34,23 +34,13 @@ export default function RoulementSalarieSection({
     return roulements.find((r) => r.id === roulementId)?.nom ?? roulementId;
   }
 
-  function changerDateDebut(valeur: string) {
-    if (!valeur) return;
-    setDateDebut(formatDateISO(lundiDeLaSemaine(parseDateISO(valeur))));
-  }
-
   function assigner() {
     if (!roulementChoisiId) {
       setErreur("Choisissez un roulement.");
       return;
     }
-    if (dateFin && dateFin < dateDebut) {
-      setErreur("La date de fin doit être postérieure à la date de début.");
-      return;
-    }
     setErreur(null);
-    onAssigner({ roulementId: roulementChoisiId, dateDebut, dateFin: dateFin || undefined });
-    setDateFin("");
+    onAssigner({ roulementId: roulementChoisiId });
   }
 
   return (
@@ -113,33 +103,10 @@ export default function RoulementSalarieSection({
                 ))}
               </select>
             </div>
-            <div className="flex gap-2">
-              <div className="flex-1">
-                <label className="mb-1 block text-[11px] font-medium text-zinc-600">
-                  Date de début (lundi)
-                </label>
-                <input
-                  type="date"
-                  value={dateDebut}
-                  onChange={(e) => changerDateDebut(e.target.value)}
-                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-xs"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="mb-1 block text-[11px] font-medium text-zinc-600">
-                  Date de fin (optionnelle)
-                </label>
-                <input
-                  type="date"
-                  value={dateFin}
-                  onChange={(e) => setDateFin(e.target.value)}
-                  className="w-full rounded border border-zinc-300 px-2 py-1.5 text-xs"
-                />
-              </div>
-            </div>
             <p className="text-[11px] text-zinc-400">
-              Laisser la date de fin vide si le roulement reste en cours. La date de début est
-              automatiquement ramenée au lundi de sa semaine.
+              Prend effet immédiatement (à partir d&apos;aujourd&apos;hui). La semaine à partir de
+              laquelle le motif est réellement écrit sur le planning se choisit ensuite depuis
+              l&apos;écran Planning, en cliquant sur la semaine voulue.
             </p>
 
             {erreur && <p className="text-xs font-medium text-red-600">{erreur}</p>}
