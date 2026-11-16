@@ -605,20 +605,24 @@ export default function PlanningGrid({
   // n'est pas homogène), donc cette fonction peut fusionner sans reste de
   // contrôle à faire ici.
   function appliquerCodeSelectionMultiple(codeChoisi: string) {
+    // Calculé avant setEditions, pas dans son callback : la fonction passée
+    // à setEditions n'est pas forcément exécutée tout de suite par React —
+    // lire ensuite "lignes" juste après l'appel reviendrait à la lire avant
+    // qu'elle soit remplie, et enregistrerJournees([]) ne persisterait rien
+    // sans la moindre erreur (bug identifié le 16/11 sur l'équivalent
+    // roulement, appliquerRoulementGroupe, même cause).
     const precedentes: Record<string, ValeurCellule | undefined> = {};
     const lignes: { salarieId: string; dateISO: string; valeur: ValeurCellule }[] = [];
-    setEditions((prev) => {
-      let nouvelles = prev;
-      for (const { salarieId, dateISO } of celluleEnSelection()) {
-        const cle = `${salarieId}__${dateISO}`;
-        precedentes[cle] = cle in nouvelles ? nouvelles[cle] : planningBase[cle];
-        const actuelle = precedentes[cle] ?? {};
-        const nouvelle = fusionnerCode(actuelle, codeChoisi);
-        lignes.push({ salarieId, dateISO, valeur: nouvelle });
-        nouvelles = { ...nouvelles, [cle]: nouvelle };
-      }
-      return nouvelles;
-    });
+    let nouvelles = editions;
+    for (const { salarieId, dateISO } of celluleEnSelection()) {
+      const cle = `${salarieId}__${dateISO}`;
+      precedentes[cle] = cle in nouvelles ? nouvelles[cle] : planningBase[cle];
+      const actuelle = precedentes[cle] ?? {};
+      const nouvelle = fusionnerCode(actuelle, codeChoisi);
+      lignes.push({ salarieId, dateISO, valeur: nouvelle });
+      nouvelles = { ...nouvelles, [cle]: nouvelle };
+    }
+    setEditions(nouvelles);
     annulerSelection();
     demarrerPersistance(async () => {
       const resultat = await enregistrerJournees(lignes);
@@ -642,26 +646,30 @@ export default function PlanningGrid({
     const lundiISO = formatDateISO(lundi);
     const salarieIds = celluleEnSelection().map((c) => c.salarieId);
 
+    // Calculé avant setEditions, pas dans son callback — même raison que
+    // dans appliquerCodeSelectionMultiple ci-dessus (bug identifié le 16/11 :
+    // "candidats" était lu juste après l'appel à setEditions, avant que son
+    // callback n'ait forcément été exécuté par React, donc vide la plupart
+    // du temps — la boucle de persistance ci-dessous ne faisait alors rien,
+    // sans la moindre erreur affichée).
     const candidats: string[] = [];
     const precedentes: Record<string, ValeurCellule | undefined> = {};
-    setEditions((prev) => {
-      let nouvelles = prev;
-      for (const salarieId of salarieIds) {
-        const roulement = roulementActuelDuSalarie(salarieId);
-        if (!roulement) continue;
-        const resultat = evaluerProjectionRoulement(nouvelles, salarieId, lundi, roulement);
-        if (resultat.bloque) continue;
-        for (let j = 0; j < roulement.nbSemaines * 7; j++) {
-          const jour = new Date(lundi);
-          jour.setDate(jour.getDate() + j);
-          const cle = `${salarieId}__${formatDateISO(jour)}`;
-          precedentes[cle] = cle in nouvelles ? nouvelles[cle] : planningBase[cle];
-        }
-        nouvelles = resultat.editions;
-        candidats.push(salarieId);
+    let nouvelles = editions;
+    for (const salarieId of salarieIds) {
+      const roulement = roulementActuelDuSalarie(salarieId);
+      if (!roulement) continue;
+      const resultat = evaluerProjectionRoulement(nouvelles, salarieId, lundi, roulement);
+      if (resultat.bloque) continue;
+      for (let j = 0; j < roulement.nbSemaines * 7; j++) {
+        const jour = new Date(lundi);
+        jour.setDate(jour.getDate() + j);
+        const cle = `${salarieId}__${formatDateISO(jour)}`;
+        precedentes[cle] = cle in nouvelles ? nouvelles[cle] : planningBase[cle];
       }
-      return nouvelles;
-    });
+      nouvelles = resultat.editions;
+      candidats.push(salarieId);
+    }
+    setEditions(nouvelles);
     annulerSelection();
 
     demarrerPersistance(async () => {
