@@ -187,15 +187,31 @@ export function FiltreSalariesBouton({
             <div>
               <div className="mb-1.5 flex items-center justify-between">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">Service</p>
-                {mesServices && mesServices.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => onChange({ ...filtres, service: new Set(mesServices) })}
-                    className="text-[11px] font-medium text-blue-600 hover:text-blue-800"
-                  >
-                    Mes services
-                  </button>
-                )}
+                <div className="flex items-center gap-2">
+                  {services.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onChange({
+                          ...filtres,
+                          service: filtres.service.size === services.length ? new Set() : new Set(services),
+                        })
+                      }
+                      className="text-[11px] font-medium text-blue-600 hover:text-blue-800"
+                    >
+                      {filtres.service.size === services.length ? "Tout désélectionner" : "Tout sélectionner"}
+                    </button>
+                  )}
+                  {mesServices && mesServices.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => onChange({ ...filtres, service: new Set(mesServices) })}
+                      className="text-[11px] font-medium text-blue-600 hover:text-blue-800"
+                    >
+                      Mes services
+                    </button>
+                  )}
+                </div>
               </div>
               {managers.length > 0 && (
                 <select
