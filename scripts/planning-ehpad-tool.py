@@ -39,7 +39,7 @@ import os
 import re
 import sys
 import unicodedata
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import requests
 from openpyxl import load_workbook
@@ -244,6 +244,17 @@ def en_alignement_roulement(valeur):
     )
 
 
+def lundi_de_la_semaine(iso):
+    """Ramène une date ISO au lundi de sa semaine — même règle que
+    lundiDeLaSemaine() (src/lib/dates.ts), appliquée silencieusement par la
+    fiche salarié (RoulementSalarieSection.tsx) à chaque date de début de
+    roulement choisie. appliquer_roulement() (RPC) suppose que date_debut
+    est un lundi pour son calcul de semaines — une date hors lundi importée
+    telle quelle désalignerait silencieusement le motif du roulement."""
+    d = date.fromisoformat(iso)
+    return (d - timedelta(days=d.weekday())).isoformat()
+
+
 def en_matricule(valeur):
     v = (texte(valeur) or "").upper()
     if not (2 <= len(v) <= 5) or not v.isalnum():
@@ -308,7 +319,10 @@ def preparer_import_salaries(db, chemin, feuille, ehpad_id):
                 debut = en_date(val(ligne, "roulement_debut"))
                 if not debut:
                     raise ValueError("date de début de roulement manquante")
-                affectation = {"roulement_id": roulements[normaliser(roulement)], "date_debut": debut}
+                affectation = {
+                    "roulement_id": roulements[normaliser(roulement)],
+                    "date_debut": lundi_de_la_semaine(debut),
+                }
 
             a_importer.append((num, salarie, affectation))
         except ValueError as e:
