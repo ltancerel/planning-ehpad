@@ -48,6 +48,7 @@ export default function SalarieForm({
     valeurInitiale?.groupeRoulement ?? null
   );
   const [presence, setPresence] = useState<FicheSalarie["presence"]>(valeurInitiale?.presence ?? "Présent");
+  const [roulementChoisiId, setRoulementChoisiId] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
   const [panneauRoulementOuvert, setPanneauRoulementOuvert] = useState(false);
   const serviceChoisi = services.find((s) => s.id === serviceId);
@@ -88,6 +89,7 @@ export default function SalarieForm({
       typePaie,
       alignementRoulement: groupeRoulement ?? "",
       presence,
+      roulementId: !modeEdition && roulementChoisiId ? roulementChoisiId : undefined,
     });
   }
 
@@ -182,23 +184,17 @@ export default function SalarieForm({
           </select>
         </div>
 
-        <div className="rounded border border-zinc-200 p-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-zinc-700">Roulement</p>
-              {modeEdition ? (
+        {modeEdition ? (
+          <div className="rounded border border-zinc-200 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-zinc-700">Roulement</p>
                 <p className="mt-0.5 truncate text-xs text-zinc-500">
                   {roulementActuel && nomRoulementActuel
                     ? `${nomRoulementActuel} — depuis le ${formatJourMois(parseDateISO(roulementActuel.dateDebut))}`
                     : "Aucun roulement assigné"}
                 </p>
-              ) : (
-                <p className="mt-0.5 text-xs text-zinc-400">
-                  Aucun par défaut — assignable après création.
-                </p>
-              )}
-            </div>
-            {modeEdition && (
+              </div>
               <button
                 type="button"
                 onClick={() => setPanneauRoulementOuvert(true)}
@@ -206,9 +202,25 @@ export default function SalarieForm({
               >
                 Gérer
               </button>
-            )}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-700">Roulement</label>
+            <select
+              value={roulementChoisiId}
+              onChange={(e) => setRoulementChoisiId(e.target.value)}
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+            >
+              <option value="">Aucun</option>
+              {roulements.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.nom}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div>
           <label className="mb-1 block text-xs font-medium text-zinc-700">Présence</label>

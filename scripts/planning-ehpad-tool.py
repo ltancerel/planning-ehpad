@@ -39,7 +39,7 @@ import os
 import re
 import sys
 import unicodedata
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 
 import requests
 from openpyxl import load_workbook
@@ -199,7 +199,6 @@ COLONNES_SALARIES = {
     "alignement_roulement": "Alignement roulement",
     "presence": "Présence",
     "roulement": "Roulement",
-    "roulement_debut": "Date début roulement",
 }
 OBLIGATOIRES_SALARIES = ["matricule", "nom", "prenom", "service"]
 
@@ -242,17 +241,6 @@ def en_alignement_roulement(valeur):
         f"alignement roulement « {valeur} » invalide "
         f"(Équipe A à D, ou Paire/Impaire)"
     )
-
-
-def lundi_de_la_semaine(iso):
-    """Ramène une date ISO au lundi de sa semaine — même règle que
-    lundiDeLaSemaine() (src/lib/dates.ts), appliquée silencieusement par la
-    fiche salarié (RoulementSalarieSection.tsx) à chaque date de début de
-    roulement choisie. appliquer_roulement() (RPC) suppose que date_debut
-    est un lundi pour son calcul de semaines — une date hors lundi importée
-    telle quelle désalignerait silencieusement le motif du roulement."""
-    d = date.fromisoformat(iso)
-    return (d - timedelta(days=d.weekday())).isoformat()
 
 
 def en_matricule(valeur):
@@ -316,12 +304,14 @@ def preparer_import_salaries(db, chemin, feuille, ehpad_id):
             if roulement:
                 if normaliser(roulement) not in roulements:
                     raise ValueError(f"roulement « {roulement} » inconnu dans l'application")
-                debut = en_date(val(ligne, "roulement_debut"))
-                if not debut:
-                    raise ValueError("date de début de roulement manquante")
+                # Prend effet immédiatement (date du jour) — même règle que
+                # l'assignation depuis la fiche salarié (retour client du
+                # 16/11) : date_debut ne sert qu'à déterminer quel roulement
+                # est en vigueur, la semaine réellement écrite sur le
+                # planning se choisit à part, dans l'écran Planning.
                 affectation = {
                     "roulement_id": roulements[normaliser(roulement)],
-                    "date_debut": lundi_de_la_semaine(debut),
+                    "date_debut": date.today().isoformat(),
                 }
 
             a_importer.append((num, salarie, affectation))

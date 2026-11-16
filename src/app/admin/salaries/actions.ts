@@ -19,6 +19,10 @@ export type ChampsSalarie = {
   typePaie: "25/M" | "30/M" | "Aucun";
   alignementRoulement: string;
   presence: "Présent" | "Absent";
+  // Assignation d'un roulement dès la création (retour client du 16/11) —
+  // ignoré en modification, où l'assignation passe par assignerRoulement
+  // (panneau "Gérer" dédié, avec historique).
+  roulementId?: string;
 };
 
 // Type de paie directement sur salarie — remplace l'ancien concept de
@@ -62,9 +66,23 @@ export async function enregistrerSalarie(
       return { error: "Mise à jour du salarié impossible : " + error.message };
     }
   } else {
-    const { error } = await supabase.from("salarie").insert(donneesSalarie).select("id").single();
+    const { data, error } = await supabase.from("salarie").insert(donneesSalarie).select("id").single();
     if (error) {
       return { error: "Création du salarié impossible : " + error.message };
+    }
+    if (champs.roulementId) {
+      const { error: erreurRoulement } = await supabase.from("affectation_roulement").insert({
+        salarie_id: data.id,
+        roulement_id: champs.roulementId,
+        date_debut: new Date().toISOString().slice(0, 10),
+      });
+      if (erreurRoulement) {
+        // Annule la création plutôt que de laisser un salarié sans le
+        // roulement demandé, sans qu'il n'y paraisse (même convention que
+        // executer_import_salaries() côté script).
+        await supabase.from("salarie").delete().eq("id", data.id);
+        return { error: "Assignation du roulement impossible : " + erreurRoulement.message };
+      }
     }
   }
 
