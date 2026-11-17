@@ -1039,12 +1039,22 @@ export default function PlanningGrid({
             {groupes.map((groupe) => (
               <Fragment key={groupe.service}>
                 <tr>
-                  <td
-                    colSpan={jours.length + 1}
-                    className="sticky left-0 z-10 border border-zinc-200 bg-zinc-200 px-2 py-1 text-xs font-bold text-zinc-700"
-                  >
+                  {/* Bug du 17/11 : un seul <td colSpan> sticky left-0 pour toute
+                      la ligne ne reste pas figé sur son intégralité en Chrome/
+                      Firefox (position: sticky mal géré sur une cellule
+                      colspannée) — le texte, positionné au tout début de cette
+                      cellule géante, scrollait donc hors champ comme un texte
+                      normal, pendant que la bande grise (par ailleurs toujours
+                      visible) donnait l'illusion que la ligne restait figée.
+                      Fix : on isole le texte dans une cellule d'une seule
+                      colonne (largeur = celle de la colonne salarié, via le
+                      colgroup), sticky comme les noms de salariés juste
+                      en-dessous (qui n'ont jamais eu ce problème) ; la bande
+                      grise du reste de la ligne n'a pas besoin d'être figée. */}
+                  <td className="sticky left-0 z-10 border border-zinc-200 bg-zinc-200 px-2 py-1 text-xs font-bold text-zinc-700">
                     {groupe.service}
                   </td>
+                  <td colSpan={jours.length} className="border border-zinc-200 bg-zinc-200" aria-hidden="true" />
                 </tr>
                 {groupe.salaries.map((salarie) => (
                   <tr key={salarie.id}>
