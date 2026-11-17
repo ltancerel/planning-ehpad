@@ -122,6 +122,16 @@ export default function PlanningGrid({
   // visibles : pas d'ascenseur horizontal tant que l'utilisateur n'a pas
   // délibérément augmenté ce nombre.
   const [nbSemainesChargees, setNbSemainesChargees] = useState(NB_SEMAINES_CHARGEES_DEFAUT);
+  // Index (0..nbSemainesChargees-NB_SEMAINES_VISIBLES) de la semaine affichée
+  // à gauche au sein du lot chargé — cf. bug du 17/11 : piloter le scroll à
+  // partir d'un entier plutôt que de pixels bruts (scrollLeft/scrollBy) pour
+  // garantir un décalage d'exactement une semaine à chaque clic, dans les
+  // deux sens. Avec les pixels, le reliquat de place disponible n'étant
+  // presque jamais un multiple exact d'une largeur de semaine (ça dépend de
+  // la largeur réelle de la fenêtre), le navigateur tronquait le défilement
+  // demandé à ce qui restait, atterrissant au milieu d'une semaine plutôt
+  // que sur un lundi.
+  const [semaineVisible, setSemaineVisible] = useState(0);
   const jours = useMemo(
     () => genererPeriode(debutPeriode, nbSemainesChargees * 7),
     [debutPeriode, nbSemainesChargees]
@@ -157,21 +167,15 @@ export default function PlanningGrid({
       .finally(() => setChargementPlanning(false));
   }, [debutPeriode, nbSemainesChargees]);
 
-  // Conteneur scrollable horizontalement : les flèches de navigation
-  // avancent/reculent d'une semaine dans le lot déjà chargé (gratuit, pas de
-  // rechargement) tant que c'est possible, et ne déclenchent un changement
-  // de période (nouveau lot) qu'une fois le bord du lot atteint — cf.
-  // allerSemaine ci-dessous. scrollIntentionRef mémorise, juste avant un tel
-  // changement, si le nouveau lot doit s'afficher depuis son début (flèche
-  // suivante) ou sa fin (flèche précédente).
+  // Conteneur scrollable horizontalement : la position de scroll est
+  // toujours entièrement pilotée par semaineVisible (jamais lue/déduite de
+  // scrollLeft), donc toujours un multiple exact d'une largeur de semaine.
   const conteneurScrollRef = useRef<HTMLDivElement>(null);
-  const scrollIntentionRef = useRef<"debut" | "fin">("debut");
   useEffect(() => {
     const conteneur = conteneurScrollRef.current;
     if (!conteneur) return;
-    conteneur.scrollLeft = scrollIntentionRef.current === "fin" ? conteneur.scrollWidth : 0;
-    scrollIntentionRef.current = "debut";
-  }, [debutPeriode, nbSemainesChargees]);
+    conteneur.scrollLeft = semaineVisible * LARGEUR_SEMAINE;
+  }, [debutPeriode, nbSemainesChargees, semaineVisible]);
   // undefined = case hachurée (jamais remplie), y compris quand une case est
   // effacée : l'effacement remet la case en attente de planification plutôt
   // que de la marquer comme "vidée" (retour client du 17/09).
@@ -788,31 +792,26 @@ export default function PlanningGrid({
     });
   }
 
-  // Avance/recule d'une semaine : défile dans le lot déjà chargé quand c'est
-  // possible (gratuit, aucun rechargement), et ne change de période (nouveau
-  // lot, cf. changerPeriode) qu'une fois le bord du lot atteint — c'est ce
-  // qui rend le chargement de plusieurs semaines à la fois utile une fois le
-  // backend réel branché.
+  // Avance/recule exactement d'une semaine, toujours alignée sur un lundi
+  // (bug du 17/11 : voir le commentaire sur semaineVisible ci-dessus).
+  // Défile dans le lot déjà chargé quand c'est possible (gratuit, aucun
+  // rechargement) ; une fois le bord du lot atteint, décale la période d'une
+  // semaine (changerPeriode(±1), pas de tout le lot d'un coup) — semaineVisible
+  // reste alors inchangée (0 ou max), le lot entier glissant d'une semaine
+  // sous la fenêtre visible.
   function allerSemaine(direction: 1 | -1) {
-    const conteneur = conteneurScrollRef.current;
-    if (!conteneur) {
-      changerPeriode(direction);
-      return;
-    }
-    const scrollMax = conteneur.scrollWidth - conteneur.clientWidth;
+    const max = Math.max(0, nbSemainesChargees - NB_SEMAINES_VISIBLES);
     if (direction === 1) {
-      if (conteneur.scrollLeft < scrollMax - 1) {
-        conteneur.scrollBy({ left: LARGEUR_SEMAINE, behavior: "smooth" });
+      if (semaineVisible < max) {
+        setSemaineVisible((v) => v + 1);
       } else {
-        scrollIntentionRef.current = "debut";
-        changerPeriode(nbSemainesChargees);
+        changerPeriode(1);
       }
     } else {
-      if (conteneur.scrollLeft > 1) {
-        conteneur.scrollBy({ left: -LARGEUR_SEMAINE, behavior: "smooth" });
+      if (semaineVisible > 0) {
+        setSemaineVisible((v) => v - 1);
       } else {
-        scrollIntentionRef.current = "fin";
-        changerPeriode(-nbSemainesChargees);
+        changerPeriode(-1);
       }
     }
   }
@@ -894,6 +893,7 @@ export default function PlanningGrid({
                       onChange={(e) => {
                         if (e.target.value) {
                           setDebutPeriode(lundiDeLaSemaine(parseDateISO(e.target.value)));
+                          setSemaineVisible(0);
                           setSelecteurOuvert(false);
                         }
                       }}
@@ -915,6 +915,7 @@ export default function PlanningGrid({
                           Math.max(NB_SEMAINES_CHARGEES_MIN, Math.round(brut))
                         );
                         setNbSemainesChargees(borne);
+                        setSemaineVisible(0);
                       }}
                       className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm"
                     />
