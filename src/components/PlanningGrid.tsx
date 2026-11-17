@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   GROUPES_ROULEMENT,
@@ -122,6 +122,16 @@ export default function PlanningGrid({
   // visibles : pas d'ascenseur horizontal tant que l'utilisateur n'a pas
   // délibérément augmenté ce nombre.
   const [nbSemainesChargees, setNbSemainesChargees] = useState(NB_SEMAINES_CHARGEES_DEFAUT);
+  // Index (0..nbSemainesChargees-NB_SEMAINES_VISIBLES) de la semaine affichée
+  // à gauche au sein du lot chargé — cf. bug du 17/11 : piloter le scroll à
+  // partir d'un entier plutôt que de pixels bruts (scrollLeft/scrollBy) pour
+  // garantir un décalage d'exactement une semaine à chaque clic, dans les
+  // deux sens. Avec les pixels, le reliquat de place disponible n'étant
+  // presque jamais un multiple exact d'une largeur de semaine (ça dépend de
+  // la largeur réelle de la fenêtre), le navigateur tronquait le défilement
+  // demandé à ce qui restait, atterrissant au milieu d'une semaine plutôt
+  // que sur un lundi.
+  const [semaineVisible, setSemaineVisible] = useState(0);
   const jours = useMemo(
     () => genererPeriode(debutPeriode, nbSemainesChargees * 7),
     [debutPeriode, nbSemainesChargees]
@@ -157,21 +167,15 @@ export default function PlanningGrid({
       .finally(() => setChargementPlanning(false));
   }, [debutPeriode, nbSemainesChargees]);
 
-  // Conteneur scrollable horizontalement : les flèches de navigation
-  // avancent/reculent d'une semaine dans le lot déjà chargé (gratuit, pas de
-  // rechargement) tant que c'est possible, et ne déclenchent un changement
-  // de période (nouveau lot) qu'une fois le bord du lot atteint — cf.
-  // allerSemaine ci-dessous. scrollIntentionRef mémorise, juste avant un tel
-  // changement, si le nouveau lot doit s'afficher depuis son début (flèche
-  // suivante) ou sa fin (flèche précédente).
+  // Conteneur scrollable horizontalement : la position de scroll est
+  // toujours entièrement pilotée par semaineVisible (jamais lue/déduite de
+  // scrollLeft), donc toujours un multiple exact d'une largeur de semaine.
   const conteneurScrollRef = useRef<HTMLDivElement>(null);
-  const scrollIntentionRef = useRef<"debut" | "fin">("debut");
   useEffect(() => {
     const conteneur = conteneurScrollRef.current;
     if (!conteneur) return;
-    conteneur.scrollLeft = scrollIntentionRef.current === "fin" ? conteneur.scrollWidth : 0;
-    scrollIntentionRef.current = "debut";
-  }, [debutPeriode, nbSemainesChargees]);
+    conteneur.scrollLeft = semaineVisible * LARGEUR_SEMAINE;
+  }, [debutPeriode, nbSemainesChargees, semaineVisible]);
   // undefined = case hachurée (jamais remplie), y compris quand une case est
   // effacée : l'effacement remet la case en attente de planification plutôt
   // que de la marquer comme "vidée" (retour client du 17/09).
@@ -199,6 +203,32 @@ export default function PlanningGrid({
     left: number;
   } | null>(null);
   const [selecteurCodeMultipleOuvert, setSelecteurCodeMultipleOuvert] = useState(false);
+  // Le panneau d'action (résumé de la sélection + boutons) s'ancre sous le
+  // point de relâchement de la souris — pour une sélection proche du bas de
+  // l'écran, ça le pousse hors champ, rendant les boutons inatteignable
+  // (retour client du 17/11, même symptôme déjà corrigé le 17/09 pour
+  // HoraireCodeSelector : cf. son useLayoutEffect de recadrage). On applique
+  // ici le même principe : mesurer la taille réelle une fois rendu, puis
+  // recadrer dans la fenêtre visible.
+  const conteneurActionSelectionRef = useRef<HTMLDivElement>(null);
+  const [positionActionSelectionAffichee, setPositionActionSelectionAffichee] = useState({
+    top: 0,
+    left: 0,
+  });
+  useLayoutEffect(() => {
+    const el = conteneurActionSelectionRef.current;
+    if (!el || !positionActionSelection) return;
+    const marge = 8;
+    const left = Math.min(
+      Math.max(positionActionSelection.left, marge),
+      Math.max(marge, window.innerWidth - el.offsetWidth - marge)
+    );
+    const top = Math.min(
+      Math.max(positionActionSelection.top, marge),
+      Math.max(marge, window.innerHeight - el.offsetHeight - marge)
+    );
+    setPositionActionSelectionAffichee({ top, left });
+  }, [positionActionSelection, selecteurCodeMultipleOuvert]);
 
   // Mémorisation de la période affichée d'une ouverture à l'autre (cf. CDC)
   useEffect(() => {
@@ -788,31 +818,26 @@ export default function PlanningGrid({
     });
   }
 
-  // Avance/recule d'une semaine : défile dans le lot déjà chargé quand c'est
-  // possible (gratuit, aucun rechargement), et ne change de période (nouveau
-  // lot, cf. changerPeriode) qu'une fois le bord du lot atteint — c'est ce
-  // qui rend le chargement de plusieurs semaines à la fois utile une fois le
-  // backend réel branché.
+  // Avance/recule exactement d'une semaine, toujours alignée sur un lundi
+  // (bug du 17/11 : voir le commentaire sur semaineVisible ci-dessus).
+  // Défile dans le lot déjà chargé quand c'est possible (gratuit, aucun
+  // rechargement) ; une fois le bord du lot atteint, décale la période d'une
+  // semaine (changerPeriode(±1), pas de tout le lot d'un coup) — semaineVisible
+  // reste alors inchangée (0 ou max), le lot entier glissant d'une semaine
+  // sous la fenêtre visible.
   function allerSemaine(direction: 1 | -1) {
-    const conteneur = conteneurScrollRef.current;
-    if (!conteneur) {
-      changerPeriode(direction);
-      return;
-    }
-    const scrollMax = conteneur.scrollWidth - conteneur.clientWidth;
+    const max = Math.max(0, nbSemainesChargees - NB_SEMAINES_VISIBLES);
     if (direction === 1) {
-      if (conteneur.scrollLeft < scrollMax - 1) {
-        conteneur.scrollBy({ left: LARGEUR_SEMAINE, behavior: "smooth" });
+      if (semaineVisible < max) {
+        setSemaineVisible((v) => v + 1);
       } else {
-        scrollIntentionRef.current = "debut";
-        changerPeriode(nbSemainesChargees);
+        changerPeriode(1);
       }
     } else {
-      if (conteneur.scrollLeft > 1) {
-        conteneur.scrollBy({ left: -LARGEUR_SEMAINE, behavior: "smooth" });
+      if (semaineVisible > 0) {
+        setSemaineVisible((v) => v - 1);
       } else {
-        scrollIntentionRef.current = "fin";
-        changerPeriode(-nbSemainesChargees);
+        changerPeriode(-1);
       }
     }
   }
@@ -894,6 +919,7 @@ export default function PlanningGrid({
                       onChange={(e) => {
                         if (e.target.value) {
                           setDebutPeriode(lundiDeLaSemaine(parseDateISO(e.target.value)));
+                          setSemaineVisible(0);
                           setSelecteurOuvert(false);
                         }
                       }}
@@ -915,6 +941,7 @@ export default function PlanningGrid({
                           Math.max(NB_SEMAINES_CHARGEES_MIN, Math.round(brut))
                         );
                         setNbSemainesChargees(borne);
+                        setSemaineVisible(0);
                       }}
                       className="w-20 rounded border border-zinc-300 px-2 py-1 text-sm"
                     />
@@ -1039,12 +1066,22 @@ export default function PlanningGrid({
             {groupes.map((groupe) => (
               <Fragment key={groupe.service}>
                 <tr>
-                  <td
-                    colSpan={jours.length + 1}
-                    className="sticky left-0 z-10 border border-zinc-200 bg-zinc-200 px-2 py-1 text-xs font-bold text-zinc-700"
-                  >
+                  {/* Bug du 17/11 : un seul <td colSpan> sticky left-0 pour toute
+                      la ligne ne reste pas figé sur son intégralité en Chrome/
+                      Firefox (position: sticky mal géré sur une cellule
+                      colspannée) — le texte, positionné au tout début de cette
+                      cellule géante, scrollait donc hors champ comme un texte
+                      normal, pendant que la bande grise (par ailleurs toujours
+                      visible) donnait l'illusion que la ligne restait figée.
+                      Fix : on isole le texte dans une cellule d'une seule
+                      colonne (largeur = celle de la colonne salarié, via le
+                      colgroup), sticky comme les noms de salariés juste
+                      en-dessous (qui n'ont jamais eu ce problème) ; la bande
+                      grise du reste de la ligne n'a pas besoin d'être figée. */}
+                  <td className="sticky left-0 z-10 border border-zinc-200 bg-zinc-200 px-2 py-1 text-xs font-bold text-zinc-700">
                     {groupe.service}
                   </td>
+                  <td colSpan={jours.length} className="border border-zinc-200 bg-zinc-200" aria-hidden="true" />
                 </tr>
                 {groupe.salaries.map((salarie) => (
                   <tr key={salarie.id}>
@@ -1067,6 +1104,14 @@ export default function PlanningGrid({
                       // plutôt que "vidée" pour rester disponible à la planification.
                       const valeur = cle in editions ? editions[cle] : planningBase[cle];
                       const jamaisRemplie = valeur === undefined;
+                      // Repos explicite (issu d'un roulement appliqué) : une case
+                      // remplie mais sans aucun code. Jusqu'ici totalement blanche,
+                      // indiscernable au premier coup d'œil d'une case vide — retour
+                      // client du 17/11. Marque le même tiret gris que l'éditeur de
+                      // roulement (RoulementForm.tsx) pour une case de repos, afin que
+                      // les deux affichages restent cohérents.
+                      const reposExplicite =
+                        !jamaisRemplie && !valeur?.travail && !valeur?.evenementiel && !valeur?.informatif;
                       const horaireTravail = valeur?.travail ? codesParCode[valeur.travail] : undefined;
                       const horaireInformatif = valeur?.informatif
                         ? codesParCode[valeur.informatif]
@@ -1207,6 +1252,11 @@ export default function PlanningGrid({
                                 {valeur.informatif}
                               </span>
                             ))}
+                          {reposExplicite && (
+                            <span className="block px-1 pt-0.5 text-center text-xs font-semibold text-zinc-400">
+                              —
+                            </span>
+                          )}
                         </td>
                       );
                     })}
@@ -1284,8 +1334,13 @@ export default function PlanningGrid({
                 />
               ) : (
                 <div
-                  className="fixed z-50 w-72 rounded border border-zinc-200 bg-white p-3 text-xs shadow-lg"
-                  style={{ top: positionActionSelection.top, left: positionActionSelection.left }}
+                  ref={conteneurActionSelectionRef}
+                  className="fixed z-50 w-72 overflow-y-auto rounded border border-zinc-200 bg-white p-3 text-xs shadow-lg"
+                  style={{
+                    top: positionActionSelectionAffichee.top,
+                    left: positionActionSelectionAffichee.left,
+                    maxHeight: "calc(100vh - 16px)",
+                  }}
                 >
                   <p className="mb-2 font-medium text-zinc-700">
                     {cellulesSelection.length} case(s) sélectionnée(s)
