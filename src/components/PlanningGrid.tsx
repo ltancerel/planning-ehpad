@@ -1104,6 +1104,14 @@ export default function PlanningGrid({
                       // plutôt que "vidée" pour rester disponible à la planification.
                       const valeur = cle in editions ? editions[cle] : planningBase[cle];
                       const jamaisRemplie = valeur === undefined;
+                      // Repos explicite (issu d'un roulement appliqué) : une case
+                      // remplie mais sans aucun code. Jusqu'ici totalement blanche,
+                      // indiscernable au premier coup d'œil d'une case vide — retour
+                      // client du 17/11. Marque le même tiret gris que l'éditeur de
+                      // roulement (RoulementForm.tsx) pour une case de repos, afin que
+                      // les deux affichages restent cohérents.
+                      const reposExplicite =
+                        !jamaisRemplie && !valeur?.travail && !valeur?.evenementiel && !valeur?.informatif;
                       const horaireTravail = valeur?.travail ? codesParCode[valeur.travail] : undefined;
                       const horaireInformatif = valeur?.informatif
                         ? codesParCode[valeur.informatif]
@@ -1244,6 +1252,11 @@ export default function PlanningGrid({
                                 {valeur.informatif}
                               </span>
                             ))}
+                          {reposExplicite && (
+                            <span className="block px-1 pt-0.5 text-center text-xs font-semibold text-zinc-400">
+                              —
+                            </span>
+                          )}
                         </td>
                       );
                     })}
