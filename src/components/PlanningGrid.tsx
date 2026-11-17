@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   GROUPES_ROULEMENT,
@@ -203,6 +203,32 @@ export default function PlanningGrid({
     left: number;
   } | null>(null);
   const [selecteurCodeMultipleOuvert, setSelecteurCodeMultipleOuvert] = useState(false);
+  // Le panneau d'action (résumé de la sélection + boutons) s'ancre sous le
+  // point de relâchement de la souris — pour une sélection proche du bas de
+  // l'écran, ça le pousse hors champ, rendant les boutons inatteignable
+  // (retour client du 17/11, même symptôme déjà corrigé le 17/09 pour
+  // HoraireCodeSelector : cf. son useLayoutEffect de recadrage). On applique
+  // ici le même principe : mesurer la taille réelle une fois rendu, puis
+  // recadrer dans la fenêtre visible.
+  const conteneurActionSelectionRef = useRef<HTMLDivElement>(null);
+  const [positionActionSelectionAffichee, setPositionActionSelectionAffichee] = useState({
+    top: 0,
+    left: 0,
+  });
+  useLayoutEffect(() => {
+    const el = conteneurActionSelectionRef.current;
+    if (!el || !positionActionSelection) return;
+    const marge = 8;
+    const left = Math.min(
+      Math.max(positionActionSelection.left, marge),
+      Math.max(marge, window.innerWidth - el.offsetWidth - marge)
+    );
+    const top = Math.min(
+      Math.max(positionActionSelection.top, marge),
+      Math.max(marge, window.innerHeight - el.offsetHeight - marge)
+    );
+    setPositionActionSelectionAffichee({ top, left });
+  }, [positionActionSelection, selecteurCodeMultipleOuvert]);
 
   // Mémorisation de la période affichée d'une ouverture à l'autre (cf. CDC)
   useEffect(() => {
@@ -1295,8 +1321,13 @@ export default function PlanningGrid({
                 />
               ) : (
                 <div
-                  className="fixed z-50 w-72 rounded border border-zinc-200 bg-white p-3 text-xs shadow-lg"
-                  style={{ top: positionActionSelection.top, left: positionActionSelection.left }}
+                  ref={conteneurActionSelectionRef}
+                  className="fixed z-50 w-72 overflow-y-auto rounded border border-zinc-200 bg-white p-3 text-xs shadow-lg"
+                  style={{
+                    top: positionActionSelectionAffichee.top,
+                    left: positionActionSelectionAffichee.left,
+                    maxHeight: "calc(100vh - 16px)",
+                  }}
                 >
                   <p className="mb-2 font-medium text-zinc-700">
                     {cellulesSelection.length} case(s) sélectionnée(s)
