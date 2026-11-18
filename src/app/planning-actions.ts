@@ -9,11 +9,25 @@ type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 export type LigneJournee = { salarieId: string; dateISO: string; valeur: ValeurCellule };
 export type CelluleJournee = { salarieId: string; dateISO: string };
 
+// Nombre de lignes par page — doit être ≤ la limite max-rows de l'API
+// PostgREST du projet (1000 par défaut, non changée ici) : au-delà,
+// l'API tronque silencieusement la réponse sans remonter d'erreur.
+const TAILLE_PAGE_JOURNEE = 1000;
+
 // Charge les cases réellement planifiées sur une plage de dates — appelé
 // côté client (PlanningGrid, Émargement) à chaque changement de fenêtre
 // affichée, pas côté serveur au premier rendu : la période initiale dépend
 // de préférences mémorisées en localStorage (cf. commentaire dans
 // PlanningGrid), donc jamais connue avant l'hydratation côté client.
+//
+// Paginée (retour client du 18/11) : sans salarieId, une fenêtre de 4
+// semaines bien remplie dépasse largement les 1000 lignes (ex. 1727 lignes
+// constatées en PROD pour 66 salariés sur 28 jours) — la limite max-rows de
+// l'API PostgREST tronquait alors silencieusement le résultat, sans erreur,
+// laissant des cases réellement planifiées s'afficher comme vides. D'où un
+// blocage serveur « la semaine a été planifiée entre-temps » lors de
+// l'application d'un roulement sur une case qui semblait pourtant libre à
+// l'écran — la base avait raison, l'écran avait tort.
 export async function chargerPlanningReel(
   dateDebut: string,
   dateFin: string,
@@ -21,24 +35,37 @@ export async function chargerPlanningReel(
 ): Promise<{ planning?: Record<string, ValeurCellule>; error?: string }> {
   const supabase = await createClient();
 
-  let requete = supabase
-    .from("journee")
-    .select(
-      "salarie_id, date, code_travail:code_travail_id(code), code_informatif:code_informatif_id(code), code_evenementiel:code_evenementiel_id(code), journee_evenementiel_plage(heure_debut, heure_fin, ordre)"
-    )
-    .gte("date", dateDebut)
-    .lte("date", dateFin);
-  if (salarieId) {
-    requete = requete.eq("salarie_id", salarieId);
+  function requetePage(debutPage: number) {
+    let requete = supabase
+      .from("journee")
+      .select(
+        "salarie_id, date, code_travail:code_travail_id(code), code_informatif:code_informatif_id(code), code_evenementiel:code_evenementiel_id(code), journee_evenementiel_plage(heure_debut, heure_fin, ordre)"
+      )
+      .gte("date", dateDebut)
+      .lte("date", dateFin)
+      // Ordre explicite et stable requis pour que range() pagine sans
+      // doublon ni trou d'une page à l'autre (non garanti sans order()).
+      .order("salarie_id", { ascending: true })
+      .order("date", { ascending: true })
+      .range(debutPage, debutPage + TAILLE_PAGE_JOURNEE - 1);
+    if (salarieId) {
+      requete = requete.eq("salarie_id", salarieId);
+    }
+    return requete;
   }
 
-  const { data, error } = await requete;
-  if (error) {
-    return { error: "Lecture du planning impossible : " + error.message };
+  const lignes: NonNullable<Awaited<ReturnType<typeof requetePage>>["data"]> = [];
+  for (let debutPage = 0; ; debutPage += TAILLE_PAGE_JOURNEE) {
+    const { data, error } = await requetePage(debutPage);
+    if (error) {
+      return { error: "Lecture du planning impossible : " + error.message };
+    }
+    lignes.push(...(data ?? []));
+    if (!data || data.length < TAILLE_PAGE_JOURNEE) break;
   }
 
   const planning: Record<string, ValeurCellule> = {};
-  for (const j of data ?? []) {
+  for (const j of lignes) {
     planning[`${j.salarie_id}__${j.date}`] = {
       travail: j.code_travail?.code,
       informatif: j.code_informatif?.code,
