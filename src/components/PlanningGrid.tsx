@@ -1107,9 +1107,8 @@ export default function PlanningGrid({
                       // Repos explicite (issu d'un roulement appliqué) : une case
                       // remplie mais sans aucun code. Jusqu'ici totalement blanche,
                       // indiscernable au premier coup d'œil d'une case vide — retour
-                      // client du 17/11. Marque le même tiret gris que l'éditeur de
-                      // roulement (RoulementForm.tsx) pour une case de repos, afin que
-                      // les deux affichages restent cohérents.
+                      // client du 17/11 (précisé le 18/11 : point, pas tiret, pour
+                      // rester cohérent avec l'éditeur de roulement, RoulementForm.tsx).
                       const reposExplicite =
                         !jamaisRemplie && !valeur?.travail && !valeur?.evenementiel && !valeur?.informatif;
                       const horaireTravail = valeur?.travail ? codesParCode[valeur.travail] : undefined;
@@ -1254,7 +1253,7 @@ export default function PlanningGrid({
                             ))}
                           {reposExplicite && (
                             <span className="block px-1 pt-0.5 text-center text-xs font-semibold text-zinc-400">
-                              —
+                              .
                             </span>
                           )}
                         </td>
