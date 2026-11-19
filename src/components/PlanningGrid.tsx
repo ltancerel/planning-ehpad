@@ -36,6 +36,7 @@ import {
   formatAnneeMois,
 } from "@/lib/dates";
 import UserMenu from "@/components/UserMenu";
+import AppTabs from "@/components/AppTabs";
 import HoraireCodeSelector, { type PositionSelecteur } from "@/components/HoraireCodeSelector";
 import {
   chargerPlanningReel,
@@ -1008,6 +1009,7 @@ export default function PlanningGrid({
             <UserMenu utilisateur={utilisateur} />
           </div>
         </div>
+        <AppTabs actif="planning" />
       </header>
 
       {erreurPersistance && (
