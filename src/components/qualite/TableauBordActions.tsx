@@ -31,10 +31,10 @@ function IndicateurTuile({
 }) {
   return (
     <div
-      className={`flex aspect-square flex-col items-center justify-center rounded-2xl bg-gradient-to-br p-4 text-center text-white shadow-md ${degrade}`}
+      className={`flex flex-col items-center justify-center rounded-xl bg-gradient-to-br p-3 text-center text-white shadow-sm ${degrade}`}
     >
-      <div className="text-4xl font-bold">{valeur}</div>
-      <div className="mt-1.5 text-xs font-medium leading-snug text-white/90">{label}</div>
+      <div className="text-2xl font-bold">{valeur}</div>
+      <div className="mt-1 text-[11px] font-medium leading-snug text-white/90">{label}</div>
     </div>
   );
 }
