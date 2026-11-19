@@ -46,7 +46,8 @@ function IconeActions() {
 // TBD, pages placeholder en attendant). Icônes rondes colorées avec
 // libellé plutôt qu'un sélecteur à ouvrir : chaque application reste
 // visible et accessible en un clic, l'application active mise en avant
-// (icône plus grande, libellé en gras).
+// (icône plus grande, libellé en gras). Intégré dans la rangée d'en-tête,
+// à droite du bloc EHPAD, plutôt qu'en rangée séparée (retour client).
 const APPLICATIONS: ApplicationOnglet[] = [
   { code: "planning", label: "Planning", href: "/", couleur: "#2563eb", icone: <IconePlanning /> },
   { code: "pilotage-paqg", label: "Pilotage PAQG", href: "/pilotage-paqg", couleur: "#7c3aed", icone: <IconePilotage /> },
@@ -55,7 +56,7 @@ const APPLICATIONS: ApplicationOnglet[] = [
 
 export default function AppTabs({ actif }: { actif: string }) {
   return (
-    <nav className="flex items-end gap-5 border-t border-zinc-200 bg-zinc-50 px-4 pb-2 pt-1.5" aria-label="Applications">
+    <nav className="flex items-center gap-3" aria-label="Applications">
       {APPLICATIONS.map((application) => {
         const estActif = application.code === actif;
         return (
@@ -63,20 +64,20 @@ export default function AppTabs({ actif }: { actif: string }) {
             key={application.code}
             href={application.href}
             aria-current={estActif ? "page" : undefined}
-            className="flex flex-col items-center gap-1 text-center"
+            className="flex flex-col items-center gap-0.5 text-center"
           >
             <span
               className={
                 "flex items-center justify-center rounded-full text-white shadow-sm transition-all " +
-                (estActif ? "h-11 w-11" : "h-8 w-8 opacity-90")
+                (estActif ? "h-8 w-8" : "h-6 w-6 opacity-90")
               }
               style={{ backgroundColor: application.couleur }}
             >
-              <span className={estActif ? "" : "scale-75"}>{application.icone}</span>
+              <span className={estActif ? "scale-90" : "scale-[0.6]"}>{application.icone}</span>
             </span>
             <span
               className={
-                "text-[10px] uppercase tracking-wide " +
+                "text-[9px] uppercase leading-none tracking-wide " +
                 (estActif ? "font-semibold text-zinc-800" : "font-medium text-zinc-400")
               }
             >

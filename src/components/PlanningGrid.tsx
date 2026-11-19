@@ -917,6 +917,9 @@ export default function PlanningGrid({
                 {chargementPlanning ? "Planning — chargement…" : "Planning"}
               </p>
             </div>
+            <div className="ml-4 border-l border-zinc-200 pl-4">
+              <AppTabs actif="planning" />
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <FiltreSalariesBouton
@@ -1010,7 +1013,6 @@ export default function PlanningGrid({
             <UserMenu utilisateur={utilisateur} />
           </div>
         </div>
-        <AppTabs actif="planning" />
       </header>
 
       {erreurPersistance && (

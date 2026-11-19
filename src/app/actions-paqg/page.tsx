@@ -17,12 +17,14 @@ export default function ActionsPaqg() {
               <h1 className="font-semibold text-zinc-800">EHPAD Démo</h1>
               <p className="text-[10px] text-zinc-400">Actions PAQG</p>
             </div>
+            <div className="ml-4 border-l border-zinc-200 pl-4">
+              <AppTabs actif="actions-paqg" />
+            </div>
           </div>
           <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-semibold text-white">
             JD
           </div>
         </div>
-        <AppTabs actif="actions-paqg" />
       </header>
 
       <div className="flex flex-1 items-center justify-center">
