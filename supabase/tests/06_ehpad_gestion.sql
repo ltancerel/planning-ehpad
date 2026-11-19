@@ -55,6 +55,48 @@ reset request.jwt.claim.sub;
 
 select test.ok(:ehpad_suppr_n = 0, 'gestion EHPAD : administrateur_systeme peut supprimer un EHPAD');
 
+-- 4bis) bug réel détecté le 19/11 : supprimer un EHPAD qui a des données
+-- liées (donc une vraie cascade "on delete cascade") échouait avec
+-- "insert or update on table log_audit violates foreign key constraint
+-- log_audit_ehpad_id_fkey" — tracer_log_audit() (posé sur service, compte,
+-- salarie...) tentait de logger chaque suppression en cascade avec
+-- l'ehpad_id de l'EHPAD... déjà supprimé à cet instant. Le point 4
+-- ci-dessus ne l'attrapait pas, faute de toute donnée liée sur l'EHPAD de
+-- test. Corrigé en migration 20261119000001.
+set role authenticated;
+set request.jwt.claim.sub = '11111111-1111-1111-1111-111111111111';
+insert into public.ehpad (id, nom) values ('99999999-9999-9999-9999-999999999998', 'EHPAD Gestion Test Cascade');
+insert into public.service (id, ehpad_id, nom, ordre)
+  values ('99999999-9999-9999-9999-999999999997', '99999999-9999-9999-9999-999999999998', 'Service Cascade', 1);
+
+do $$
+declare echoue boolean := false;
+begin
+  begin
+    delete from public.ehpad where id = '99999999-9999-9999-9999-999999999998';
+  exception when others then
+    echoue := true;
+  end;
+  perform test.ok(not echoue, 'gestion EHPAD : suppression d''un EHPAD avec données liées (cascade) ne lève pas d''erreur FK sur log_audit');
+end $$;
+
+select count(*) as n from public.ehpad where id = '99999999-9999-9999-9999-999999999998' \gset ehpad_cascade_suppr_
+select test.ok(:ehpad_cascade_suppr_n = 0, 'gestion EHPAD : l''EHPAD et son service lié sont bien supprimés malgré la cascade');
+
+-- 2 lignes attendues à ehpad_id null : celle de la suppression en cascade
+-- elle-même (créée par mon correctif, cf. migration 20261119000001), et
+-- celle de la création du service un peu plus tôt dans ce même test, dont
+-- l'ehpad_id est mis à null rétroactivement par le "on delete set null"
+-- déjà en place sur log_audit.ehpad_id (comportement normal, pas un
+-- effet de mon correctif).
+select count(*) as n from public.log_audit
+where entite = 'service' and entite_id = '99999999-9999-9999-9999-999999999997' and ehpad_id is null
+\gset log_cascade_
+select test.ok(:log_cascade_n = 2, 'gestion EHPAD : les lignes d''audit du service (création et suppression en cascade) existent, avec ehpad_id mis à null plutôt que de bloquer');
+
+reset role;
+reset request.jwt.claim.sub;
+
 -- 5) un compte administrateur peut modifier l'identité (nom/logo) de son
 --    propre EHPAD (écran /admin/ehpad, migration 20260925000007 — bug réel
 --    détecté le 25/09 : cette policy n'autorisait jusqu'ici que
