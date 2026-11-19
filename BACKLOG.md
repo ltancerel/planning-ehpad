@@ -1848,6 +1848,44 @@ mise de côté pour le MVP (#31) qui tourne uniquement en PROD. Ajoutée le
   droits (nous fournissons les moyens techniques, pas la démarche), et la
   nécessité d'un DPO côté EHPAD.
 
+## EPIC — Multi-application (Planning, Pilotage PAQG, Actions PAQG) _(issue #46)_
+
+**Objectif** : faire évoluer l'application d'une application unique (Planning)
+vers un socle portant à terme 3 applications : **Planning EHPAD** (existant),
+**Pilotage PAQG** (à définir) et **Actions PAQG** (à définir). Le socle
+multi-application (comptes, EHPAD, applications souscrites, accès par
+application) existe déjà dans le
+[modèle de données](https://claude.ai/artifact/3sR99FsK3pjzNivG7NB8FV)
+(domaine A — `application`, `ehpad_application`, `compte_application`), mais
+n'a jamais été construit côté écrans. Ajouté le 19/11.
+
+**Contexte** : une exploration antérieure (branche
+`experiment/qualite-maquette`, jamais fusionnée, basée sur un état du code
+antérieur au vrai backend) avait maquetté un sélecteur d'application et une
+application « Qualité » générique (DUERP + référentiel HAS). Cette
+exploration est abandonnée telle quelle, décidé le 19/11 : son tableau de
+bord servira de point de départ pour Actions PAQG, avec des modifications —
+pas une reprise à l'identique.
+
+**Décisions actées (19/11)** :
+- 3 applications cibles, comme listé ci-dessus.
+- Priorité : une maquette d'abord (urgent, cf. story 1 ci-dessous), validée
+  par le client, avant de découper la construction des 2 nouvelles
+  applications.
+
+### Stories
+
+- [ ] **1. Maquette multi-application** _(issue #47)_ — **urgent**.
+  Sélecteur d'application dans la navigation (3 applications), maquette de
+  Pilotage PAQG et de Actions PAQG (données fictives, sans backend réel,
+  même logique que l'EPIC « Maquette graphique v0 »). Pilotage PAQG et
+  Actions PAQG ont un périmètre fonctionnel TBD à ce jour, à définir avec le
+  client. Actions PAQG peut repartir du tableau de bord déjà maquetté sur
+  `experiment/qualite-maquette` comme point de départ visuel, pas comme
+  base de code à fusionner. Livrable : maquette interactive déployée
+  (branche Vercel Preview dédiée), à valider par le client avant de découper
+  la construction des 2 applications.
+
 ## Idées pour epics futurs (hors périmètre maquette graphique v0)
 
 - **EPIC — Administration Système (logs, statistiques d'usage & doc API)**
