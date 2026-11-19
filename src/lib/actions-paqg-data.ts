@@ -19,10 +19,12 @@ export type ActionQualite = {
   origineBadge: "DUERP" | "HAS";
   origineTexte: string;
   intitule: string;
+  details?: string;
   responsable: string;
   echeance: string; // ISO yyyy-mm-dd, pour tri/retard
   echeanceLabel?: string; // affichage si différent (ex. "2026 — T4")
   statut: StatutAction;
+  imperatif?: boolean;
 };
 
 export const ACTIONS_DEMO: ActionQualite[] = [
@@ -66,6 +68,7 @@ export const ACTIONS_DEMO: ActionQualite[] = [
     echeance: "2026-12-31",
     echeanceLabel: "2026 — T4",
     statut: "a_faire",
+    imperatif: true,
   },
   {
     id: "duerp-26-05",
@@ -77,6 +80,7 @@ export const ACTIONS_DEMO: ActionQualite[] = [
     echeance: "2026-12-31",
     echeanceLabel: "2026 — T4",
     statut: "a_faire",
+    imperatif: true,
   },
   {
     id: "duerp-26-06",
