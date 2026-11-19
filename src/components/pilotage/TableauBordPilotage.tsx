@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ANNEE,
   MOIS_COURANT,
@@ -360,7 +360,7 @@ function LigneItem({
         </div>
         {item.nomComplet && <div className="text-xs text-zinc-500">{item.nomComplet}</div>}
       </td>
-      <td className="border-l border-zinc-100 px-2 py-2">
+      <td className="w-[84px] whitespace-nowrap border-l border-zinc-100 px-1.5 py-2">
         <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${STYLES_FREQUENCE[item.frequenceType]}`}>
           {item.frequenceN} {LABELS_FREQUENCE[item.frequenceType]}
         </span>
@@ -399,6 +399,165 @@ function IndicateurConformite({ label, pourcentage }: { label: string; pourcenta
     <div className="rounded-xl border border-zinc-200 bg-white p-3">
       <div className={`text-2xl font-bold ${couleur}`}>{pourcentage}%</div>
       <div className="mt-0.5 text-[11px] font-medium leading-snug text-zinc-500">{label}</div>
+    </div>
+  );
+}
+
+// --- Filtres (masqués derrière un bouton, même langage visuel que le
+// filtre du planning — FiltreSalariesBouton dans FiltreSalariesAvance.tsx,
+// retour client du 20/11) ----------------------------------------------------
+
+function FunnelIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path
+        d="M1.5 2.5h13l-4.75 5.75v4.25l-3.5 1.5V8.25L1.5 2.5Z"
+        stroke="currentColor"
+        strokeWidth="1.3"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function TitreSection({ enfant }: { enfant: string }) {
+  return <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-zinc-500">{enfant}</p>;
+}
+
+function FiltresPilotageBouton({
+  motCle,
+  onMotCleChange,
+  frequenceFiltre,
+  onFrequenceFiltreChange,
+  managerFiltre,
+  onManagerFiltreChange,
+  responsables,
+  instances,
+  instancesDesactivees,
+  onBasculerInstance,
+  nbResultats,
+  onReinitialiser,
+}: {
+  motCle: string;
+  onMotCleChange: (v: string) => void;
+  frequenceFiltre: "toutes" | FrequenceType;
+  onFrequenceFiltreChange: (v: "toutes" | FrequenceType) => void;
+  managerFiltre: string;
+  onManagerFiltreChange: (v: string) => void;
+  responsables: string[];
+  instances: InstancePilotage[];
+  instancesDesactivees: Set<string>;
+  onBasculerInstance: (id: string) => void;
+  nbResultats: number;
+  onReinitialiser: () => void;
+}) {
+  const [ouvert, setOuvert] = useState(false);
+  const conteneurRef = useRef<HTMLDivElement>(null);
+  const actifs =
+    (motCle.trim() ? 1 : 0) + (frequenceFiltre !== "toutes" ? 1 : 0) + (managerFiltre !== "tous" ? 1 : 0) + instancesDesactivees.size;
+
+  useEffect(() => {
+    if (!ouvert) return;
+    function surClicExterieur(e: MouseEvent) {
+      if (conteneurRef.current && !conteneurRef.current.contains(e.target as Node)) setOuvert(false);
+    }
+    document.addEventListener("mousedown", surClicExterieur);
+    return () => document.removeEventListener("mousedown", surClicExterieur);
+  }, [ouvert]);
+
+  return (
+    <div ref={conteneurRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOuvert((v) => !v)}
+        className={`flex items-center gap-1.5 rounded border px-2.5 py-1 text-xs font-medium ${
+          actifs > 0 ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100" : "border-zinc-300 text-zinc-700 hover:bg-zinc-50"
+        }`}
+      >
+        <FunnelIcon />
+        Filtres
+        {actifs > 0 && (
+          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-semibold text-white">
+            {actifs}
+          </span>
+        )}
+      </button>
+
+      {ouvert && (
+        <div className="absolute right-0 top-full z-40 mt-1.5 w-[320px] rounded border border-zinc-200 bg-white p-3.5 shadow-lg">
+          <div>
+            <TitreSection enfant="Mot-clé" />
+            <input
+              type="text"
+              value={motCle}
+              onChange={(e) => onMotCleChange(e.target.value)}
+              placeholder="Rechercher..."
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+            />
+          </div>
+
+          <div className="mt-3">
+            <TitreSection enfant="Fréquence" />
+            <select
+              value={frequenceFiltre}
+              onChange={(e) => onFrequenceFiltreChange(e.target.value as "toutes" | FrequenceType)}
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+            >
+              <option value="toutes">Toutes</option>
+              <option value="an">/ an</option>
+              <option value="mois">/ mois</option>
+              <option value="semaine">/ semaine</option>
+            </select>
+          </div>
+
+          <div className="mt-3">
+            <TitreSection enfant="Manager" />
+            <select
+              value={managerFiltre}
+              onChange={(e) => onManagerFiltreChange(e.target.value)}
+              className="w-full rounded border border-zinc-300 px-2 py-1.5 text-sm"
+            >
+              <option value="tous">Tous</option>
+              {responsables.map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="mt-3 border-t border-zinc-100 pt-3">
+            <TitreSection enfant="Instances" />
+            <div className="flex flex-col gap-1">
+              {instances.map((instance) => (
+                <label key={instance.id} className="flex cursor-pointer items-center gap-1.5 text-sm text-zinc-700">
+                  <input
+                    type="checkbox"
+                    checked={!instancesDesactivees.has(instance.id)}
+                    onChange={() => onBasculerInstance(instance.id)}
+                    className="h-3.5 w-3.5 rounded border-zinc-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  {instance.nom}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between border-t border-zinc-100 pt-3">
+            <button
+              type="button"
+              onClick={onReinitialiser}
+              disabled={actifs === 0}
+              className="text-xs font-medium text-zinc-500 hover:text-zinc-800 disabled:cursor-not-allowed disabled:text-zinc-300"
+            >
+              Réinitialiser
+            </button>
+            <span className="text-xs text-zinc-500">
+              {nbResultats} item{nbResultats > 1 ? "s" : ""} affiché{nbResultats > 1 ? "s" : ""}
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -489,26 +648,47 @@ export default function TableauBordPilotage() {
             Administrateur — accès réservé Administrateur &amp; Manager.
           </p>
         </div>
-        {/* Navigation année — visuelle uniquement pour cette maquette, pas
-            encore fonctionnelle (retour client du 20/11). */}
-        <div className="flex items-center gap-2 rounded-lg border border-zinc-300 px-1 py-1">
-          <button
-            type="button"
-            aria-label="Année précédente"
-            title="Année précédente (pas encore fonctionnel dans cette maquette)"
-            className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
-          >
-            ←
-          </button>
-          <span className="px-1 text-sm font-semibold text-zinc-800">{ANNEE}</span>
-          <button
-            type="button"
-            aria-label="Année suivante"
-            title="Année suivante (pas encore fonctionnel dans cette maquette)"
-            className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
-          >
-            →
-          </button>
+        <div className="flex items-center gap-2">
+          <FiltresPilotageBouton
+            motCle={motCle}
+            onMotCleChange={setMotCle}
+            frequenceFiltre={frequenceFiltre}
+            onFrequenceFiltreChange={setFrequenceFiltre}
+            managerFiltre={managerFiltre}
+            onManagerFiltreChange={setManagerFiltre}
+            responsables={responsables}
+            instances={INSTANCES_DEMO}
+            instancesDesactivees={instancesDesactivees}
+            onBasculerInstance={basculerInstance}
+            nbResultats={tousLesItemsFiltres.length}
+            onReinitialiser={() => {
+              setMotCle("");
+              setFrequenceFiltre("toutes");
+              setManagerFiltre("tous");
+              setInstancesDesactivees(new Set());
+            }}
+          />
+          {/* Navigation année — visuelle uniquement pour cette maquette, pas
+              encore fonctionnelle (retour client du 20/11). */}
+          <div className="flex items-center gap-2 rounded-lg border border-zinc-300 px-1 py-1">
+            <button
+              type="button"
+              aria-label="Année précédente"
+              title="Année précédente (pas encore fonctionnel dans cette maquette)"
+              className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
+            >
+              ←
+            </button>
+            <span className="px-1 text-sm font-semibold text-zinc-800">{ANNEE}</span>
+            <button
+              type="button"
+              aria-label="Année suivante"
+              title="Année suivante (pas encore fonctionnel dans cette maquette)"
+              className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
+            >
+              →
+            </button>
+          </div>
         </div>
       </div>
 
@@ -523,69 +703,12 @@ export default function TableauBordPilotage() {
         ))}
       </div>
 
-      <div className="mt-6 flex flex-wrap items-end gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Mot-clé</label>
-          <input
-            type="text"
-            value={motCle}
-            onChange={(e) => setMotCle(e.target.value)}
-            placeholder="Rechercher..."
-            className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Fréquence</label>
-          <select
-            value={frequenceFiltre}
-            onChange={(e) => setFrequenceFiltre(e.target.value as typeof frequenceFiltre)}
-            className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm"
-          >
-            <option value="toutes">Toutes</option>
-            <option value="an">/ an</option>
-            <option value="mois">/ mois</option>
-            <option value="semaine">/ semaine</option>
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Manager</label>
-          <select
-            value={managerFiltre}
-            onChange={(e) => setManagerFiltre(e.target.value)}
-            className="rounded-lg border border-zinc-300 px-2.5 py-1.5 text-sm"
-          >
-            <option value="tous">Tous</option>
-            {responsables.map((r) => (
-              <option key={r} value={r}>
-                {r}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-zinc-600">Instances</label>
-          <div className="flex flex-wrap gap-2">
-            {INSTANCES_DEMO.map((instance) => (
-              <label key={instance.id} className="flex items-center gap-1 text-xs text-zinc-700">
-                <input
-                  type="checkbox"
-                  checked={!instancesDesactivees.has(instance.id)}
-                  onChange={() => basculerInstance(instance.id)}
-                  className="h-3.5 w-3.5 rounded border-zinc-300"
-                />
-                {instance.nom}
-              </label>
-            ))}
-          </div>
-        </div>
-      </div>
-
       <div className="mt-4 overflow-x-auto rounded border border-zinc-200">
         <table className="w-full text-sm">
           <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
             <tr>
               <th className="sticky left-0 z-10 min-w-[300px] bg-zinc-50 px-3 py-2">Item</th>
-              <th className="border-l border-zinc-200 px-2 py-2">Fréquence</th>
+              <th className="w-[84px] whitespace-nowrap border-l border-zinc-200 px-1.5 py-2">Fréquence</th>
               <th className="border-l border-zinc-200 px-2 py-2">Resp.</th>
               {MOIS_LABELS.map((m, i) => (
                 <th
