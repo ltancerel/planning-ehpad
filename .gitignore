@@ -48,3 +48,7 @@ next-env.d.ts
 # python (scripts/)
 __pycache__/
 *.pyc
+
+# réglages Claude Code locaux à une session/un environnement (ex.
+# autorisations d'outils) — jamais partagés via le dépôt
+.claude/settings.local.json
