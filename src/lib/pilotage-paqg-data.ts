@@ -45,6 +45,17 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
     nom: "Instances - Comités - Commissions",
     items: [
       {
+        id: "ca",
+        code: "CA",
+        nomComplet: "Conseil d'Administration",
+        responsable: "Secrétaire générale",
+        frequenceType: "an",
+        frequenceN: 4,
+        moisAnticipes: [0, 3, 6, 9],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
         id: "codir",
         code: "CODIR",
         nomComplet: "Comité de Direction",
@@ -56,6 +67,17 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
         documentCompteConformite: true,
       },
       {
+        id: "copil",
+        code: "COPIL qualité",
+        nomComplet: "Comité de Pilotage",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 10,
+        moisAnticipes: [0, 1, 2, 3, 4, 5, 8, 9, 10, 11],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
         id: "coviris",
         code: "COVIRIS",
         nomComplet: "Comité des Vigilances et des Risques",
@@ -63,6 +85,101 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
         frequenceType: "an",
         frequenceN: 4,
         moisAnticipes: [1, 3, 5, 10],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "clan",
+        code: "CLAN",
+        nomComplet: "Comité de Liaison Alimentation Nutrition",
+        responsable: "IDER",
+        frequenceType: "an",
+        frequenceN: 2,
+        moisAnticipes: [3, 9],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "ccg",
+        code: "CCG",
+        nomComplet: "Commission de coordination gériatrique",
+        responsable: "Médecin coordonnateur",
+        frequenceType: "an",
+        frequenceN: 2,
+        moisAnticipes: [2, 8],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "ceb",
+        code: "CEB",
+        nomComplet: "Comité Ethique et Bientraitance",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 4,
+        moisAnticipes: [1, 4, 7, 10],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "cvs",
+        code: "CVS",
+        nomComplet: "Conseil de la Vie Sociale",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 3,
+        moisAnticipes: [2, 6, 10],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "commission-animation",
+        code: "Commission animation",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 3,
+        moisAnticipes: [1, 5, 9],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "commission-restauration",
+        code: "Commission restauration",
+        responsable: "Maîtresse de maison",
+        frequenceType: "an",
+        frequenceN: 4,
+        moisAnticipes: [0, 3, 8, 11],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "reunion-familles",
+        code: "Réunion familles",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [5],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "cafe-aidants",
+        code: "Café des aidants",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 4,
+        moisAnticipes: [1, 4, 7, 10],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "cse",
+        code: "CSE",
+        nomComplet: "Comité Social et Economique",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 6,
+        moisAnticipes: [0, 2, 4, 6, 8, 10],
         gestionDocumentaire: false,
         documentCompteConformite: false,
       },
@@ -76,6 +193,24 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
         id: "ash-entretien",
         code: "ASH - pôle entretien",
         responsable: "Maîtresse de maison",
+        frequenceType: "semaine",
+        frequenceN: 1,
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "ash-lingerie",
+        code: "ASH - pôle lingerie",
+        responsable: "Maîtresse de maison",
+        frequenceType: "semaine",
+        frequenceN: 1,
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "animation-reunion",
+        code: "Animation",
+        responsable: "Psychologue",
         frequenceType: "semaine",
         frequenceN: 1,
         gestionDocumentaire: false,
@@ -97,6 +232,15 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
         frequenceType: "mois",
         frequenceN: 1,
         gestionDocumentaire: true,
+        documentCompteConformite: false,
+      },
+      {
+        id: "nutrition",
+        code: "Nutrition",
+        responsable: "IDER",
+        frequenceType: "mois",
+        frequenceN: 1,
+        gestionDocumentaire: false,
         documentCompteConformite: false,
       },
     ],
@@ -125,6 +269,46 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
         gestionDocumentaire: true,
         documentCompteConformite: true,
       },
+      {
+        id: "douleurs",
+        code: "Douleurs",
+        responsable: "IDER",
+        frequenceType: "an",
+        frequenceN: 2,
+        moisAnticipes: [2, 8],
+        gestionDocumentaire: true,
+        documentCompteConformite: true,
+      },
+      {
+        id: "deces",
+        code: "Décès",
+        responsable: "IDER",
+        frequenceType: "an",
+        frequenceN: 2,
+        moisAnticipes: [4, 10],
+        gestionDocumentaire: true,
+        documentCompteConformite: true,
+      },
+      {
+        id: "entretien-chambre",
+        code: "Entretien quotidien d'une chambre",
+        responsable: "Maîtresse de maison",
+        frequenceType: "an",
+        frequenceN: 2,
+        moisAnticipes: [1, 7],
+        gestionDocumentaire: true,
+        documentCompteConformite: true,
+      },
+      {
+        id: "soins-hygiene",
+        code: "Soins d'hygiène et de nursing",
+        responsable: "IDER",
+        frequenceType: "an",
+        frequenceN: 2,
+        moisAnticipes: [3, 9],
+        gestionDocumentaire: true,
+        documentCompteConformite: true,
+      },
     ],
   },
   {
@@ -138,6 +322,233 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
         frequenceType: "an",
         frequenceN: 1,
         moisAnticipes: [2],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "bientraitance-sens",
+        code: "Bientraitance",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [0],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "risques-infectieux",
+        code: "Risques infectieux",
+        responsable: "Maîtresse de maison",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [1],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "liberte-aller-venir",
+        code: "Liberté d'aller et venir",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [3],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "lanceur-alerte",
+        code: "Lanceur d'alerte",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [4],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "droits-1-2-7",
+        code: "Connaissance des droits de la personne accompagnée",
+        nomComplet: "Critère 1.2.7",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [5],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "prevention-sante-1-14-6",
+        code: "Prévention et éducation à la santé",
+        nomComplet: "Critère 1.14.6",
+        responsable: "IDER",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [6],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "activites-non-medicamenteuses-1-15-9",
+        code: "Activités et approches non médicamenteuses",
+        nomComplet: "Critère 1.15.9",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [7],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "prevention-medicamenteux-3-6-5",
+        code: "Prévention et gestion du risque médicamenteux",
+        nomComplet: "Critère 3.6.5",
+        responsable: "IDER",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [8],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "prevention-infectieux-3-4-3",
+        code: "Prévention et maîtrise du risque infectieux",
+        nomComplet: "Critère 3.4.3",
+        responsable: "Maîtresse de maison",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [9],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "reperage-rupture-2-8-3",
+        code: "Repérage, prévention et gestion des risques de rupture de parcours",
+        nomComplet: "Critère 2.8.3",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [0],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "questionnement-ethique-2-1-3",
+        code: "Questionnement éthique",
+        nomComplet: "Critère 2.1.3",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [1],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "bientraitance-3-1-4",
+        code: "Bientraitance",
+        nomComplet: "Critère 3.1.4",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [2],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "preservation-autonomie-3-5-3",
+        code: "Préservation de l'autonomie et prévention du risque d'isolement",
+        nomComplet: "Critère 3.5.3",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [4],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "detection-maltraitance-3-11-3",
+        code: "Détection et signalement de faits de maltraitance",
+        nomComplet: "Critère 3.11.3",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [5],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "gestion-indesirables-3-13-4",
+        code: "Gestion des évènements indésirables",
+        nomComplet: "Critère 3.13.4",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [6],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "gestion-crise-3-14-4",
+        code: "Gestion de crise",
+        nomComplet: "Critère 3.14.4",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [7],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "outils-numeriques-3-15-3",
+        code: "Outils numériques",
+        nomComplet: "Critère 3.15.3",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [8],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "rbpp-directrice",
+        code: "RBPP, procédures et références spécifiques",
+        nomComplet: "Critère 3.8.6 — Directrice",
+        responsable: "Directrice",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [9],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "rbpp-ider",
+        code: "RBPP, procédures et références spécifiques",
+        nomComplet: "Critère 3.8.6 — IDER",
+        responsable: "IDER",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [10],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "rbpp-mm",
+        code: "RBPP, procédures et références spécifiques",
+        nomComplet: "Critère 3.8.6 — Maîtresse de maison",
+        responsable: "Maîtresse de maison",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [10],
+        gestionDocumentaire: false,
+        documentCompteConformite: false,
+      },
+      {
+        id: "rbpp-psy",
+        code: "RBPP, procédures et références spécifiques",
+        nomComplet: "Critère 3.8.6 — Psychologue",
+        responsable: "Psychologue",
+        frequenceType: "an",
+        frequenceN: 1,
+        moisAnticipes: [11],
         gestionDocumentaire: false,
         documentCompteConformite: false,
       },
@@ -180,6 +591,48 @@ function evenementsSemaineDemo(itemId: string, avecReference: boolean, idPrefix:
   return evenements;
 }
 
+function itemParId(id: string): ItemPilotage {
+  const item = tousLesItems().find((i) => i.id === id);
+  if (!item) throw new Error(`Item inconnu dans pilotage-paqg-data : ${id}`);
+  return item;
+}
+
+// Pour les items fréquence/an ajoutés depuis le fichier source (retour
+// client du 21/11) : remplit la plupart des mois anticipés avant le mois
+// courant (un sur six manqué, réaliste) — jamais utilisé pour l'instance
+// Audit, dont les items restent volontairement épars (cf. plus bas).
+function evenementsAnDemo(itemId: string, idPrefix: string): EvenementPilotage[] {
+  const item = itemParId(itemId);
+  const mois = (item.moisAnticipes ?? []).filter((m) => m < MOIS_COURANT);
+  const evenements: EvenementPilotage[] = [];
+  mois.forEach((m, i) => {
+    if (mois.length > 1 && i % 6 === 5) return;
+    const jour = 5 + ((i * 7) % 20);
+    evenements.push({
+      id: `${idPrefix}-${i}`,
+      itemId,
+      date: `${ANNEE}-${String(m + 1).padStart(2, "0")}-${String(jour).padStart(2, "0")}`,
+      reference: item.gestionDocumentaire ? `REF-${idPrefix}-${i}.pdf` : undefined,
+    });
+  });
+  return evenements;
+}
+
+function evenementsMoisDemo(itemId: string, avecReference: boolean, idPrefix: string): EvenementPilotage[] {
+  const evenements: EvenementPilotage[] = [];
+  for (let m = 0; m < MOIS_COURANT; m++) {
+    if (m === 6) continue; // juillet manqué, réaliste
+    const jour = 10 + (m % 15);
+    evenements.push({
+      id: `${idPrefix}-${m}`,
+      itemId,
+      date: `${ANNEE}-${String(m + 1).padStart(2, "0")}-${String(jour).padStart(2, "0")}`,
+      reference: avecReference ? `REF-${idPrefix}-${m}.pdf` : undefined,
+    });
+  }
+  return evenements;
+}
+
 export const EVENEMENTS_DEMO: EvenementPilotage[] = [
   // CODIR (10/an, doc obligatoire) : tous les mois anticipés tenus avant
   // novembre, sauf mars (référence manquante, un cas non conforme réaliste).
@@ -214,14 +667,59 @@ export const EVENEMENTS_DEMO: EvenementPilotage[] = [
 
   // Audit — volontairement en retard (retour client du 20/11) : Guide
   // bientraitance jamais tenu ; Circuit du médicament tenu une fois sur
-  // deux, et sans référence (non conforme malgré l'évènement saisi).
+  // deux, et sans référence (non conforme malgré l'évènement saisi). Les
+  // 4 items ajoutés depuis le fichier source restent épars eux aussi, pour
+  // la même raison — un seul évènement, sans référence.
   { id: "circuit-medicament-1", itemId: "circuit-medicament", date: "2026-03-12" },
+  { id: "douleurs-1", itemId: "douleurs", date: "2026-03-10" },
 
-  // Les deux items fréquence/semaine, générés (voir evenementsSemaineDemo)
-  // — IDE avec gestion documentaire (démontre le cas /semaine + document,
-  // retour client du 20/11), ASH sans.
+  // Les items fréquence/semaine, générés (voir evenementsSemaineDemo) —
+  // IDE avec gestion documentaire (démontre le cas /semaine + document,
+  // retour client du 20/11), les autres sans.
   ...evenementsSemaineDemo("ash-entretien", false, "ash"),
+  ...evenementsSemaineDemo("ash-lingerie", false, "ashl"),
+  ...evenementsSemaineDemo("animation-reunion", false, "anim"),
   ...evenementsSemaineDemo("reunion-ide", true, "ide"),
+
+  // Nutrition (1/mois, pas de document) : bonne conformité.
+  ...evenementsMoisDemo("nutrition", false, "nutrition"),
+
+  // Items /an ajoutés depuis le fichier source (retour client du 21/11) —
+  // Instances - Comités - Commissions : bonne conformité, comme CODIR/COVIRIS.
+  ...evenementsAnDemo("ca", "ca"),
+  ...evenementsAnDemo("copil", "copil"),
+  ...evenementsAnDemo("clan", "clan"),
+  ...evenementsAnDemo("ccg", "ccg"),
+  ...evenementsAnDemo("ceb", "ceb"),
+  ...evenementsAnDemo("cvs", "cvs"),
+  ...evenementsAnDemo("commission-animation", "commanim"),
+  ...evenementsAnDemo("commission-restauration", "commrest"),
+  ...evenementsAnDemo("reunion-familles", "reunionfam"),
+  ...evenementsAnDemo("cafe-aidants", "cafeaid"),
+  ...evenementsAnDemo("cse", "cse"),
+
+  // Sensibilisation : bonne conformité, comme Risques chimiques.
+  ...evenementsAnDemo("bientraitance-sens", "bien-sens"),
+  ...evenementsAnDemo("risques-infectieux", "risq-inf"),
+  ...evenementsAnDemo("liberte-aller-venir", "liberte"),
+  ...evenementsAnDemo("lanceur-alerte", "lanceur"),
+  ...evenementsAnDemo("droits-1-2-7", "droits"),
+  ...evenementsAnDemo("prevention-sante-1-14-6", "prev-sante"),
+  ...evenementsAnDemo("activites-non-medicamenteuses-1-15-9", "activites"),
+  ...evenementsAnDemo("prevention-medicamenteux-3-6-5", "prev-medic"),
+  ...evenementsAnDemo("prevention-infectieux-3-4-3", "prev-inf"),
+  ...evenementsAnDemo("reperage-rupture-2-8-3", "reperage"),
+  ...evenementsAnDemo("questionnement-ethique-2-1-3", "ethique"),
+  ...evenementsAnDemo("bientraitance-3-1-4", "bien-3-1-4"),
+  ...evenementsAnDemo("preservation-autonomie-3-5-3", "preserv-auto"),
+  ...evenementsAnDemo("detection-maltraitance-3-11-3", "detection"),
+  ...evenementsAnDemo("gestion-indesirables-3-13-4", "gest-indes"),
+  ...evenementsAnDemo("gestion-crise-3-14-4", "gest-crise"),
+  ...evenementsAnDemo("outils-numeriques-3-15-3", "outils-num"),
+  ...evenementsAnDemo("rbpp-directrice", "rbpp-dir"),
+  ...evenementsAnDemo("rbpp-ider", "rbpp-ider"),
+  ...evenementsAnDemo("rbpp-mm", "rbpp-mm"),
+  ...evenementsAnDemo("rbpp-psy", "rbpp-psy"),
 ];
 
 // Tous les lundis d'un mois donné, chacun rattaché au mois où tombe sa
