@@ -1,9 +1,11 @@
 import AppTabs from "@/components/AppTabs";
+import TableauBordPilotage from "@/components/pilotage/TableauBordPilotage";
 
-// EPIC Multi-application (#46), story #47 (maquette) — périmètre
-// fonctionnel de Pilotage PAQG encore TBD, à définir avec le client.
-// Placeholder statique (pas de Supabase, pas d'authentification) pour que
-// l'onglet soit cliquable dans la maquette.
+// EPIC Multi-application (#46), story #47 (maquette) — cahier des charges
+// fourni par le client le 20/11 (cf. artefact "Pilotage PAQG — Cahier des
+// charges"). Voir TableauBordPilotage pour le périmètre retenu pour cette
+// première maquette (vue Administrateur, édition des 3 types de
+// fréquence, pas d'écrans d'administration).
 export default function PilotagePaqg() {
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
@@ -27,10 +29,8 @@ export default function PilotagePaqg() {
         </div>
       </header>
 
-      <div className="flex flex-1 items-center justify-center">
-        <p className="max-w-md text-center text-sm text-zinc-500">
-          Pilotage PAQG — maquette à venir. Périmètre fonctionnel à définir avec le client (cf. issue #47).
-        </p>
+      <div className="flex-1 overflow-auto">
+        <TableauBordPilotage />
       </div>
     </div>
   );

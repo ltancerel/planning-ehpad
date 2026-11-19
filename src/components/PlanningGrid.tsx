@@ -99,6 +99,7 @@ export default function PlanningGrid({
   utilisateur,
   roulements,
   affectationsRoulement,
+  planningInitial,
 }: {
   salaries: Salarie[];
   servicesOrdre: string[];
@@ -109,6 +110,11 @@ export default function PlanningGrid({
   utilisateur: ProfilUtilisateur;
   roulements: Roulement[];
   affectationsRoulement: Record<string, AffectationRoulement[]>;
+  // Optionnel : état initial de la grille sans passer par
+  // chargerPlanningReel (Supabase) — utilisé par la maquette multi-application
+  // (sans backend) pour afficher des cases déjà remplies au lieu d'une
+  // grille entièrement hachurée. Absent en usage réel.
+  planningInitial?: Record<string, ValeurCellule>;
 }) {
   const codesParCode = useMemo(
     () => Object.fromEntries(codesHoraires.map((h) => [h.code.toUpperCase(), h])),
@@ -147,7 +153,7 @@ export default function PlanningGrid({
   // période en naviguant dans les deux sens ; ne grandit jamais au-delà de
   // la session, mais reste borné par le nombre de périodes réellement
   // visitées.
-  const [planningBase, setPlanningBase] = useState<Record<string, ValeurCellule>>({});
+  const [planningBase, setPlanningBase] = useState<Record<string, ValeurCellule>>(planningInitial ?? {});
   const fenetresChargeesRef = useRef<Set<string>>(new Set());
   const [chargementPlanning, setChargementPlanning] = useState(false);
   const [erreurPersistance, setErreurPersistance] = useState<string | null>(null);

@@ -1,17 +1,20 @@
 import PlanningGrid from "@/components/PlanningGrid";
 import { type Salarie, type ProfilUtilisateur } from "@/lib/mock-data";
 import { HORAIRE_CODES } from "@/lib/horaire-codes";
+import { genererPlanningDemo } from "@/lib/planning-maquette-data";
 
 // Maquette multi-application (EPIC #46, story #47, urgent) — branche
 // exploratoire, jamais fusionnée. Réutilise le vrai composant PlanningGrid
 // (même rendu que Staging/Prod) mais avec des données fictives en dur,
 // aucun appel Supabase : pas de dépendance base de données ni
 // d'authentification pour cette maquette (même logique que l'EPIC
-// « Maquette graphique v0 » à l'origine du vrai Planning). Le chargement
-// interne du planning réel (chargerPlanningReel, appelé par PlanningGrid
-// côté client) échouera silencieusement faute de backend — la grille reste
-// vide/hachurée, ce qui n'empêche pas de voir et manipuler l'interface
-// réelle (filtres, sélecteur de code, navigation, en-tête).
+// « Maquette graphique v0 » à l'origine du vrai Planning). planningInitial
+// (genererPlanningDemo) préremplit la grille de codes horaires variés
+// (retour client du 20/11, pour que ce soit représentatif d'une
+// application utilisée) — chargerPlanningReel, appelé en interne par
+// PlanningGrid côté client, échouera quand même silencieusement faute de
+// backend, sans écraser ces données puisqu'il ne renvoie jamais de
+// résultat exploitable.
 
 const SALARIES_DEMO: Salarie[] = [
   { id: "1", nom: "BERNARD", prenom: "Claire", service: "IDE", groupeRoulement: "Équipe A", presence: "Présent", typePaie: "Aucun" },
@@ -45,6 +48,7 @@ export default function Home() {
       affectationsRoulement={{}}
       ehpad={{ nom: "EHPAD Démo", logo: null }}
       utilisateur={UTILISATEUR_DEMO}
+      planningInitial={genererPlanningDemo(SALARIES_DEMO)}
     />
   );
 }
