@@ -13,6 +13,8 @@ import {
 import {
   FiltreSalariesBouton,
   filtresVides,
+  serialiserFiltres,
+  deserialiserFiltres,
   type FiltresAvances,
 } from "@/components/FiltreSalariesAvance";
 import {
@@ -59,6 +61,7 @@ const LARGEUR_VISIBLE = LARGEUR_COLONNE_SALARIE + NB_SEMAINES_VISIBLES * LARGEUR
 const HAUTEUR_LIGNE_ENTETE = 28;
 const CLE_STOCKAGE_PERIODE = "planning-ehpad:periode-debut";
 const CLE_STOCKAGE_NB_SEMAINES = "planning-ehpad:nb-semaines-chargees";
+const CLE_STOCKAGE_FILTRES = "planning-ehpad:filtres";
 
 // Vue par défaut : septembre 2026, pour une démo cohérente quelle que soit la
 // date réelle de consultation.
@@ -280,6 +283,38 @@ export default function PlanningGrid({
       // ignoré : la mémorisation est un confort, pas une exigence bloquante
     }
   }, [nbSemainesChargees]);
+
+  // Mémorisation du filtre avancé, même logique que la période — retour
+  // client du 19/11 : le filtre se perdait en naviguant vers l'émargement
+  // d'un salarié ou l'Administration puis en revenant au Planning (remontage
+  // complet du composant, l'état React seul ne survit pas à la navigation).
+  // Hydratation au montage, même logique que la période ci-dessus. Pas
+  // d'effet symétrique "persister à chaque changement de filtres" : un tel
+  // effet tournerait dès le montage avec la valeur par défaut (avant que ce
+  // setFiltres n'ait eu la main), écrasant la valeur qu'on vient de lire —
+  // la persistance se fait donc directement dans changerFiltres ci-dessous,
+  // jamais déclenchée par un rendu dont on ne connaît pas la cause.
+  useEffect(() => {
+    try {
+      const enregistre = localStorage.getItem(CLE_STOCKAGE_FILTRES);
+      if (!enregistre) return;
+      const filtresEnregistres = deserialiserFiltres(enregistre);
+      if (!filtresEnregistres) return;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFiltres(filtresEnregistres);
+    } catch {
+      // localStorage indisponible : on garde le filtre vide par défaut
+    }
+  }, []);
+
+  function changerFiltres(nouveaux: FiltresAvances) {
+    setFiltres(nouveaux);
+    try {
+      localStorage.setItem(CLE_STOCKAGE_FILTRES, serialiserFiltres(nouveaux));
+    } catch {
+      // ignoré : la mémorisation est un confort, pas une exigence bloquante
+    }
+  }
 
   // "Avec/sans planning" dépend de la période actuellement affichée (retour
   // client du 17/09) : au moins un jour de la période a un code travail ou
@@ -884,7 +919,7 @@ export default function PlanningGrid({
           <div className="flex items-center gap-2">
             <FiltreSalariesBouton
               filtres={filtres}
-              onChange={setFiltres}
+              onChange={changerFiltres}
               services={servicesOrdre}
               managers={managers}
               groupesRoulement={GROUPES_ROULEMENT}

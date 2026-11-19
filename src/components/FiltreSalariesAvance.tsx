@@ -33,6 +33,35 @@ export function filtresVides(): FiltresAvances {
   };
 }
 
+// Sérialisation pour mémorisation (localStorage, cf. PlanningGrid) : les
+// Set ne sont pas JSON-sérialisables tels quels, convertis en tableaux.
+export function serialiserFiltres(filtres: FiltresAvances): string {
+  return JSON.stringify({
+    typePaie: [...filtres.typePaie],
+    presence: [...filtres.presence],
+    groupeRoulement: [...filtres.groupeRoulement],
+    service: [...filtres.service],
+    planning: [...filtres.planning],
+  });
+}
+
+// Retourne null si le contenu mémorisé n'est pas exploitable (format
+// changé, corruption...) — l'appelant retombe alors sur filtresVides().
+export function deserialiserFiltres(json: string): FiltresAvances | null {
+  try {
+    const brut = JSON.parse(json);
+    return {
+      typePaie: new Set(brut.typePaie ?? []),
+      presence: new Set(brut.presence ?? []),
+      groupeRoulement: new Set(brut.groupeRoulement ?? []),
+      service: new Set(brut.service ?? []),
+      planning: new Set(brut.planning ?? []),
+    };
+  } catch {
+    return null;
+  }
+}
+
 export function nbFiltresActifs(filtres: FiltresAvances): number {
   return (
     filtres.typePaie.size +
