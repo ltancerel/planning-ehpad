@@ -168,6 +168,7 @@ export default function PlanningGrid({
           setErreurPersistance(resultat.error);
         }
       })
+      .catch(() => setErreurPersistance("Lecture du planning impossible."))
       .finally(() => setChargementPlanning(false));
   }, [debutPeriode, nbSemainesChargees]);
 
