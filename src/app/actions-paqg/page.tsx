@@ -1,9 +1,9 @@
 import AppTabs from "@/components/AppTabs";
+import TableauBordActions from "@/components/qualite/TableauBordActions";
 
-// EPIC Multi-application (#46), story #47 (maquette) — périmètre
-// fonctionnel de Actions PAQG encore TBD, à définir avec le client.
-// Placeholder statique (pas de Supabase, pas d'authentification) pour que
-// l'onglet soit cliquable dans la maquette.
+// EPIC Multi-application (#46), story #47 (maquette) — reprend le tableau
+// de bord maquetté sur experiment/qualite-maquette (voir
+// TableauBordActions pour le détail des modifications demandées).
 export default function ActionsPaqg() {
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
@@ -27,10 +27,8 @@ export default function ActionsPaqg() {
         </div>
       </header>
 
-      <div className="flex flex-1 items-center justify-center">
-        <p className="max-w-md text-center text-sm text-zinc-500">
-          Actions PAQG — maquette à venir. Périmètre fonctionnel à définir avec le client (cf. issue #47).
-        </p>
+      <div className="flex-1 overflow-auto">
+        <TableauBordActions />
       </div>
     </div>
   );
