@@ -82,6 +82,15 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
         documentCompteConformite: false,
       },
       {
+        id: "reunion-ide",
+        code: "IDE",
+        responsable: "IDER",
+        frequenceType: "semaine",
+        frequenceN: 1,
+        gestionDocumentaire: true,
+        documentCompteConformite: true,
+      },
+      {
         id: "chutes",
         code: "Chutes",
         responsable: "IDER",
@@ -103,6 +112,16 @@ export const INSTANCES_DEMO: InstancePilotage[] = [
         frequenceType: "an",
         frequenceN: 1,
         moisAnticipes: [8],
+        gestionDocumentaire: true,
+        documentCompteConformite: true,
+      },
+      {
+        id: "circuit-medicament",
+        code: "Circuit du médicament",
+        responsable: "IDER",
+        frequenceType: "an",
+        frequenceN: 2,
+        moisAnticipes: [2, 8],
         gestionDocumentaire: true,
         documentCompteConformite: true,
       },
@@ -133,17 +152,76 @@ export type EvenementPilotage = {
   reference?: string;
 };
 
-// Quelques évènements déjà saisis, pour que la grille et le bandeau ne
-// démarrent pas totalement vides (cf. CODIR dans l'exemple du fichier
-// source : janvier et février déjà tenus).
+// Historique réaliste jusqu'à octobre inclus (novembre = mois en cours,
+// exclu du calcul de conformité) — retour client du 20/11 : bonne
+// conformité globale, sauf sur l'instance Audit, volontairement en
+// retard pour illustrer un indicateur qui alerte vraiment.
+
+// Lundis d'un item fréquence/semaine, de janvier à octobre, un
+// identifiant stable par évènement (pas de Math.random : cette donnée est
+// évaluée à la fois côté serveur et côté client, un générateur non
+// déterministe casserait l'hydratation React).
+function evenementsSemaineDemo(itemId: string, avecReference: boolean, idPrefix: string): EvenementPilotage[] {
+  const evenements: EvenementPilotage[] = [];
+  let compteur = 0;
+  for (let m = 0; m < MOIS_COURANT; m++) {
+    for (const lundi of lundisDuMois(ANNEE, m)) {
+      compteur++;
+      // Une semaine sur huit non tenue : conformité réaliste, pas parfaite.
+      if (compteur % 8 === 0) continue;
+      evenements.push({
+        id: `${idPrefix}-${compteur}`,
+        itemId,
+        date: dateISO(lundi),
+        reference: avecReference ? `REF-${idPrefix}-${compteur}.pdf` : undefined,
+      });
+    }
+  }
+  return evenements;
+}
+
 export const EVENEMENTS_DEMO: EvenementPilotage[] = [
-  { id: "ev1", itemId: "codir", date: "2026-01-08", reference: "CR-CODIR-2026-01.pdf" },
-  { id: "ev2", itemId: "codir", date: "2026-02-09", reference: "CR-CODIR-2026-02.pdf" },
-  { id: "ev3", itemId: "codir", date: "2026-03-10" }, // référence manquante → non conforme
-  { id: "ev4", itemId: "coviris", date: "2026-02-18" },
-  { id: "ev5", itemId: "chutes", date: "2026-01-20", reference: "Audit-chutes-janvier.pdf" },
-  { id: "ev6", itemId: "chutes", date: "2026-02-17" },
-  { id: "ev7", itemId: "risques-chimiques", date: "2026-03-05" },
+  // CODIR (10/an, doc obligatoire) : tous les mois anticipés tenus avant
+  // novembre, sauf mars (référence manquante, un cas non conforme réaliste).
+  { id: "codir-1", itemId: "codir", date: "2026-01-08", reference: "CR-CODIR-2026-01.pdf" },
+  { id: "codir-2", itemId: "codir", date: "2026-02-09", reference: "CR-CODIR-2026-02.pdf" },
+  { id: "codir-3", itemId: "codir", date: "2026-03-10" },
+  { id: "codir-4", itemId: "codir", date: "2026-04-14", reference: "CR-CODIR-2026-04.pdf" },
+  { id: "codir-5", itemId: "codir", date: "2026-05-12", reference: "CR-CODIR-2026-05.pdf" },
+  { id: "codir-6", itemId: "codir", date: "2026-06-09", reference: "CR-CODIR-2026-06.pdf" },
+  { id: "codir-7", itemId: "codir", date: "2026-09-08", reference: "CR-CODIR-2026-09.pdf" },
+  { id: "codir-8", itemId: "codir", date: "2026-10-13", reference: "CR-CODIR-2026-10.pdf" },
+
+  // COVIRIS (4/an, pas de document) : les 3 mois anticipés avant novembre tenus.
+  { id: "coviris-1", itemId: "coviris", date: "2026-02-18" },
+  { id: "coviris-2", itemId: "coviris", date: "2026-04-22" },
+  { id: "coviris-3", itemId: "coviris", date: "2026-06-17" },
+
+  // Chutes (1/mois, document facultatif — ne compte pas pour la
+  // conformité) : 9 des 10 mois tenus, juillet manqué.
+  { id: "chutes-1", itemId: "chutes", date: "2026-01-20", reference: "Audit-chutes-2026-01.pdf" },
+  { id: "chutes-2", itemId: "chutes", date: "2026-02-17" },
+  { id: "chutes-3", itemId: "chutes", date: "2026-03-17", reference: "Audit-chutes-2026-03.pdf" },
+  { id: "chutes-4", itemId: "chutes", date: "2026-04-21" },
+  { id: "chutes-5", itemId: "chutes", date: "2026-05-19", reference: "Audit-chutes-2026-05.pdf" },
+  { id: "chutes-6", itemId: "chutes", date: "2026-06-16" },
+  { id: "chutes-7", itemId: "chutes", date: "2026-08-18", reference: "Audit-chutes-2026-08.pdf" },
+  { id: "chutes-8", itemId: "chutes", date: "2026-09-15" },
+  { id: "chutes-9", itemId: "chutes", date: "2026-10-20", reference: "Audit-chutes-2026-10.pdf" },
+
+  // Risques chimiques (1/an, mars) : tenu.
+  { id: "risques-chimiques-1", itemId: "risques-chimiques", date: "2026-03-05" },
+
+  // Audit — volontairement en retard (retour client du 20/11) : Guide
+  // bientraitance jamais tenu ; Circuit du médicament tenu une fois sur
+  // deux, et sans référence (non conforme malgré l'évènement saisi).
+  { id: "circuit-medicament-1", itemId: "circuit-medicament", date: "2026-03-12" },
+
+  // Les deux items fréquence/semaine, générés (voir evenementsSemaineDemo)
+  // — IDE avec gestion documentaire (démontre le cas /semaine + document,
+  // retour client du 20/11), ASH sans.
+  ...evenementsSemaineDemo("ash-entretien", false, "ash"),
+  ...evenementsSemaineDemo("reunion-ide", true, "ide"),
 ];
 
 // Tous les lundis d'un mois donné, chacun rattaché au mois où tombe sa
@@ -179,9 +257,22 @@ export function jourDeISO(iso: string): number {
   return Number(iso.slice(8, 10));
 }
 
+// jj/mm/aa — retour client du 20/11 : date complète affichée pour /an et
+// /mois (pas seulement le quantième).
 export function formatDateFR(iso: string): string {
   const [y, m, j] = iso.split("-").map(Number);
-  return new Date(y, m - 1, j).toLocaleDateString("fr-FR");
+  return new Date(y, m - 1, j).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" });
+}
+
+// Dernier jour (dimanche) de la semaine dont lundiISO est le premier jour
+// — comparaison de chaînes ISO yyyy-mm-dd, toujours valide lexicalement.
+export function finDeSemaineISO(lundiISO: string): string {
+  const [y, m, j] = lundiISO.split("-").map(Number);
+  return dateISO(new Date(y, m - 1, j + 6));
+}
+
+export function dateDansSemaine(dateISOCible: string, lundiISO: string): boolean {
+  return dateISOCible >= lundiISO && dateISOCible <= finDeSemaineISO(lundiISO);
 }
 
 export function toutesLesInstances(): InstancePilotage[] {
@@ -215,10 +306,7 @@ export function statsItem(
   if (item.frequenceType === "an") {
     const moisAttendus = (item.moisAnticipes ?? []).filter((m) => m < moisLimite);
     const realise = moisAttendus.filter((m) =>
-      evenementsItem.some((e) => {
-        const d = new Date(e.date);
-        return d.getMonth() === m && evenementConforme(item, e);
-      })
+      evenementsItem.some((e) => moisDeISO(e.date) === m && evenementConforme(item, e))
     ).length;
     return { attendu: moisAttendus.length, realise };
   }
@@ -226,12 +314,14 @@ export function statsItem(
   if (item.frequenceType === "mois") {
     let realise = 0;
     for (let m = 0; m < moisLimite; m++) {
-      if (evenementsItem.some((e) => new Date(e.date).getMonth() === m && evenementConforme(item, e))) realise++;
+      if (evenementsItem.some((e) => moisDeISO(e.date) === m && evenementConforme(item, e))) realise++;
     }
     return { attendu: moisLimite, realise };
   }
 
-  // "semaine"
+  // "semaine" — un évènement compte pour une semaine s'il tombe n'importe
+  // quel jour de cette semaine (pas nécessairement le lundi, cf. retour
+  // client du 20/11 : la date proposée par défaut est celle du jour).
   let attendu = 0;
   let realise = 0;
   for (let m = 0; m < moisLimite; m++) {
@@ -239,7 +329,7 @@ export function statsItem(
     attendu += lundis.length;
     for (const lundi of lundis) {
       const iso = dateISO(lundi);
-      if (evenementsItem.some((e) => e.date === iso && evenementConforme(item, e))) realise++;
+      if (evenementsItem.some((e) => dateDansSemaine(e.date, iso) && evenementConforme(item, e))) realise++;
     }
   }
   return { attendu, realise };

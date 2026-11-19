@@ -11,8 +11,9 @@ import {
   lundisDuMois,
   dateISO,
   moisDeISO,
-  jourDeISO,
   formatDateFR,
+  dateDansSemaine,
+  finDeSemaineISO,
   evenementConforme,
   conformitePourcentage,
   tousLesResponsables,
@@ -30,6 +31,14 @@ import {
 // d'écrans d'administration (création d'instance/item, drag-and-drop).
 // Entièrement local (useState), sans backend ni rémanence — même logique
 // que le reste de cette maquette multi-application.
+//
+// Retours client du 20/11 intégrés ici : navigation année (visuelle,
+// non fonctionnelle), colonnes mieux délimitées, colonne Item élargie
+// (lignes moins hautes), un seul style de « coché » pour les 3 fréquences
+// (plus de cible ronde), date complète affichée pour /an et /mois,
+// référence documentaire visible sans ouvrir la fenêtre d'édition, date du
+// jour proposée par défaut (modifiable) y compris pour /semaine, badge
+// « Doc » dans la colonne Item quand la référence est requise.
 
 const STYLES_FREQUENCE: Record<FrequenceType, string> = {
   an: "bg-violet-100 text-violet-800",
@@ -73,20 +82,24 @@ function EvenementPopover({
   onEnregistrer: (valeurs: { date: string; reference: string }) => void;
   onSupprimer: () => void;
 }) {
-  const dateParDefaut =
-    contexte.type === "semaine" ? contexte.lundiISO : evenementExistant?.date ?? `${ANNEE}-${String(contexte.mois + 1).padStart(2, "0")}-01`;
-  const [date, setDate] = useState(dateParDefaut);
+  // Date du jour proposée par défaut (modifiable) — retour client du
+  // 20/11, y compris pour la fréquence /semaine.
+  const [date, setDate] = useState(evenementExistant?.date ?? dateISO(new Date()));
   const [reference, setReference] = useState(evenementExistant?.reference ?? "");
   const [erreur, setErreur] = useState<string | null>(null);
 
   const titre =
     contexte.type === "semaine"
-      ? `Semaine du ${formatDateFR(contexte.lundiISO)}`
+      ? `Semaine du ${formatDateFR(contexte.lundiISO)} au ${formatDateFR(finDeSemaineISO(contexte.lundiISO))}`
       : `${MOIS_LABELS[contexte.mois]} ${ANNEE}`;
 
   function enregistrer() {
     if (contexte.type === "mois" && moisDeISO(date) !== contexte.mois) {
       setErreur("La date doit correspondre au mois choisi.");
+      return;
+    }
+    if (contexte.type === "semaine" && !dateDansSemaine(date, contexte.lundiISO)) {
+      setErreur("La date doit correspondre à la semaine choisie.");
       return;
     }
     onEnregistrer({ date, reference });
@@ -110,21 +123,19 @@ function EvenementPopover({
         </div>
 
         <div className="space-y-3 px-5 py-4">
-          {contexte.type !== "semaine" && (
-            <div>
-              <label className="mb-1 block text-xs font-medium text-zinc-600">Date de l&apos;évènement</label>
-              <input
-                type="date"
-                value={date}
-                onChange={(e) => {
-                  setDate(e.target.value);
-                  setErreur(null);
-                }}
-                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
-              />
-              {erreur && <p className="mt-1 text-xs text-red-600">{erreur}</p>}
-            </div>
-          )}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-zinc-600">Date de l&apos;évènement</label>
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => {
+                setDate(e.target.value);
+                setErreur(null);
+              }}
+              className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+            />
+            {erreur && <p className="mt-1 text-xs text-red-600">{erreur}</p>}
+          </div>
           {item.gestionDocumentaire && (
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-600">
@@ -169,21 +180,86 @@ function EvenementPopover({
   );
 }
 
-// --- Cellule de la grille ---------------------------------------------------
+// --- Style unifié de « coché », commun aux 3 fréquences ---------------------
+// Même langage visuel partout (coin arrondi, vert = conforme, rouge = non
+// conforme, pastille bleue = référence documentaire présente) plutôt
+// qu'une cible ronde réservée à /an — retour client du 20/11.
 
-function PastilleEvenement({ jour, conforme }: { jour: number; conforme: boolean }) {
+function PointReference() {
+  return <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-blue-500 ring-1 ring-white" />;
+}
+
+function PuceDate({
+  dateLabel,
+  conforme,
+  reference,
+  onCliquer,
+}: {
+  dateLabel: string;
+  conforme: boolean;
+  reference?: string;
+  onCliquer: () => void;
+}) {
   return (
-    <span
+    <button
+      onClick={onCliquer}
+      title={reference ? `Référence : ${reference}` : undefined}
       className={
-        "flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-semibold text-white " +
-        (conforme ? "bg-emerald-500" : "bg-red-500")
+        "relative inline-flex items-center rounded-md border px-1.5 py-1 text-[11px] font-semibold tabular-nums " +
+        (conforme ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-red-300 bg-red-50 text-red-700 hover:bg-red-100")
       }
-      title={conforme ? "Conforme" : "Non conforme (référence manquante)"}
     >
-      {jour}
-    </span>
+      {dateLabel}
+      {reference && <PointReference />}
+    </button>
   );
 }
+
+function PucePrevue({ onCliquer }: { onCliquer: () => void }) {
+  return (
+    <button
+      onClick={onCliquer}
+      title="Ajouter l'évènement"
+      className="rounded-md border border-dashed border-violet-300 px-2 py-1 text-[11px] font-medium text-violet-400 hover:border-amber-400 hover:text-amber-600"
+    >
+      +
+    </button>
+  );
+}
+
+function CaseSemaine({
+  cochee,
+  conforme,
+  reference,
+  titre,
+  onCliquer,
+}: {
+  cochee: boolean;
+  conforme: boolean;
+  reference?: string;
+  titre: string;
+  onCliquer: () => void;
+}) {
+  return (
+    <button
+      onClick={onCliquer}
+      title={reference ? `${titre} — référence : ${reference}` : titre}
+      className={
+        "relative flex h-4 w-4 items-center justify-center rounded border text-[8px] font-bold leading-none " +
+        (cochee
+          ? conforme
+            ? "border-emerald-500 bg-emerald-500 text-white"
+            : "border-red-500 bg-red-500 text-white"
+          : "border-zinc-300 bg-white hover:border-amber-400")
+      }
+    >
+      {cochee && "✓"}
+      {cochee && reference && <PointReference />}
+    </button>
+  );
+}
+
+// --- Cellule de la grille ---------------------------------------------------
 
 function CelluleMois({
   item,
@@ -196,39 +272,23 @@ function CelluleMois({
   evenement: EvenementPilotage | undefined;
   onCliquer: () => void;
 }) {
-  if (item.frequenceType === "an") {
-    const anticipe = item.moisAnticipes?.includes(mois);
-    if (!anticipe) return <td className="bg-zinc-50/60 px-1 py-1.5" />;
-    if (evenement) {
-      return (
-        <td className="cursor-pointer px-1 py-1.5 text-center hover:bg-amber-50" onClick={onCliquer}>
-          <PastilleEvenement jour={jourDeISO(evenement.date)} conforme={evenementConforme(item, evenement)} />
-        </td>
-      );
-    }
-    return (
-      <td className="cursor-pointer px-1 py-1.5 text-center hover:bg-amber-50" onClick={onCliquer}>
-        <span className="mx-auto flex h-6 w-6 items-center justify-center rounded-full border-2 border-dashed border-violet-300 text-violet-400">
-          ○
-        </span>
-      </td>
-    );
+  if (item.frequenceType === "an" && !item.moisAnticipes?.includes(mois)) {
+    return <td className="border-l border-zinc-100 bg-zinc-50/60 px-1.5 py-1.5" />;
   }
-
-  if (item.frequenceType === "mois") {
-    return (
-      <td className="cursor-pointer px-1 py-1.5 text-center hover:bg-amber-50" onClick={onCliquer}>
-        {evenement ? (
-          <PastilleEvenement jour={jourDeISO(evenement.date)} conforme={evenementConforme(item, evenement)} />
-        ) : (
-          <span className="mx-auto flex h-6 w-6 items-center justify-center rounded-full text-zinc-300 hover:text-amber-500">+</span>
-        )}
-      </td>
-    );
-  }
-
-  // "semaine" : une petite checkbox par semaine du mois.
-  return null;
+  return (
+    <td className="border-l border-zinc-100 px-1.5 py-1.5 text-center">
+      {evenement ? (
+        <PuceDate
+          dateLabel={formatDateFR(evenement.date)}
+          conforme={evenementConforme(item, evenement)}
+          reference={evenement.reference}
+          onCliquer={onCliquer}
+        />
+      ) : (
+        <PucePrevue onCliquer={onCliquer} />
+      )}
+    </td>
+  );
 }
 
 function CelluleSemaine({
@@ -244,29 +304,22 @@ function CelluleSemaine({
 }) {
   const lundis = lundisDuMois(ANNEE, mois);
   return (
-    <td className="px-1 py-1.5">
-      <div className="flex flex-wrap items-center justify-center gap-1">
+    <td className="border-l border-zinc-100 px-1.5 py-1.5">
+      <div className="flex items-center justify-center gap-1">
         {lundis.map((lundi) => {
           const iso = dateISO(lundi);
-          const evenement = evenements.find((e) => e.itemId === item.id && e.date === iso);
+          const evenement = evenements.find((e) => e.itemId === item.id && dateDansSemaine(e.date, iso));
           const coche = Boolean(evenement);
           const conforme = evenement ? evenementConforme(item, evenement) : true;
           return (
-            <button
+            <CaseSemaine
               key={iso}
-              onClick={() => onCliquerSemaine(iso)}
-              title={`Semaine du ${lundi.toLocaleDateString("fr-FR")}`}
-              className={
-                "flex h-5 w-5 items-center justify-center rounded border text-[10px] font-bold " +
-                (coche
-                  ? conforme
-                    ? "border-emerald-500 bg-emerald-500 text-white"
-                    : "border-red-500 bg-red-500 text-white"
-                  : "border-zinc-300 bg-white text-transparent hover:border-amber-400")
-              }
-            >
-              ✓
-            </button>
+              cochee={coche}
+              conforme={conforme}
+              reference={evenement?.reference}
+              titre={`Semaine du ${formatDateFR(iso)}`}
+              onCliquer={() => onCliquerSemaine(iso)}
+            />
           );
         })}
       </div>
@@ -289,16 +342,30 @@ function LigneItem({
 }) {
   return (
     <tr className="border-t border-zinc-100">
-      <td className="sticky left-0 z-10 min-w-[220px] bg-white px-3 py-2">
-        <div className="font-medium text-zinc-800">{item.code}</div>
+      <td className="sticky left-0 z-10 min-w-[300px] bg-white px-3 py-2">
+        <div className="flex items-center gap-1.5">
+          <span className="font-medium text-zinc-800">{item.code}</span>
+          {item.gestionDocumentaire && (
+            <span
+              className="inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-blue-600"
+              title={
+                item.documentCompteConformite
+                  ? "Référence documentaire requise — compte pour la conformité"
+                  : "Référence documentaire requise"
+              }
+            >
+              Doc
+            </span>
+          )}
+        </div>
         {item.nomComplet && <div className="text-xs text-zinc-500">{item.nomComplet}</div>}
       </td>
-      <td className="px-2 py-2">
+      <td className="border-l border-zinc-100 px-2 py-2">
         <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${STYLES_FREQUENCE[item.frequenceType]}`}>
           {item.frequenceN} {LABELS_FREQUENCE[item.frequenceType]}
         </span>
       </td>
-      <td className="px-2 py-2">
+      <td className="border-l border-zinc-100 px-2 py-2">
         <AvatarResponsable nom={item.responsable} />
       </td>
       {MOIS_LABELS.map((_, mois) =>
@@ -378,7 +445,9 @@ export default function TableauBordPilotage() {
   function enregistrerEvenement(item: ItemPilotage, contexte: ContextePopover, date: string, reference: string) {
     setEvenements((prev) => {
       const existant = prev.find(
-        (e) => e.itemId === item.id && (contexte.type === "semaine" ? e.date === contexte.lundiISO : moisDeISO(e.date) === contexte.mois)
+        (e) =>
+          e.itemId === item.id &&
+          (contexte.type === "semaine" ? dateDansSemaine(e.date, contexte.lundiISO) : moisDeISO(e.date) === contexte.mois)
       );
       if (existant) {
         return prev.map((e) => (e.id === existant.id ? { ...e, date, reference: reference || undefined } : e));
@@ -392,7 +461,7 @@ export default function TableauBordPilotage() {
     setEvenements((prev) =>
       prev.filter((e) => {
         if (e.itemId !== item.id) return true;
-        if (contexte.type === "semaine") return e.date !== contexte.lundiISO;
+        if (contexte.type === "semaine") return !dateDansSemaine(e.date, contexte.lundiISO);
         return moisDeISO(e.date) !== contexte.mois;
       })
     );
@@ -402,7 +471,7 @@ export default function TableauBordPilotage() {
   const evenementEnEdition = edition
     ? evenements.find((e) => {
         if (e.itemId !== edition.item.id) return false;
-        if (edition.contexte.type === "semaine") return e.date === edition.contexte.lundiISO;
+        if (edition.contexte.type === "semaine") return dateDansSemaine(e.date, edition.contexte.lundiISO);
         return moisDeISO(e.date) === edition.contexte.mois;
       })
     : undefined;
@@ -412,11 +481,36 @@ export default function TableauBordPilotage() {
 
   return (
     <div className="p-6">
-      <h1 className="text-xl font-semibold text-zinc-900">Tableau de bord Pilotage PAQG</h1>
-      <p className="mt-1 max-w-2xl text-sm text-zinc-500">
-        Suivi des instances, comités, réunions, audits et sensibilisations planifiés sur l&apos;année {ANNEE}. Vue
-        Administrateur — accès réservé Administrateur &amp; Manager.
-      </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-zinc-900">Tableau de bord Pilotage PAQG</h1>
+          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
+            Suivi des instances, comités, réunions, audits et sensibilisations planifiés sur l&apos;année. Vue
+            Administrateur — accès réservé Administrateur &amp; Manager.
+          </p>
+        </div>
+        {/* Navigation année — visuelle uniquement pour cette maquette, pas
+            encore fonctionnelle (retour client du 20/11). */}
+        <div className="flex items-center gap-2 rounded-lg border border-zinc-300 px-1 py-1">
+          <button
+            type="button"
+            aria-label="Année précédente"
+            title="Année précédente (pas encore fonctionnel dans cette maquette)"
+            className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
+          >
+            ←
+          </button>
+          <span className="px-1 text-sm font-semibold text-zinc-800">{ANNEE}</span>
+          <button
+            type="button"
+            aria-label="Année suivante"
+            title="Année suivante (pas encore fonctionnel dans cette maquette)"
+            className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
+          >
+            →
+          </button>
+        </div>
+      </div>
 
       <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(110px,140px))] gap-3">
         <IndicateurConformite label="Conformité globale" pourcentage={conformiteGlobale} />
@@ -490,11 +584,17 @@ export default function TableauBordPilotage() {
         <table className="w-full text-sm">
           <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
             <tr>
-              <th className="sticky left-0 z-10 bg-zinc-50 px-3 py-2">Item</th>
-              <th className="px-2 py-2">Fréquence</th>
-              <th className="px-2 py-2">Resp.</th>
+              <th className="sticky left-0 z-10 min-w-[300px] bg-zinc-50 px-3 py-2">Item</th>
+              <th className="border-l border-zinc-200 px-2 py-2">Fréquence</th>
+              <th className="border-l border-zinc-200 px-2 py-2">Resp.</th>
               {MOIS_LABELS.map((m, i) => (
-                <th key={m} className={"px-1 py-2 text-center " + (i === MOIS_COURANT ? "text-amber-600" : "")}>
+                <th
+                  key={m}
+                  className={
+                    "border-l border-zinc-200 px-1.5 py-2 text-center " +
+                    (i === MOIS_COURANT ? "bg-amber-50 text-amber-700" : "")
+                  }
+                >
                   {m}
                 </th>
               ))}
