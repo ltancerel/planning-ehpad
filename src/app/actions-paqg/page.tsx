@@ -1,61 +1,26 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import AppTabs from "@/components/AppTabs";
-import UserMenu from "@/components/UserMenu";
 
 // EPIC Multi-application (#46), story #47 (maquette) — périmètre
 // fonctionnel de Actions PAQG encore TBD, à définir avec le client.
-// Placeholder pour que l'onglet soit cliquable et cohérent avec les deux
-// autres applications pendant la maquette.
-export default async function ActionsPaqg() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: compte } = await supabase
-    .from("compte")
-    .select("nom, prenom, type_compte, poste")
-    .eq("id", user.id)
-    .single();
-
-  if (!compte) {
-    redirect("/compte");
-  }
-
-  const { data: ehpad } = await supabase.from("ehpad").select("nom, logo_base64").single();
-  const logo = ehpad?.logo_base64 ?? null;
-
+// Placeholder statique (pas de Supabase, pas d'authentification) pour que
+// l'onglet soit cliquable dans la maquette.
+export default function ActionsPaqg() {
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
       <header className="flex shrink-0 flex-col border-b border-zinc-200">
         <div className="flex items-center justify-between px-4 py-2">
           <div className="flex items-center gap-2">
-            {logo ? (
-              // eslint-disable-next-line @next/next/no-img-element -- logo dynamique (data URL uploadé), incompatible avec next/image
-              <img src={logo} alt="" className="h-7 w-7 rounded object-contain" />
-            ) : (
-              <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
-                {ehpad?.nom.charAt(0) ?? "?"}
-              </span>
-            )}
+            <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
+              E
+            </span>
             <div className="leading-tight">
-              <h1 className="font-semibold text-zinc-800">{ehpad?.nom}</h1>
+              <h1 className="font-semibold text-zinc-800">EHPAD Démo</h1>
               <p className="text-[10px] text-zinc-400">Actions PAQG</p>
             </div>
           </div>
-          <UserMenu
-            utilisateur={{
-              nom: compte.nom,
-              prenom: compte.prenom,
-              typeUtilisateur: compte.type_compte,
-              poste: compte.poste ?? undefined,
-            }}
-          />
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-semibold text-white">
+            JD
+          </div>
         </div>
         <AppTabs actif="actions-paqg" />
       </header>

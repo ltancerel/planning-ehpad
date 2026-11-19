@@ -1,146 +1,99 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import PlanningGrid from "@/components/PlanningGrid";
-import { type GroupeRoulement, type ProfilUtilisateur, type TypePaie } from "@/lib/mock-data";
-import { construireRoulements, grouperAffectationsParSalarie } from "@/lib/roulements";
-import type { HoraireCategorie, HoraireCode, TypeEvenement } from "@/lib/horaire-codes";
+import AppTabs from "@/components/AppTabs";
 
-const LABEL_TYPE_COMPTE: Record<string, ProfilUtilisateur["typeUtilisateur"]> = {
-  administrateur: "Administrateur",
-  manager: "Manager",
-  utilisateur: "Utilisateur",
+// Maquette multi-application (EPIC #46, story #47, urgent) — branche
+// exploratoire, jamais fusionnée (même logique que l'EPIC "Maquette
+// graphique v0" à l'origine du vrai Planning) : données fictives, aucune
+// authentification ni dépendance à Supabase, pour pouvoir être ouverte sans
+// configuration d'environnement. Ne remplace pas le vrai `page.tsx` de
+// `main`/`staging`, qui reste connecté au backend réel.
+
+const SALARIES_APERCU = [
+  { nom: "BERNARD Claire", service: "IDE" },
+  { nom: "LAURENT Inès", service: "ASH" },
+  { nom: "MARTIN Paul", service: "ASH" },
+  { nom: "DUBOIS Julie", service: "IDE" },
+  { nom: "PETIT Marc", service: "Administratif" },
+];
+
+const JOURS = ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
+
+type CelluleApercu = { code: string; fond: string; texte: string };
+
+const CODES: Record<string, CelluleApercu> = {
+  repos: { code: ".", fond: "#f4f4f5", texte: "#71717a" },
+  ash: { code: "70A", fond: "#dbeafe", texte: "#1e3a8a" },
+  ide: { code: "SEC", fond: "#dcfce7", texte: "#14532d" },
+  abs: { code: "ABS", fond: "#e4e4e7", texte: "#3f3f46" },
 };
 
-export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+// Motif fictif, juste pour illustrer visuellement la grille — pas de vraie
+// logique de roulement ici.
+const MOTIF: CelluleApercu[][] = [
+  [CODES.ide, CODES.ide, CODES.ide, CODES.repos, CODES.repos, CODES.ide, CODES.ide],
+  [CODES.ash, CODES.ash, CODES.repos, CODES.ash, CODES.ash, CODES.repos, CODES.repos],
+  [CODES.repos, CODES.ash, CODES.ash, CODES.ash, CODES.repos, CODES.ash, CODES.ash],
+  [CODES.ide, CODES.repos, CODES.ide, CODES.ide, CODES.ide, CODES.repos, CODES.repos],
+  [CODES.abs, CODES.abs, CODES.abs, CODES.repos, CODES.repos, CODES.repos, CODES.repos],
+];
 
-  if (!user) {
-    redirect("/login");
-  }
-
-  const { data: compte } = await supabase
-    .from("compte")
-    .select("nom, prenom, type_compte, poste")
-    .eq("id", user.id)
-    .single();
-
-  // Un compte administrateur_systeme n'a pas d'EHPAD propre : pas d'écran
-  // Planning pour lui (défense en profondeur si /  est tapée directement,
-  // le lien normal passe par /compte).
-  if (!compte) {
-    redirect("/compte");
-  }
-
-  const { data: ehpad } = await supabase.from("ehpad").select("nom, logo_base64").single();
-
-  const { data: servicesData } = await supabase
-    .from("service")
-    .select("nom, responsable_id, responsable:responsable_id(nom, prenom)")
-    .order("nom");
-  const services = servicesData ?? [];
-  const mesServices = services.filter((s) => s.responsable_id === user.id).map((s) => s.nom);
-
-  // Un manager/administrateur peut être responsable de plusieurs services
-  // (service.responsable_id) : regroupés ici pour le filtre "Manager" du
-  // planning, qui sélectionne en un clic tous les services d'un manager
-  // donné — retour client du 12/11 (rétablit l'ancien filtre manager,
-  // mais dérivé du service plutôt qu'un champ salarié.manager déconnecté).
-  const managersParId = new Map<string, { id: string; nom: string; services: string[] }>();
-  for (const s of services) {
-    if (!s.responsable_id || !s.responsable) continue;
-    const existant = managersParId.get(s.responsable_id);
-    if (existant) existant.services.push(s.nom);
-    else
-      managersParId.set(s.responsable_id, {
-        id: s.responsable_id,
-        nom: `${s.responsable.prenom} ${s.responsable.nom}`,
-        services: [s.nom],
-      });
-  }
-  const managers = [...managersParId.values()].sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
-
-  const { data: joursFeriesData } = await supabase.from("jour_ferie").select("date").eq("actif", true);
-  const joursFeries = (joursFeriesData ?? []).map((j) => j.date);
-
-  const { data: salariesData } = await supabase
-    .from("salarie")
-    .select("id, nom, prenom, alignement_roulement, presence, type_paie, service:service_id(nom)")
-    .order("nom");
-
-  const salaries = (salariesData ?? []).map((s) => ({
-    id: s.id,
-    nom: s.nom,
-    prenom: s.prenom,
-    service: s.service?.nom ?? "",
-    groupeRoulement: s.alignement_roulement as GroupeRoulement | null,
-    presence: s.presence === "Absent" ? ("Absent" as const) : ("Présent" as const),
-    typePaie: s.type_paie as TypePaie,
-  }));
-
-  // Roulements réels (motif + affectations), branchés le 12/11 (story #35
-  // dernier incrément) — jusqu'ici PlanningGrid lisait ROULEMENTS_DEMO/
-  // AFFECTATIONS_ROULEMENT_DEMO. motif[s][j] reprend le même format que la
-  // maquette (code court, "" = repos) pour ne pas changer evaluerProjectionRoulement.
-  const { data: roulementsData } = await supabase
-    .from("roulement")
-    .select(
-      "id, nom, nb_semaines, roulement_jour(semaine_index, jour_semaine, code:code_horaire_id(code))"
-    )
-    .order("nom");
-
-  const roulements = construireRoulements(roulementsData ?? []);
-
-  const { data: affectationsData } = await supabase
-    .from("affectation_roulement")
-    .select("id, salarie_id, roulement_id, date_debut, date_fin");
-  const affectationsRoulement = grouperAffectationsParSalarie(affectationsData ?? []);
-
-  const { data: codesData } = await supabase
-    .from("code_horaire")
-    .select(
-      "code, intitule, categorie, couleur_fond, couleur_texte, commentaire, afficher_vue_annuelle, type_evenement, duree_heures, plage_horaire(heure_debut, heure_fin, ordre)"
-    )
-    .order("code");
-
-  const codesHoraires: HoraireCode[] = (codesData ?? []).map((c) => ({
-    code: c.code,
-    intitule: c.intitule,
-    categorie: c.categorie as HoraireCategorie,
-    couleurFond: c.couleur_fond,
-    couleurTexte: c.couleur_texte,
-    commentaire: c.commentaire ?? undefined,
-    afficherVueAnnuelle: c.afficher_vue_annuelle,
-    typeEvenement: (c.type_evenement as TypeEvenement | null) ?? undefined,
-    duree: c.duree_heures ?? undefined,
-    plages:
-      c.categorie === "travail"
-        ? [...c.plage_horaire]
-            .sort((a, b) => a.ordre - b.ordre)
-            .map((p) => ({ debut: p.heure_debut.slice(0, 5), fin: p.heure_fin.slice(0, 5) }))
-        : undefined,
-  }));
-
+export default function PlanningApercu() {
   return (
-    <PlanningGrid
-      salaries={salaries}
-      servicesOrdre={services.map((s) => s.nom)}
-      managers={managers}
-      codesHoraires={codesHoraires}
-      joursFeries={joursFeries}
-      roulements={roulements}
-      affectationsRoulement={affectationsRoulement}
-      ehpad={{ nom: ehpad?.nom ?? "", logo: ehpad?.logo_base64 ?? null }}
-      utilisateur={{
-        nom: compte.nom,
-        prenom: compte.prenom,
-        typeUtilisateur: LABEL_TYPE_COMPTE[compte.type_compte] ?? "Utilisateur",
-        service: mesServices.join(", "),
-        mesServices,
-        poste: compte.poste ?? "",
-      }}
-    />
+    <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
+      <header className="flex shrink-0 flex-col border-b border-zinc-200">
+        <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
+              E
+            </span>
+            <div className="leading-tight">
+              <h1 className="font-semibold text-zinc-800">EHPAD Démo</h1>
+              <p className="text-[10px] text-zinc-400">Planning</p>
+            </div>
+          </div>
+          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-semibold text-white">
+            JD
+          </div>
+        </div>
+        <AppTabs actif="planning" />
+      </header>
+
+      <div className="flex-1 overflow-auto p-4">
+        <p className="mb-3 text-xs text-zinc-400">
+          Aperçu — application Planning existante (données fictives, non interactif dans cette maquette).
+        </p>
+        <table className="w-full max-w-2xl border-collapse overflow-hidden rounded border border-zinc-200 text-xs">
+          <thead>
+            <tr className="bg-zinc-50 text-zinc-500">
+              <th className="border-b border-zinc-200 px-2 py-1.5 text-left font-medium">Salarié</th>
+              {JOURS.map((j) => (
+                <th key={j} className="border-b border-zinc-200 px-2 py-1.5 text-center font-medium">
+                  {j}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {SALARIES_APERCU.map((salarie, i) => (
+              <tr key={salarie.nom} className="border-b border-zinc-100 last:border-b-0">
+                <td className="px-2 py-1.5">
+                  <div className="font-medium text-zinc-800">{salarie.nom}</div>
+                  <div className="text-[10px] text-zinc-400">{salarie.service}</div>
+                </td>
+                {MOTIF[i].map((cellule, j) => (
+                  <td key={j} className="p-1 text-center">
+                    <span
+                      className="inline-block w-full rounded px-1 py-1 font-semibold"
+                      style={{ backgroundColor: cellule.fond, color: cellule.texte }}
+                    >
+                      {cellule.code}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 }

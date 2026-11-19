@@ -7,6 +7,11 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Maquette multi-application (EPIC #46) : / , /pilotage-paqg et
+    // /actions-paqg sont des pages statiques sans backend sur cette branche
+    // exploratoire (aucune dépendance Supabase voulue, cf. story #47) —
+    // exclues ici pour ne pas déclencher la vérification de session, qui
+    // échouerait sans variables d'environnement Supabase configurées.
+    "/((?!_next/static|_next/image|favicon.ico|pilotage-paqg|actions-paqg|$|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
