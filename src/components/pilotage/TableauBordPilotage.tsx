@@ -8,6 +8,7 @@ import {
   LABELS_FREQUENCE,
   EVENEMENTS_DEMO,
   INSTANCES_DEMO,
+  NOTIFICATIONS_DEMO,
   lundisDuMois,
   dateISO,
   moisDeISO,
@@ -17,10 +18,12 @@ import {
   evenementConforme,
   conformitePourcentage,
   tousLesResponsables,
+  tousLesItems,
   type FrequenceType,
   type ItemPilotage,
   type InstancePilotage,
   type EvenementPilotage,
+  type NotificationPilotage,
 } from "@/lib/pilotage-paqg-data";
 
 // EPIC Multi-application (#46), story #47 (maquette) — Pilotage PAQG.
@@ -562,6 +565,92 @@ function FiltresPilotageBouton({
   );
 }
 
+// --- Notifications (indicateur dans le bandeau supérieur, retour client
+// du 20/11) : signale un retard de suivi ou un indicateur de conformité
+// trop bas. Liste figée pour cette maquette, à affiner avec l'application
+// réelle (détection automatique, historique...). ----------------------------
+
+function NotificationsPilotageBouton({
+  notifications,
+  onOuvrirItem,
+}: {
+  notifications: NotificationPilotage[];
+  onOuvrirItem: (itemId: string, mois: number) => void;
+}) {
+  const [ouvert, setOuvert] = useState(false);
+  const [consultees, setConsultees] = useState(false);
+  const conteneurRef = useRef<HTMLDivElement>(null);
+  const nonLues = consultees ? 0 : notifications.length;
+
+  useEffect(() => {
+    if (!ouvert) return;
+    function surClicExterieur(e: MouseEvent) {
+      if (conteneurRef.current && !conteneurRef.current.contains(e.target as Node)) setOuvert(false);
+    }
+    document.addEventListener("mousedown", surClicExterieur);
+    return () => document.removeEventListener("mousedown", surClicExterieur);
+  }, [ouvert]);
+
+  return (
+    <div ref={conteneurRef} className="relative">
+      <button
+        type="button"
+        onClick={() => {
+          setOuvert((v) => !v);
+          setConsultees(true);
+        }}
+        aria-label="Notifications"
+        title="Notifications"
+        className={
+          "relative flex h-7 w-7 items-center justify-center rounded-full border text-sm font-bold " +
+          (nonLues > 0
+            ? "border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+            : "border-zinc-300 text-zinc-500 hover:bg-zinc-50")
+        }
+      >
+        ?
+        {nonLues > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold text-white ring-2 ring-white">
+            {nonLues}
+          </span>
+        )}
+      </button>
+
+      {ouvert && (
+        <div className="absolute right-0 top-full z-40 mt-1.5 w-[340px] rounded border border-zinc-200 bg-white p-3.5 shadow-lg">
+          <TitreSection enfant="Notifications" />
+          {notifications.length === 0 ? (
+            <p className="py-2 text-sm text-zinc-500">Rien à signaler.</p>
+          ) : (
+            <ul className="flex flex-col gap-1">
+              {notifications.map((n) => (
+                <li key={n.id}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onOuvrirItem(n.itemId, n.mois);
+                      setOuvert(false);
+                    }}
+                    className="flex w-full items-start gap-2 rounded px-2 py-1.5 text-left text-sm hover:bg-zinc-50"
+                  >
+                    <span
+                      className={
+                        "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full " +
+                        (n.gravite === "retard" ? "bg-red-500" : "bg-amber-500")
+                      }
+                    />
+                    <span className="text-zinc-700">{n.message}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // --- Composant principal ------------------------------------------------------
 
 export default function TableauBordPilotage() {
@@ -649,6 +738,13 @@ export default function TableauBordPilotage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <NotificationsPilotageBouton
+            notifications={NOTIFICATIONS_DEMO}
+            onOuvrirItem={(itemId, mois) => {
+              const item = tousLesItems().find((i) => i.id === itemId);
+              if (item) setEdition({ item, contexte: { type: "mois", mois } });
+            }}
+          />
           <FiltresPilotageBouton
             motCle={motCle}
             onMotCleChange={setMotCle}

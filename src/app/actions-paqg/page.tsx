@@ -1,9 +1,22 @@
 import AppTabs from "@/components/AppTabs";
+import UserMenu from "@/components/UserMenu";
 import TableauBordActions from "@/components/qualite/TableauBordActions";
 
 // EPIC Multi-application (#46), story #47 (maquette) — reprend le tableau
 // de bord maquetté sur experiment/qualite-maquette (voir
 // TableauBordActions pour le détail des modifications demandées).
+//
+// UserMenu (avatar + détail Julie Dupont) repris tel quel du Planning pour
+// uniformiser l'utilisateur affiché en haut à droite sur les 3 applis
+// (retour client du 20/11).
+const UTILISATEUR_DEMO = {
+  nom: "DUPONT",
+  prenom: "Julie",
+  typeUtilisateur: "Administrateur",
+  service: "Administratif",
+  poste: "Directrice",
+};
+
 export default function ActionsPaqg() {
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
@@ -21,9 +34,7 @@ export default function ActionsPaqg() {
               <AppTabs actif="actions-paqg" />
             </div>
           </div>
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-semibold text-white">
-            JD
-          </div>
+          <UserMenu utilisateur={UTILISATEUR_DEMO} />
         </div>
       </header>
 

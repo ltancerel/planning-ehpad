@@ -1,4 +1,5 @@
 import AppTabs from "@/components/AppTabs";
+import UserMenu from "@/components/UserMenu";
 import TableauBordPilotage from "@/components/pilotage/TableauBordPilotage";
 
 // EPIC Multi-application (#46), story #47 (maquette) — cahier des charges
@@ -6,6 +7,18 @@ import TableauBordPilotage from "@/components/pilotage/TableauBordPilotage";
 // charges"). Voir TableauBordPilotage pour le périmètre retenu pour cette
 // première maquette (vue Administrateur, édition des 3 types de
 // fréquence, pas d'écrans d'administration).
+//
+// UserMenu (avatar + détail Julie Dupont) repris tel quel du Planning pour
+// uniformiser l'utilisateur affiché en haut à droite sur les 3 applis
+// (retour client du 20/11).
+const UTILISATEUR_DEMO = {
+  nom: "DUPONT",
+  prenom: "Julie",
+  typeUtilisateur: "Administrateur",
+  service: "Administratif",
+  poste: "Directrice",
+};
+
 export default function PilotagePaqg() {
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
@@ -23,9 +36,7 @@ export default function PilotagePaqg() {
               <AppTabs actif="pilotage-paqg" />
             </div>
           </div>
-          <div className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-semibold text-white">
-            JD
-          </div>
+          <UserMenu utilisateur={UTILISATEUR_DEMO} />
         </div>
       </header>
 

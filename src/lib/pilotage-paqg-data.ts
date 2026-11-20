@@ -785,6 +785,38 @@ export function tousLesResponsables(): string[] {
   return [...new Set(tousLesItems().map((i) => i.responsable))].sort((a, b) => a.localeCompare(b, "fr"));
 }
 
+// --- Notifications ------------------------------------------------------
+// Première maquette d'un indicateur de notification dans le bandeau
+// supérieur (retour client du 20/11) : signale un retard de suivi ou un
+// indicateur de conformité trop bas. Liste figée pour cette maquette —
+// les exigences (détection automatique, historique, etc.) seront
+// affinées avec l'application réelle.
+
+export type NotificationPilotage = {
+  id: string;
+  gravite: "retard" | "attention";
+  message: string;
+  itemId: string;
+  mois: number;
+};
+
+export const NOTIFICATIONS_DEMO: NotificationPilotage[] = [
+  {
+    id: "notif-codir-doc",
+    gravite: "attention",
+    message: "CODIR — le compte-rendu du 10/03/26 n'a pas de référence documentaire.",
+    itemId: "codir",
+    mois: 2,
+  },
+  {
+    id: "notif-copil-juin",
+    gravite: "retard",
+    message: "COPIL qualité — la réunion de juin n'a pas été renseignée.",
+    itemId: "copil",
+    mois: 5,
+  },
+];
+
 // Un évènement est conforme s'il n'a pas de contrainte documentaire liée à
 // la conformité, ou s'il en a une et qu'une référence a été saisie.
 export function evenementConforme(item: ItemPilotage, evenement: EvenementPilotage): boolean {
