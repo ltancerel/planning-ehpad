@@ -343,23 +343,25 @@ function LigneItem({
   return (
     <tr className="border-t border-zinc-100">
       <td className="sticky left-0 z-10 min-w-[300px] bg-white px-3 py-2">
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between gap-2">
           <span className="font-medium text-zinc-800">{item.code}</span>
-          <span className={`inline-block shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${STYLES_FREQUENCE[item.frequenceType]}`}>
-            {item.frequenceN} {LABELS_FREQUENCE[item.frequenceType]}
-          </span>
-          {item.gestionDocumentaire && (
-            <span
-              className="inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-blue-600"
-              title={
-                item.documentCompteConformite
-                  ? "Référence documentaire requise — compte pour la conformité"
-                  : "Référence documentaire requise"
-              }
-            >
-              Doc
+          <div className="flex shrink-0 items-center gap-1.5">
+            <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${STYLES_FREQUENCE[item.frequenceType]}`}>
+              {item.frequenceN} {LABELS_FREQUENCE[item.frequenceType]}
             </span>
-          )}
+            {item.gestionDocumentaire && (
+              <span
+                className="inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-blue-600"
+                title={
+                  item.documentCompteConformite
+                    ? "Référence documentaire requise — compte pour la conformité"
+                    : "Référence documentaire requise"
+                }
+              >
+                Doc
+              </span>
+            )}
+          </div>
         </div>
         {item.nomComplet && <div className="text-xs text-zinc-500">{item.nomComplet}</div>}
       </td>
