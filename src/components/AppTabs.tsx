@@ -50,8 +50,8 @@ function IconeActions() {
 // à droite du bloc EHPAD, plutôt qu'en rangée séparée (retour client).
 const APPLICATIONS: ApplicationOnglet[] = [
   { code: "planning", label: "Planning", href: "/", couleur: "#2563eb", icone: <IconePlanning /> },
-  { code: "pilotage-paqg", label: "Pilotage PAQG", href: "/pilotage-paqg", couleur: "#7c3aed", icone: <IconePilotage /> },
-  { code: "actions-paqg", label: "Actions PAQG", href: "/actions-paqg", couleur: "#059669", icone: <IconeActions /> },
+  { code: "pilotage-paqg", label: "Programmation", href: "/pilotage-paqg", couleur: "#7c3aed", icone: <IconePilotage /> },
+  { code: "actions-paqg", label: "PAQG", href: "/actions-paqg", couleur: "#059669", icone: <IconeActions /> },
 ];
 
 export default function AppTabs({ actif }: { actif: string }) {

@@ -214,7 +214,7 @@ function PuceDate({
       onClick={onCliquer}
       title={reference ? `Référence : ${reference}` : undefined}
       className={
-        "relative inline-flex items-center rounded-md border px-1.5 py-1 text-[11px] font-semibold tabular-nums " +
+        "relative inline-flex items-center rounded-md border px-1 py-0.5 text-[11px] font-semibold tabular-nums " +
         (conforme ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100" : "border-red-300 bg-red-50 text-red-700 hover:bg-red-100")
       }
     >
@@ -251,7 +251,7 @@ function PucePrevue({
       }}
       title={deplacable ? "À renseigner — glisser pour reprogrammer sur un autre mois" : "Ajouter l'évènement"}
       className={
-        "rounded-md border border-zinc-400 bg-zinc-100 px-1.5 py-1 text-[11px] font-bold text-zinc-600 hover:bg-zinc-200 " +
+        "rounded-md border border-zinc-400 bg-zinc-100 px-1 py-0.5 text-[11px] font-bold text-zinc-600 hover:bg-zinc-200 " +
         (deplacable ? "cursor-grab active:cursor-grabbing" : "")
       }
     >
@@ -283,7 +283,7 @@ function PuceRetard({
           : "En retard — non renseigné"
       }
       className={
-        "rounded-md border border-red-400 bg-red-100 px-1.5 py-1 text-[11px] font-bold text-red-700 hover:bg-red-200 " +
+        "rounded-md border border-red-400 bg-red-100 px-1 py-0.5 text-[11px] font-bold text-red-700 hover:bg-red-200 " +
         (deplacable ? "cursor-grab active:cursor-grabbing" : "")
       }
     >
@@ -349,13 +349,13 @@ function CelluleMois({
     : {};
 
   if (item.frequenceType === "an" && !item.moisAnticipes?.includes(mois)) {
-    return <td className="border-l border-zinc-100 bg-zinc-50/60 px-1 py-1" {...proprietesDepot} />;
+    return <td className="border-l border-zinc-100 bg-zinc-50/60 px-0.5 py-0.5" {...proprietesDepot} />;
   }
 
   const enRetard = !evenement && mois < MOIS_COURANT;
 
   return (
-    <td className="border-l border-zinc-100 px-1 py-1 text-center" {...proprietesDepot}>
+    <td className="border-l border-zinc-100 px-0.5 py-0.5 text-center" {...proprietesDepot}>
       {evenement ? (
         <PuceDate
           dateLabel={formatDateFR(evenement.date)}
@@ -385,8 +385,8 @@ function CelluleSemaine({
 }) {
   const lundis = lundisDuMois(ANNEE, mois);
   return (
-    <td className="border-l border-zinc-100 px-1 py-1">
-      <div className="flex items-center justify-center gap-0.5">
+    <td className="border-l border-zinc-100 px-0.5 py-0.5">
+      <div className="flex items-center justify-center gap-px">
         {lundis.map((lundi) => {
           const iso = dateISO(lundi);
           const evenement = evenements.find((e) => e.itemId === item.id && dateDansSemaine(e.date, iso));
@@ -429,7 +429,7 @@ function LigneItem({
     <tr className="border-t border-zinc-100">
       {/* Colonne Responsable supprimée (retour client du 21/11) — visible
           au survol de la cellule Item ; le filtre Manager reste disponible. */}
-      <td className="sticky left-0 z-10 w-[190px] bg-white px-2 py-2" title={`Responsable : ${item.responsable}`}>
+      <td className="sticky left-0 z-10 w-[260px] bg-white px-1.5 py-1" title={`Responsable : ${item.responsable}`}>
         <div className="flex flex-wrap items-center justify-between gap-1">
           <span className="font-medium text-zinc-800">{item.code}</span>
           <div className="flex shrink-0 items-center gap-1">
@@ -852,18 +852,20 @@ export default function TableauBordPilotage() {
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
       <header className="flex shrink-0 flex-col border-b border-zinc-200">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-2">
+          <div className="flex items-center gap-2 justify-self-start">
             <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
               E
             </span>
             <div className="leading-tight">
               <h1 className="font-semibold text-zinc-800">EHPAD Démo</h1>
-              <p className="text-[10px] text-zinc-400">Pilotage PAQG</p>
+              <p className="text-[10px] text-zinc-400">Programmation</p>
             </div>
-            <div className="ml-4 border-l border-zinc-200 pl-4">
-              <AppTabs actif="pilotage-paqg" />
-            </div>
+          </div>
+          {/* Onglets d'application décalés et centrés dans le bandeau,
+              plutôt que collés au bloc EHPAD — retour client du 21/11. */}
+          <div className="justify-self-center">
+            <AppTabs actif="pilotage-paqg" />
           </div>
           {/* Même bandeau que l'utilisateur — retour client du 21/11 :
               auparavant Filtres/navigation/notifications étaient sur une
@@ -871,7 +873,7 @@ export default function TableauBordPilotage() {
               même bandeau (Filtres, sélecteur, [Administration], puis
               l'utilisateur). Pas de bouton Administration ici, hors
               périmètre de cette première maquette. */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-self-end gap-2">
             <FiltresPilotageBouton
               motCle={motCle}
               onMotCleChange={setMotCle}
@@ -925,7 +927,7 @@ export default function TableauBordPilotage() {
       </header>
 
       <div className="flex-1 overflow-auto p-6">
-      <h2 className="text-xl font-semibold text-zinc-900">Tableau de bord Pilotage PAQG</h2>
+      <h2 className="text-xl font-semibold text-zinc-900">Programmation qualité</h2>
       <p className="mt-1 max-w-2xl text-sm text-zinc-500">
         Suivi des instances, comités, réunions, audits et sensibilisations planifiés sur l&apos;année. Vue
         Administrateur — accès réservé Administrateur &amp; Manager.
@@ -950,12 +952,12 @@ export default function TableauBordPilotage() {
         <table className="w-full table-fixed text-sm">
           <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
             <tr>
-              <th className="sticky left-0 z-10 w-[190px] bg-zinc-50 px-2 py-2">Item</th>
+              <th className="sticky left-0 z-10 w-[260px] bg-zinc-50 px-1.5 py-1.5">Item</th>
               {MOIS_LABELS.map((m, i) => (
                 <th
                   key={m}
                   className={
-                    "w-[82px] border-l border-zinc-200 px-1 py-2 text-center " +
+                    "w-[76px] border-l border-zinc-200 px-0.5 py-1.5 text-center " +
                     (i === MOIS_COURANT ? "bg-amber-50 text-amber-700" : "")
                   }
                 >

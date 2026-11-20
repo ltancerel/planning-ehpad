@@ -907,8 +907,8 @@ export default function PlanningGrid({
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
       <header className="flex shrink-0 flex-col border-b border-zinc-200">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-2">
+          <div className="flex items-center gap-2 justify-self-start">
             {ehpad.logo ? (
               // eslint-disable-next-line @next/next/no-img-element -- logo dynamique (data URL uploadé), incompatible avec next/image
               <img src={ehpad.logo} alt="" className="h-7 w-7 rounded object-contain" />
@@ -923,11 +923,13 @@ export default function PlanningGrid({
                 {chargementPlanning ? "Planning — chargement…" : "Planning"}
               </p>
             </div>
-            <div className="ml-4 border-l border-zinc-200 pl-4">
-              <AppTabs actif="planning" />
-            </div>
           </div>
-          <div className="flex items-center gap-2">
+          {/* Onglets d'application décalés et centrés dans le bandeau,
+              plutôt que collés au bloc EHPAD — retour client du 21/11. */}
+          <div className="justify-self-center">
+            <AppTabs actif="planning" />
+          </div>
+          <div className="flex items-center justify-self-end gap-2">
             <FiltreSalariesBouton
               filtres={filtres}
               onChange={changerFiltres}

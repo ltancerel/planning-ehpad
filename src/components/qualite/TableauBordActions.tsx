@@ -553,23 +553,25 @@ export default function TableauBordActions() {
   return (
     <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
       <header className="flex shrink-0 flex-col border-b border-zinc-200">
-        <div className="flex items-center justify-between px-4 py-2">
-          <div className="flex items-center gap-2">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center px-4 py-2">
+          <div className="flex items-center gap-2 justify-self-start">
             <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
               E
             </span>
             <div className="leading-tight">
               <h1 className="font-semibold text-zinc-800">EHPAD Démo</h1>
-              <p className="text-[10px] text-zinc-400">Actions PAQG</p>
+              <p className="text-[10px] text-zinc-400">PAQG</p>
             </div>
-            <div className="ml-4 border-l border-zinc-200 pl-4">
-              <AppTabs actif="actions-paqg" />
-            </div>
+          </div>
+          {/* Onglets d'application décalés et centrés dans le bandeau,
+              plutôt que collés au bloc EHPAD — retour client du 21/11. */}
+          <div className="justify-self-center">
+            <AppTabs actif="actions-paqg" />
           </div>
           {/* Même bandeau que l'utilisateur — retour client du 21/11 :
               Filtres puis utilisateur dans le même bandeau que Planning,
               plutôt que sur une ligne à part. */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-self-end gap-2">
             <FiltresActionsBouton
               filtres={filtres}
               onChange={setFiltres}
@@ -582,7 +584,7 @@ export default function TableauBordActions() {
       </header>
 
       <div className="flex-1 overflow-auto p-6">
-      <h2 className="text-xl font-semibold text-zinc-900">Tableau de bord Actions PAQG</h2>
+      <h2 className="text-xl font-semibold text-zinc-900">Plan d&apos;Actions Qualité Global</h2>
       <p className="mt-1 max-w-2xl text-sm text-zinc-500">
         Vue unifiée du plan d&apos;action qualité de l&apos;établissement, alimenté par le document
         unique d&apos;évaluation des risques professionnels (DUERP) et le référentiel d&apos;évaluation
