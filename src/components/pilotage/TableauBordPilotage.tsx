@@ -345,6 +345,9 @@ function LigneItem({
       <td className="sticky left-0 z-10 min-w-[300px] bg-white px-3 py-2">
         <div className="flex items-center gap-1.5">
           <span className="font-medium text-zinc-800">{item.code}</span>
+          <span className={`inline-block shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold ${STYLES_FREQUENCE[item.frequenceType]}`}>
+            {item.frequenceN} {LABELS_FREQUENCE[item.frequenceType]}
+          </span>
           {item.gestionDocumentaire && (
             <span
               className="inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-blue-600"
@@ -359,11 +362,6 @@ function LigneItem({
           )}
         </div>
         {item.nomComplet && <div className="text-xs text-zinc-500">{item.nomComplet}</div>}
-      </td>
-      <td className="w-[84px] whitespace-nowrap border-l border-zinc-100 px-1.5 py-2">
-        <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${STYLES_FREQUENCE[item.frequenceType]}`}>
-          {item.frequenceN} {LABELS_FREQUENCE[item.frequenceType]}
-        </span>
       </td>
       <td className="border-l border-zinc-100 px-2 py-2">
         <AvatarResponsable nom={item.responsable} />
@@ -708,7 +706,6 @@ export default function TableauBordPilotage() {
           <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
             <tr>
               <th className="sticky left-0 z-10 min-w-[300px] bg-zinc-50 px-3 py-2">Item</th>
-              <th className="w-[84px] whitespace-nowrap border-l border-zinc-200 px-1.5 py-2">Fréquence</th>
               <th className="border-l border-zinc-200 px-2 py-2">Resp.</th>
               {MOIS_LABELS.map((m, i) => (
                 <th
@@ -765,7 +762,7 @@ function InstanceGroupe({
   return (
     <>
       <tr className="bg-zinc-100">
-        <td colSpan={3 + MOIS_LABELS.length} className="sticky left-0 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+        <td colSpan={2 + MOIS_LABELS.length} className="sticky left-0 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-600">
           {instance.nom}
         </td>
       </tr>
