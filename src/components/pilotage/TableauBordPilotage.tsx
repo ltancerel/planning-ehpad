@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import {
   ANNEE,
   MOIS_COURANT,
@@ -31,9 +31,9 @@ import {
 // PAQG — Cahier des charges". Périmètre explicitement demandé pour cette
 // première maquette : vue Administrateur uniquement, édition d'un
 // évènement pour les 3 types de fréquence (an / mois / semaine), pas
-// d'écrans d'administration (création d'instance/item, drag-and-drop).
-// Entièrement local (useState), sans backend ni rémanence — même logique
-// que le reste de cette maquette multi-application.
+// d'écrans d'administration (création d'instance/item). Entièrement local
+// (useState), sans backend ni rémanence — même logique que le reste de
+// cette maquette multi-application.
 //
 // Retours client du 20/11 intégrés ici : navigation année (visuelle,
 // non fonctionnelle), colonnes mieux délimitées, colonne Item élargie
@@ -42,29 +42,21 @@ import {
 // référence documentaire visible sans ouvrir la fenêtre d'édition, date du
 // jour proposée par défaut (modifiable) y compris pour /semaine, badge
 // « Doc » dans la colonne Item quand la référence est requise.
+//
+// Retours client du 21/11 : colonne Responsable supprimée (visible au
+// survol de l'item, le filtre Manager reste) ; largeur resserrée pour
+// tenir sur un écran 13 pouces avec les 12 mois visibles ; case vide plus
+// visible quand une saisie est attendue (rouge quand le mois est déjà
+// passé — retard) ; une anticipation /an non renseignée ne peut pas être
+// effacée mais peut être déplacée vers un autre mois par glisser-déposer
+// (exigence du cahier des charges : l'activité reste due, seule sa
+// programmation dans l'année peut bouger).
 
 const STYLES_FREQUENCE: Record<FrequenceType, string> = {
   an: "bg-violet-100 text-violet-800",
   mois: "bg-blue-100 text-blue-800",
   semaine: "bg-teal-100 text-teal-800",
 };
-
-function initiales(nom: string): string {
-  const mots = nom.trim().split(/\s+/);
-  if (mots.length === 1) return mots[0].slice(0, 2).toUpperCase();
-  return (mots[0][0] + mots[mots.length - 1][0]).toUpperCase();
-}
-
-function AvatarResponsable({ nom }: { nom: string }) {
-  return (
-    <span
-      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-zinc-700 text-[9px] font-semibold text-white"
-      title={nom}
-    >
-      {initiales(nom)}
-    </span>
-  );
-}
 
 // --- Fenêtre d'édition d'un évènement -------------------------------------
 
@@ -218,14 +210,70 @@ function PuceDate({
   );
 }
 
-function PucePrevue({ onCliquer }: { onCliquer: () => void }) {
+// PucePrevue (mois à venir, pas encore passé) et PuceRetard (mois déjà
+// passé sans saisie) — retour client du 21/11 : la case vide attendue
+// doit être plus visible, et franchement rouge une fois le mois passé,
+// plutôt que le discret "+" pointillé violet d'origine. Pour une
+// fréquence /an, l'anticipation (pas encore renseignée) peut être
+// déplacée vers un autre mois par glisser-déposer : elle ne peut pas être
+// effacée, seule sa programmation peut bouger (exigence du cahier des
+// charges).
+function PucePrevue({
+  onCliquer,
+  deplacable,
+  onDeplacerDebut,
+}: {
+  onCliquer: () => void;
+  deplacable: boolean;
+  onDeplacerDebut: () => void;
+}) {
   return (
     <button
       onClick={onCliquer}
-      title="Ajouter l'évènement"
-      className="rounded-md border border-dashed border-violet-300 px-2 py-1 text-[11px] font-medium text-violet-400 hover:border-amber-400 hover:text-amber-600"
+      draggable={deplacable}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", "");
+        onDeplacerDebut();
+      }}
+      title={deplacable ? "À renseigner — glisser pour reprogrammer sur un autre mois" : "Ajouter l'évènement"}
+      className={
+        "rounded-md border border-amber-400 bg-amber-50 px-1.5 py-1 text-[11px] font-bold text-amber-600 hover:bg-amber-100 " +
+        (deplacable ? "cursor-grab active:cursor-grabbing" : "")
+      }
     >
       +
+    </button>
+  );
+}
+
+function PuceRetard({
+  onCliquer,
+  deplacable,
+  onDeplacerDebut,
+}: {
+  onCliquer: () => void;
+  deplacable: boolean;
+  onDeplacerDebut: () => void;
+}) {
+  return (
+    <button
+      onClick={onCliquer}
+      draggable={deplacable}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", "");
+        onDeplacerDebut();
+      }}
+      title={
+        deplacable
+          ? "En retard — non renseigné. Glisser pour reprogrammer sur un autre mois (ne peut pas être effacé)."
+          : "En retard — non renseigné"
+      }
+      className={
+        "rounded-md border border-red-400 bg-red-100 px-1.5 py-1 text-[11px] font-bold text-red-700 hover:bg-red-200 " +
+        (deplacable ? "cursor-grab active:cursor-grabbing" : "")
+      }
+    >
+      !
     </button>
   );
 }
@@ -248,7 +296,7 @@ function CaseSemaine({
       onClick={onCliquer}
       title={reference ? `${titre} — référence : ${reference}` : titre}
       className={
-        "relative flex h-4 w-4 items-center justify-center rounded border text-[8px] font-bold leading-none " +
+        "relative flex h-[13px] w-[13px] items-center justify-center rounded border text-[7px] font-bold leading-none " +
         (cochee
           ? conforme
             ? "border-emerald-500 bg-emerald-500 text-white"
@@ -269,17 +317,31 @@ function CelluleMois({
   mois,
   evenement,
   onCliquer,
+  onDeplacerDebut,
+  onDeplacerDepot,
 }: {
   item: ItemPilotage;
   mois: number;
   evenement: EvenementPilotage | undefined;
   onCliquer: () => void;
+  onDeplacerDebut: (mois: number) => void;
+  onDeplacerDepot: (mois: number) => void;
 }) {
+  // Seule une fréquence /an a une « anticipation » qu'on peut déplacer
+  // d'un mois à l'autre par glisser-déposer (retour client du 21/11).
+  const deplacable = item.frequenceType === "an";
+  const proprietesDepot = deplacable
+    ? { onDragOver: (e: DragEvent) => e.preventDefault(), onDrop: () => onDeplacerDepot(mois) }
+    : {};
+
   if (item.frequenceType === "an" && !item.moisAnticipes?.includes(mois)) {
-    return <td className="border-l border-zinc-100 bg-zinc-50/60 px-1.5 py-1.5" />;
+    return <td className="border-l border-zinc-100 bg-zinc-50/60 px-1 py-1" {...proprietesDepot} />;
   }
+
+  const enRetard = !evenement && mois < MOIS_COURANT;
+
   return (
-    <td className="border-l border-zinc-100 px-1.5 py-1.5 text-center">
+    <td className="border-l border-zinc-100 px-1 py-1 text-center" {...proprietesDepot}>
       {evenement ? (
         <PuceDate
           dateLabel={formatDateFR(evenement.date)}
@@ -287,8 +349,10 @@ function CelluleMois({
           reference={evenement.reference}
           onCliquer={onCliquer}
         />
+      ) : enRetard ? (
+        <PuceRetard onCliquer={onCliquer} deplacable={deplacable} onDeplacerDebut={() => onDeplacerDebut(mois)} />
       ) : (
-        <PucePrevue onCliquer={onCliquer} />
+        <PucePrevue onCliquer={onCliquer} deplacable={deplacable} onDeplacerDebut={() => onDeplacerDebut(mois)} />
       )}
     </td>
   );
@@ -307,8 +371,8 @@ function CelluleSemaine({
 }) {
   const lundis = lundisDuMois(ANNEE, mois);
   return (
-    <td className="border-l border-zinc-100 px-1.5 py-1.5">
-      <div className="flex items-center justify-center gap-1">
+    <td className="border-l border-zinc-100 px-1 py-1">
+      <div className="flex items-center justify-center gap-0.5">
         {lundis.map((lundi) => {
           const iso = dateISO(lundi);
           const evenement = evenements.find((e) => e.itemId === item.id && dateDansSemaine(e.date, iso));
@@ -337,21 +401,24 @@ function LigneItem({
   evenements,
   onCliquerMois,
   onCliquerSemaine,
+  onDeplacerDebut,
+  onDeplacerDepot,
 }: {
   item: ItemPilotage;
   evenements: EvenementPilotage[];
   onCliquerMois: (item: ItemPilotage, mois: number) => void;
   onCliquerSemaine: (item: ItemPilotage, lundiISO: string) => void;
+  onDeplacerDebut: (itemId: string, mois: number) => void;
+  onDeplacerDepot: (itemId: string, mois: number) => void;
 }) {
   return (
     <tr className="border-t border-zinc-100">
-      <td className="sticky left-0 z-10 min-w-[300px] bg-white px-3 py-2">
-        <div className="flex items-center justify-between gap-2">
+      {/* Colonne Responsable supprimée (retour client du 21/11) — visible
+          au survol de la cellule Item ; le filtre Manager reste disponible. */}
+      <td className="sticky left-0 z-10 w-[190px] bg-white px-2 py-2" title={`Responsable : ${item.responsable}`}>
+        <div className="flex flex-wrap items-center justify-between gap-1">
           <span className="font-medium text-zinc-800">{item.code}</span>
-          <div className="flex shrink-0 items-center gap-1.5">
-            <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${STYLES_FREQUENCE[item.frequenceType]}`}>
-              {item.frequenceN} {LABELS_FREQUENCE[item.frequenceType]}
-            </span>
+          <div className="flex shrink-0 items-center gap-1">
             {item.gestionDocumentaire && (
               <span
                 className="inline-flex items-center rounded bg-blue-50 px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-blue-600"
@@ -364,12 +431,12 @@ function LigneItem({
                 Doc
               </span>
             )}
+            <span className={`inline-block rounded px-1.5 py-0.5 text-[10px] font-semibold ${STYLES_FREQUENCE[item.frequenceType]}`}>
+              {item.frequenceN} {LABELS_FREQUENCE[item.frequenceType]}
+            </span>
           </div>
         </div>
         {item.nomComplet && <div className="text-xs text-zinc-500">{item.nomComplet}</div>}
-      </td>
-      <td className="border-l border-zinc-100 px-2 py-2">
-        <AvatarResponsable nom={item.responsable} />
       </td>
       {MOIS_LABELS.map((_, mois) =>
         item.frequenceType === "semaine" ? (
@@ -387,6 +454,8 @@ function LigneItem({
             mois={mois}
             evenement={evenements.find((e) => e.itemId === item.id && moisDeISO(e.date) === mois)}
             onCliquer={() => onCliquerMois(item, mois)}
+            onDeplacerDebut={(m) => onDeplacerDebut(item.id, m)}
+            onDeplacerDepot={(m) => onDeplacerDepot(item.id, m)}
           />
         )
       )}
@@ -662,24 +731,63 @@ export default function TableauBordPilotage() {
   const [managerFiltre, setManagerFiltre] = useState("tous");
   const [instancesDesactivees, setInstancesDesactivees] = useState<Set<string>>(new Set());
 
+  // Une anticipation /an non renseignée ne peut pas être effacée, mais peut
+  // être déplacée vers un autre mois par glisser-déposer (cahier des
+  // charges, retour client du 21/11) — surcharge locale de moisAnticipes
+  // par item, cette maquette restant sans backend ni rémanence.
+  const [moisAnticipesOverrides, setMoisAnticipesOverrides] = useState<Record<string, number[]>>({});
+  const [deplacementEnCours, setDeplacementEnCours] = useState<{ itemId: string; mois: number } | null>(null);
+
   const responsables = useMemo(() => tousLesResponsables(), []);
 
   const instancesFiltrees = useMemo(() => {
     return INSTANCES_DEMO.filter((instance) => !instancesDesactivees.has(instance.id))
       .map((instance) => ({
         ...instance,
-        items: instance.items.filter((item) => {
-          if (frequenceFiltre !== "toutes" && item.frequenceType !== frequenceFiltre) return false;
-          if (managerFiltre !== "tous" && item.responsable !== managerFiltre) return false;
-          if (motCle.trim()) {
-            const cible = `${item.code} ${item.nomComplet ?? ""} ${item.responsable}`.toLowerCase();
-            if (!cible.includes(motCle.trim().toLowerCase())) return false;
-          }
-          return true;
-        }),
+        items: instance.items
+          .map((item) => {
+            const override = moisAnticipesOverrides[item.id];
+            return override ? { ...item, moisAnticipes: override } : item;
+          })
+          .filter((item) => {
+            if (frequenceFiltre !== "toutes" && item.frequenceType !== frequenceFiltre) return false;
+            if (managerFiltre !== "tous" && item.responsable !== managerFiltre) return false;
+            if (motCle.trim()) {
+              const cible = `${item.code} ${item.nomComplet ?? ""} ${item.responsable}`.toLowerCase();
+              if (!cible.includes(motCle.trim().toLowerCase())) return false;
+            }
+            return true;
+          }),
       }))
       .filter((instance) => instance.items.length > 0);
-  }, [motCle, frequenceFiltre, managerFiltre, instancesDesactivees]);
+  }, [motCle, frequenceFiltre, managerFiltre, instancesDesactivees, moisAnticipesOverrides]);
+
+  function debuterDeplacementAnticipation(itemId: string, mois: number) {
+    setDeplacementEnCours({ itemId, mois });
+  }
+
+  // Refuse le dépôt si la cible est déjà anticipée (ou a déjà un
+  // évènement, ce qui implique qu'elle est anticipée) — seule une case
+  // vide et non anticipée peut recevoir l'anticipation déplacée.
+  function deposerAnticipation(itemId: string, moisCible: number) {
+    if (!deplacementEnCours || deplacementEnCours.itemId !== itemId || deplacementEnCours.mois === moisCible) {
+      setDeplacementEnCours(null);
+      return;
+    }
+    const moisSource = deplacementEnCours.mois;
+    setMoisAnticipesOverrides((prev) => {
+      const item = tousLesItems().find((i) => i.id === itemId);
+      if (!item) return prev;
+      const actuels = prev[itemId] ?? item.moisAnticipes ?? [];
+      if (!actuels.includes(moisSource) || actuels.includes(moisCible)) return prev;
+      const suivants = actuels
+        .filter((m) => m !== moisSource)
+        .concat(moisCible)
+        .sort((a, b) => a - b);
+      return { ...prev, [itemId]: suivants };
+    });
+    setDeplacementEnCours(null);
+  }
 
   function basculerInstance(id: string) {
     setInstancesDesactivees((prev) => {
@@ -737,14 +845,13 @@ export default function TableauBordPilotage() {
             Administrateur — accès réservé Administrateur &amp; Manager.
           </p>
         </div>
+        {/* Ordre aligné sur le bandeau du Planning — Filtres, navigation
+            temporelle, puis les éléments liés au compte (notifications,
+            utilisateur, ce dernier affiché par la page) — retour client
+            du 21/11 : même cohérence sur les 3 applis, même si
+            l'affichage diffère (pas de bouton Administration ici, hors
+            périmètre de cette première maquette). */}
         <div className="flex items-center gap-2">
-          <NotificationsPilotageBouton
-            notifications={NOTIFICATIONS_DEMO}
-            onOuvrirItem={(itemId, mois) => {
-              const item = tousLesItems().find((i) => i.id === itemId);
-              if (item) setEdition({ item, contexte: { type: "mois", mois } });
-            }}
-          />
           <FiltresPilotageBouton
             motCle={motCle}
             onMotCleChange={setMotCle}
@@ -785,6 +892,13 @@ export default function TableauBordPilotage() {
               →
             </button>
           </div>
+          <NotificationsPilotageBouton
+            notifications={NOTIFICATIONS_DEMO}
+            onOuvrirItem={(itemId, mois) => {
+              const item = tousLesItems().find((i) => i.id === itemId);
+              if (item) setEdition({ item, contexte: { type: "mois", mois } });
+            }}
+          />
         </div>
       </div>
 
@@ -799,17 +913,20 @@ export default function TableauBordPilotage() {
         ))}
       </div>
 
+      {/* table-fixed + largeurs explicites (retour client du 21/11) : tient
+          dans la largeur d'un écran 13 pouces avec les 12 mois visibles,
+          sans quoi la mise en page automatique élargit les colonnes selon
+          le contenu et déborde. */}
       <div className="mt-4 overflow-x-auto rounded border border-zinc-200">
-        <table className="w-full text-sm">
+        <table className="w-full table-fixed text-sm">
           <thead className="bg-zinc-50 text-left text-xs uppercase tracking-wide text-zinc-500">
             <tr>
-              <th className="sticky left-0 z-10 min-w-[300px] bg-zinc-50 px-3 py-2">Item</th>
-              <th className="border-l border-zinc-200 px-2 py-2">Resp.</th>
+              <th className="sticky left-0 z-10 w-[190px] bg-zinc-50 px-2 py-2">Item</th>
               {MOIS_LABELS.map((m, i) => (
                 <th
                   key={m}
                   className={
-                    "border-l border-zinc-200 px-1.5 py-2 text-center " +
+                    "w-[82px] border-l border-zinc-200 px-1 py-2 text-center " +
                     (i === MOIS_COURANT ? "bg-amber-50 text-amber-700" : "")
                   }
                 >
@@ -826,6 +943,8 @@ export default function TableauBordPilotage() {
                 evenements={evenements}
                 onCliquerMois={(item, mois) => setEdition({ item, contexte: { type: "mois", mois } })}
                 onCliquerSemaine={(item, lundiISO) => setEdition({ item, contexte: { type: "semaine", lundiISO } })}
+                onDeplacerDebut={debuterDeplacementAnticipation}
+                onDeplacerDepot={deposerAnticipation}
               />
             ))}
           </tbody>
@@ -851,21 +970,33 @@ function InstanceGroupe({
   evenements,
   onCliquerMois,
   onCliquerSemaine,
+  onDeplacerDebut,
+  onDeplacerDepot,
 }: {
   instance: InstancePilotage;
   evenements: EvenementPilotage[];
   onCliquerMois: (item: ItemPilotage, mois: number) => void;
   onCliquerSemaine: (item: ItemPilotage, lundiISO: string) => void;
+  onDeplacerDebut: (itemId: string, mois: number) => void;
+  onDeplacerDepot: (itemId: string, mois: number) => void;
 }) {
   return (
     <>
       <tr className="bg-zinc-100">
-        <td colSpan={2 + MOIS_LABELS.length} className="sticky left-0 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-600">
+        <td colSpan={1 + MOIS_LABELS.length} className="sticky left-0 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-zinc-600">
           {instance.nom}
         </td>
       </tr>
       {instance.items.map((item) => (
-        <LigneItem key={item.id} item={item} evenements={evenements} onCliquerMois={onCliquerMois} onCliquerSemaine={onCliquerSemaine} />
+        <LigneItem
+          key={item.id}
+          item={item}
+          evenements={evenements}
+          onCliquerMois={onCliquerMois}
+          onCliquerSemaine={onCliquerSemaine}
+          onDeplacerDebut={onDeplacerDebut}
+          onDeplacerDepot={onDeplacerDepot}
+        />
       ))}
     </>
   );

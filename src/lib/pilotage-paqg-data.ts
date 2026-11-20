@@ -665,13 +665,19 @@ export const EVENEMENTS_DEMO: EvenementPilotage[] = [
   // Risques chimiques (1/an, mars) : tenu.
   { id: "risques-chimiques-1", itemId: "risques-chimiques", date: "2026-03-05" },
 
-  // Audit — volontairement en retard (retour client du 20/11) : Guide
-  // bientraitance jamais tenu ; Circuit du médicament tenu une fois sur
-  // deux, et sans référence (non conforme malgré l'évènement saisi). Les
-  // 4 items ajoutés depuis le fichier source restent épars eux aussi, pour
-  // la même raison — un seul évènement, sans référence.
+  // Audit — volontairement en retard (retour client du 20/11, affiné le
+  // 21/11 pour atterrir sur 30 % plutôt que 0 %, plus représentatif d'un
+  // indicateur qui alerte sans être nul) : 3 évènements conformes sur 10
+  // attendus avant novembre. Circuit du médicament tenu une fois sur deux
+  // et sans référence (non conforme malgré l'évènement saisi) ; Douleurs
+  // pareil ; Entretien quotidien d'une chambre volontairement laissé
+  // totalement vide (démontre le déplacement d'une anticipation /an par
+  // glisser-déposer, cf. notification et cahier des charges).
+  { id: "guide-bientraitance-1", itemId: "guide-bientraitance", date: "2026-09-14", reference: "Audit-guide-bientraitance-2026-09.pdf" },
   { id: "circuit-medicament-1", itemId: "circuit-medicament", date: "2026-03-12" },
   { id: "douleurs-1", itemId: "douleurs", date: "2026-03-10" },
+  { id: "deces-1", itemId: "deces", date: "2026-05-20", reference: "Audit-deces-2026-05.pdf" },
+  { id: "soins-hygiene-1", itemId: "soins-hygiene", date: "2026-04-08", reference: "Audit-soins-hygiene-2026-04.pdf" },
 
   // Les items fréquence/semaine, générés (voir evenementsSemaineDemo) —
   // IDE avec gestion documentaire (démontre le cas /semaine + document,
