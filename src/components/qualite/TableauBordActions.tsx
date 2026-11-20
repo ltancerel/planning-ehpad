@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import AppTabs from "@/components/AppTabs";
+import UserMenu from "@/components/UserMenu";
 import {
   ACTIONS_DEMO,
   LIBELLES_STATUT,
@@ -8,6 +10,18 @@ import {
   type ActionQualite,
   type StatutAction,
 } from "@/lib/actions-paqg-data";
+
+// UserMenu (avatar + détail Julie Dupont) repris tel quel du Planning —
+// retour client du 20/11, bandeau fusionné avec celui-ci le 21/11 pour
+// une vraie uniformité (Filtres puis utilisateur dans le même bandeau que
+// le Planning, même si l'affichage diffère).
+const UTILISATEUR_DEMO = {
+  nom: "DUPONT",
+  prenom: "Julie",
+  typeUtilisateur: "Administrateur",
+  service: "Administratif",
+  poste: "Directrice",
+};
 
 // EPIC Multi-application (#46), story #47 (maquette) — reprend le tableau
 // de bord maquetté sur experiment/qualite-maquette, avec les modifications
@@ -472,23 +486,43 @@ export default function TableauBordActions() {
   const triees = [...actionsFiltrees].sort((a, b) => a.echeance.localeCompare(b.echeance));
 
   return (
-    <div className="p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Tableau de bord Actions PAQG</h1>
-          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
-            Vue unifiée du plan d&apos;action qualité de l&apos;établissement, alimenté par le document
-            unique d&apos;évaluation des risques professionnels (DUERP) et le référentiel d&apos;évaluation
-            HAS.
-          </p>
+    <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
+      <header className="flex shrink-0 flex-col border-b border-zinc-200">
+        <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
+              E
+            </span>
+            <div className="leading-tight">
+              <h1 className="font-semibold text-zinc-800">EHPAD Démo</h1>
+              <p className="text-[10px] text-zinc-400">Actions PAQG</p>
+            </div>
+            <div className="ml-4 border-l border-zinc-200 pl-4">
+              <AppTabs actif="actions-paqg" />
+            </div>
+          </div>
+          {/* Même bandeau que l'utilisateur — retour client du 21/11 :
+              Filtres puis utilisateur dans le même bandeau que Planning,
+              plutôt que sur une ligne à part. */}
+          <div className="flex items-center gap-2">
+            <FiltresActionsBouton
+              filtres={filtres}
+              onChange={setFiltres}
+              responsables={responsables}
+              nbResultats={actionsFiltrees.length}
+            />
+            <UserMenu utilisateur={UTILISATEUR_DEMO} />
+          </div>
         </div>
-        <FiltresActionsBouton
-          filtres={filtres}
-          onChange={setFiltres}
-          responsables={responsables}
-          nbResultats={actionsFiltrees.length}
-        />
-      </div>
+      </header>
+
+      <div className="flex-1 overflow-auto p-6">
+      <h2 className="text-xl font-semibold text-zinc-900">Tableau de bord Actions PAQG</h2>
+      <p className="mt-1 max-w-2xl text-sm text-zinc-500">
+        Vue unifiée du plan d&apos;action qualité de l&apos;établissement, alimenté par le document
+        unique d&apos;évaluation des risques professionnels (DUERP) et le référentiel d&apos;évaluation
+        HAS.
+      </p>
 
       <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(120px,150px))] gap-3">
         <IndicateurTuile valeur={3} label="Risques DUERP élevés (résiduel)" degrade="from-rose-500 to-rose-600" />
@@ -584,6 +618,7 @@ export default function TableauBordActions() {
             })}
           </tbody>
         </table>
+      </div>
       </div>
     </div>
   );

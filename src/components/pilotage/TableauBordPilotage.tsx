@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
+import AppTabs from "@/components/AppTabs";
+import UserMenu from "@/components/UserMenu";
 import {
   ANNEE,
   MOIS_COURANT,
@@ -51,6 +53,18 @@ import {
 // effacée mais peut être déplacée vers un autre mois par glisser-déposer
 // (exigence du cahier des charges : l'activité reste due, seule sa
 // programmation dans l'année peut bouger).
+
+// UserMenu (avatar + détail Julie Dupont) repris tel quel du Planning —
+// retour client du 20/11, bandeau fusionné avec celui-ci le 21/11 pour
+// une vraie uniformité (Filtres, navigation, notifications, utilisateur
+// dans le même bandeau que le Planning, même si l'affichage diffère).
+const UTILISATEUR_DEMO = {
+  nom: "DUPONT",
+  prenom: "Julie",
+  typeUtilisateur: "Administrateur",
+  service: "Administratif",
+  poste: "Directrice",
+};
 
 const STYLES_FREQUENCE: Record<FrequenceType, string> = {
   an: "bg-violet-100 text-violet-800",
@@ -237,7 +251,7 @@ function PucePrevue({
       }}
       title={deplacable ? "À renseigner — glisser pour reprogrammer sur un autre mois" : "Ajouter l'évènement"}
       className={
-        "rounded-md border border-amber-400 bg-amber-50 px-1.5 py-1 text-[11px] font-bold text-amber-600 hover:bg-amber-100 " +
+        "rounded-md border border-zinc-400 bg-zinc-100 px-1.5 py-1 text-[11px] font-bold text-zinc-600 hover:bg-zinc-200 " +
         (deplacable ? "cursor-grab active:cursor-grabbing" : "")
       }
     >
@@ -301,7 +315,7 @@ function CaseSemaine({
           ? conforme
             ? "border-emerald-500 bg-emerald-500 text-white"
             : "border-red-500 bg-red-500 text-white"
-          : "border-zinc-300 bg-white hover:border-amber-400")
+          : "border-zinc-400 bg-white hover:border-zinc-500 hover:bg-zinc-50")
       }
     >
       {cochee && "✓"}
@@ -836,71 +850,86 @@ export default function TableauBordPilotage() {
   const conformiteGlobale = conformitePourcentage(tousLesItemsFiltres, evenements, MOIS_COURANT);
 
   return (
-    <div className="p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold text-zinc-900">Tableau de bord Pilotage PAQG</h1>
-          <p className="mt-1 max-w-2xl text-sm text-zinc-500">
-            Suivi des instances, comités, réunions, audits et sensibilisations planifiés sur l&apos;année. Vue
-            Administrateur — accès réservé Administrateur &amp; Manager.
-          </p>
-        </div>
-        {/* Ordre aligné sur le bandeau du Planning — Filtres, navigation
-            temporelle, puis les éléments liés au compte (notifications,
-            utilisateur, ce dernier affiché par la page) — retour client
-            du 21/11 : même cohérence sur les 3 applis, même si
-            l'affichage diffère (pas de bouton Administration ici, hors
-            périmètre de cette première maquette). */}
-        <div className="flex items-center gap-2">
-          <FiltresPilotageBouton
-            motCle={motCle}
-            onMotCleChange={setMotCle}
-            frequenceFiltre={frequenceFiltre}
-            onFrequenceFiltreChange={setFrequenceFiltre}
-            managerFiltre={managerFiltre}
-            onManagerFiltreChange={setManagerFiltre}
-            responsables={responsables}
-            instances={INSTANCES_DEMO}
-            instancesDesactivees={instancesDesactivees}
-            onBasculerInstance={basculerInstance}
-            nbResultats={tousLesItemsFiltres.length}
-            onReinitialiser={() => {
-              setMotCle("");
-              setFrequenceFiltre("toutes");
-              setManagerFiltre("tous");
-              setInstancesDesactivees(new Set());
-            }}
-          />
-          {/* Navigation année — visuelle uniquement pour cette maquette, pas
-              encore fonctionnelle (retour client du 20/11). */}
-          <div className="flex items-center gap-2 rounded-lg border border-zinc-300 px-1 py-1">
-            <button
-              type="button"
-              aria-label="Année précédente"
-              title="Année précédente (pas encore fonctionnel dans cette maquette)"
-              className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
-            >
-              ←
-            </button>
-            <span className="px-1 text-sm font-semibold text-zinc-800">{ANNEE}</span>
-            <button
-              type="button"
-              aria-label="Année suivante"
-              title="Année suivante (pas encore fonctionnel dans cette maquette)"
-              className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
-            >
-              →
-            </button>
+    <div className="flex h-screen flex-col bg-white text-sm text-zinc-900">
+      <header className="flex shrink-0 flex-col border-b border-zinc-200">
+        <div className="flex items-center justify-between px-4 py-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-7 w-7 items-center justify-center rounded bg-zinc-200 text-xs font-semibold text-zinc-500">
+              E
+            </span>
+            <div className="leading-tight">
+              <h1 className="font-semibold text-zinc-800">EHPAD Démo</h1>
+              <p className="text-[10px] text-zinc-400">Pilotage PAQG</p>
+            </div>
+            <div className="ml-4 border-l border-zinc-200 pl-4">
+              <AppTabs actif="pilotage-paqg" />
+            </div>
           </div>
-          <NotificationsPilotageBouton
-            notifications={NOTIFICATIONS_DEMO}
-            onOuvrirItem={(itemId, mois) => {
-              const item = tousLesItems().find((i) => i.id === itemId);
-              if (item) setEdition({ item, contexte: { type: "mois", mois } });
-            }}
-          />
+          {/* Même bandeau que l'utilisateur — retour client du 21/11 :
+              auparavant Filtres/navigation/notifications étaient sur une
+              ligne à part, pas uniforme avec Planning où tout est dans le
+              même bandeau (Filtres, sélecteur, [Administration], puis
+              l'utilisateur). Pas de bouton Administration ici, hors
+              périmètre de cette première maquette. */}
+          <div className="flex items-center gap-2">
+            <FiltresPilotageBouton
+              motCle={motCle}
+              onMotCleChange={setMotCle}
+              frequenceFiltre={frequenceFiltre}
+              onFrequenceFiltreChange={setFrequenceFiltre}
+              managerFiltre={managerFiltre}
+              onManagerFiltreChange={setManagerFiltre}
+              responsables={responsables}
+              instances={INSTANCES_DEMO}
+              instancesDesactivees={instancesDesactivees}
+              onBasculerInstance={basculerInstance}
+              nbResultats={tousLesItemsFiltres.length}
+              onReinitialiser={() => {
+                setMotCle("");
+                setFrequenceFiltre("toutes");
+                setManagerFiltre("tous");
+                setInstancesDesactivees(new Set());
+              }}
+            />
+            {/* Navigation année — visuelle uniquement pour cette maquette,
+                pas encore fonctionnelle (retour client du 20/11). */}
+            <div className="flex items-center gap-2 rounded-lg border border-zinc-300 px-1 py-1">
+              <button
+                type="button"
+                aria-label="Année précédente"
+                title="Année précédente (pas encore fonctionnel dans cette maquette)"
+                className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
+              >
+                ←
+              </button>
+              <span className="px-1 text-sm font-semibold text-zinc-800">{ANNEE}</span>
+              <button
+                type="button"
+                aria-label="Année suivante"
+                title="Année suivante (pas encore fonctionnel dans cette maquette)"
+                className="rounded px-2 py-1 text-sm text-zinc-500 hover:bg-zinc-100"
+              >
+                →
+              </button>
+            </div>
+            <NotificationsPilotageBouton
+              notifications={NOTIFICATIONS_DEMO}
+              onOuvrirItem={(itemId, mois) => {
+                const item = tousLesItems().find((i) => i.id === itemId);
+                if (item) setEdition({ item, contexte: { type: "mois", mois } });
+              }}
+            />
+            <UserMenu utilisateur={UTILISATEUR_DEMO} />
+          </div>
         </div>
-      </div>
+      </header>
+
+      <div className="flex-1 overflow-auto p-6">
+      <h2 className="text-xl font-semibold text-zinc-900">Tableau de bord Pilotage PAQG</h2>
+      <p className="mt-1 max-w-2xl text-sm text-zinc-500">
+        Suivi des instances, comités, réunions, audits et sensibilisations planifiés sur l&apos;année. Vue
+        Administrateur — accès réservé Administrateur &amp; Manager.
+      </p>
 
       <div className="mt-5 grid grid-cols-[repeat(auto-fit,minmax(110px,140px))] gap-3">
         <IndicateurConformite label="Conformité globale" pourcentage={conformiteGlobale} />
@@ -961,6 +990,7 @@ export default function TableauBordPilotage() {
           onSupprimer={() => supprimerEvenement(edition.item, edition.contexte)}
         />
       )}
+      </div>
     </div>
   );
 }
