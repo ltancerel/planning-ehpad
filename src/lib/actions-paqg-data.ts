@@ -14,6 +14,26 @@ export const LIBELLES_STATUT: Record<StatutAction, string> = {
   fait: "Fait",
 };
 
+// Catalogue des origines possibles pour une action — dans l'application
+// réelle, une table de référence en base (catégories DUERP, critères
+// HAS), alimentée et tenue à jour indépendamment des actions elles-mêmes.
+// Pour cette maquette sans backend, elle est simplement hardcodée ici
+// (retour client du 21/11 : pouvoir préciser l'origine à la saisie et à
+// la modification d'une action, pas seulement au moment de la génération
+// des données de démo).
+export type OrigineCatalogue = { badge: "DUERP" | "HAS"; texte: string };
+
+export const CATALOGUE_ORIGINES: OrigineCatalogue[] = [
+  { badge: "DUERP", texte: "Plan d'action global" },
+  { badge: "DUERP", texte: "Catégorie DUERP : Risques physiques" },
+  { badge: "DUERP", texte: "Catégorie DUERP : Chute et glissade" },
+  { badge: "DUERP", texte: "Catégorie DUERP : Risques spécifiques" },
+  { badge: "DUERP", texte: "Catégorie DUERP : Psychosociaux" },
+  { badge: "HAS", texte: "Affichage obligatoire" },
+  { badge: "HAS", texte: "Risque de chute" },
+  { badge: "HAS", texte: "Révisions de projet personnalisé" },
+];
+
 export type ActionQualite = {
   id: string;
   origineBadge: "DUERP" | "HAS";

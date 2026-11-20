@@ -5,6 +5,7 @@ import AppTabs from "@/components/AppTabs";
 import UserMenu from "@/components/UserMenu";
 import {
   ACTIONS_DEMO,
+  CATALOGUE_ORIGINES,
   LIBELLES_STATUT,
   STATUTS,
   type ActionQualite,
@@ -69,6 +70,17 @@ function ImperatifBadge() {
   );
 }
 
+// Fait ressortir un responsable ou une échéance encore "À définir" —
+// retour client du 21/11 : une bonne initiative (signaler qu'il reste une
+// décision à prendre) mais pas assez visible en texte brut.
+function BadgeADefinir() {
+  return (
+    <span className="inline-flex items-center rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">
+      À définir
+    </span>
+  );
+}
+
 // Même composant que AvatarResponsable dans Pilotage PAQG (TableauBordPilotage.tsx).
 function initiales(nom: string): string {
   const mots = nom.trim().split(/\s+/);
@@ -115,6 +127,8 @@ function formatDateFR(iso: string): string {
 }
 
 type ValeursFormulaire = {
+  origineBadge: ActionQualite["origineBadge"];
+  origineTexte: string;
   intitule: string;
   details: string;
   responsable: string;
@@ -122,10 +136,20 @@ type ValeursFormulaire = {
   imperatif: boolean;
 };
 
-const VALEURS_VIDES: ValeursFormulaire = { intitule: "", details: "", responsable: "", echeance: "", imperatif: false };
+const VALEURS_VIDES: ValeursFormulaire = {
+  origineBadge: CATALOGUE_ORIGINES[0].badge,
+  origineTexte: CATALOGUE_ORIGINES[0].texte,
+  intitule: "",
+  details: "",
+  responsable: "",
+  echeance: "",
+  imperatif: false,
+};
 
 function valeursDepuisAction(action: ActionQualite): ValeursFormulaire {
   return {
+    origineBadge: action.origineBadge,
+    origineTexte: action.origineTexte,
     intitule: action.intitule,
     details: action.details ?? "",
     responsable: action.responsable,
@@ -148,6 +172,13 @@ function FormulaireAction({
   const [valeurs, setValeurs] = useState<ValeursFormulaire>(
     actionExistante ? valeursDepuisAction(actionExistante) : VALEURS_VIDES
   );
+
+  // Catégories du catalogue pour le badge choisi — si l'action modifiée
+  // porte une origine antérieure au catalogue (ex. "Ajoutée manuellement"),
+  // elle est ajoutée en tête pour ne pas être perdue tant qu'on ne change
+  // pas explicitement de catégorie.
+  const categoriesPourBadge = CATALOGUE_ORIGINES.filter((o) => o.badge === valeurs.origineBadge);
+  const categorieActuelleAbsente = !categoriesPourBadge.some((o) => o.texte === valeurs.origineTexte);
 
   return (
     <div
@@ -181,6 +212,38 @@ function FormulaireAction({
               onChange={(e) => setValeurs((v) => ({ ...v, intitule: e.target.value }))}
               className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-600">Origine</label>
+              <select
+                value={valeurs.origineBadge}
+                onChange={(e) => {
+                  const badge = e.target.value as ActionQualite["origineBadge"];
+                  const premiereCategorie = CATALOGUE_ORIGINES.find((o) => o.badge === badge)?.texte ?? "";
+                  setValeurs((v) => ({ ...v, origineBadge: badge, origineTexte: premiereCategorie }));
+                }}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              >
+                <option value="DUERP">DUERP</option>
+                <option value="HAS">HAS</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-zinc-600">Catégorie</label>
+              <select
+                value={valeurs.origineTexte}
+                onChange={(e) => setValeurs((v) => ({ ...v, origineTexte: e.target.value }))}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+              >
+                {categorieActuelleAbsente && <option value={valeurs.origineTexte}>{valeurs.origineTexte}</option>}
+                {categoriesPourBadge.map((o) => (
+                  <option key={o.texte} value={o.texte}>
+                    {o.texte}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <label className="mb-1 block text-xs font-medium text-zinc-600">Détails</label>
@@ -443,8 +506,8 @@ export default function TableauBordActions() {
     setActions((prev) => [
       {
         id: `nouvelle-${Date.now()}`,
-        origineBadge: "DUERP",
-        origineTexte: "Ajoutée manuellement",
+        origineBadge: valeurs.origineBadge,
+        origineTexte: valeurs.origineTexte,
         intitule: valeurs.intitule.trim(),
         details: valeurs.details.trim() || undefined,
         responsable: valeurs.responsable.trim() || "À définir",
@@ -465,6 +528,8 @@ export default function TableauBordActions() {
         a.id === id
           ? {
               ...a,
+              origineBadge: valeurs.origineBadge,
+              origineTexte: valeurs.origineTexte,
               intitule: valeurs.intitule.trim(),
               details: valeurs.details.trim() || undefined,
               responsable: valeurs.responsable.trim() || "À définir",
@@ -591,14 +656,24 @@ export default function TableauBordActions() {
                     {action.details && <div className="mt-1 text-xs text-zinc-500">{action.details}</div>}
                   </td>
                   <td className="px-3 py-2">
-                    <div className="flex items-center gap-1.5">
-                      <AvatarResponsable nom={action.responsable} />
-                      <span className="text-zinc-700">{action.responsable}</span>
-                    </div>
+                    {action.responsable === "À définir" ? (
+                      <BadgeADefinir />
+                    ) : (
+                      <div className="flex items-center gap-1.5">
+                        <AvatarResponsable nom={action.responsable} />
+                        <span className="text-zinc-700">{action.responsable}</span>
+                      </div>
+                    )}
                   </td>
                   <td className={`px-3 py-2 ${retard ? "font-semibold text-red-600" : "text-zinc-700"}`}>
-                    {action.echeanceLabel ?? formatDateFR(action.echeance)}
-                    {retard && <span className="ml-1 text-[10px] uppercase">en retard</span>}
+                    {action.echeanceLabel === "À définir" ? (
+                      <BadgeADefinir />
+                    ) : (
+                      <>
+                        {action.echeanceLabel ?? formatDateFR(action.echeance)}
+                        {retard && <span className="ml-1 text-[10px] uppercase">en retard</span>}
+                      </>
+                    )}
                   </td>
                   <td className="px-3 py-2">
                     <select
